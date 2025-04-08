@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href"https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico">
     <title>Poxel Clan Wars</title>
     <style>
         body {
@@ -20,7 +20,7 @@
             text-align: center;
             padding: 2rem 0;
             margin-bottom: 2rem;
-            border-bottom: 3px solid #FFA500;
+            border-bottom: 3px solid #00cc00;
             position: relative; /* Added for positioning the back button */
         }
         
@@ -36,7 +36,7 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            background-color: #FFA500;
+            background-color: #00cc00;
             color: black;
             border: none;
             padding: 10px 20px;
@@ -49,7 +49,7 @@
         }
         
         .back-button:hover {
-            background-color: #FFB833;
+            background-color: #00cc00;
         }
         
         main {
@@ -67,7 +67,7 @@
         }
         
         h2 {
-            border-bottom: 2px solid #FFA500;
+            border-bottom: 2px solid #00cc00;
             padding-bottom: 0.5rem;
             margin-top: 0;
         }
@@ -131,6 +131,25 @@
             animation: pulse 1.5s infinite;
         }
         
+        /* Added style for hit indicator */
+        .hit {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        /* Winning team/player highlight */
+        .winner {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        /* Hit counter for players/teams */
+        .hit-counter {
+            color: #00ff00;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -150,12 +169,17 @@
         }
         
         th {
-            background-color: #FFA500;
+            background-color: #00cc00;
             color: black;
         }
         
         tr:hover {
             background-color: #2d2d2d;
+        }
+        
+        /* Added style for positive stats */
+        td.positive-stat {
+            color: #00ff00;
         }
         
         .bracket {
@@ -174,7 +198,7 @@
         .bracket-title {
             text-align: center;
             margin-bottom: 1rem;
-            color: #FFA500;
+            color: #00cc00;
             font-weight: bold;
         }
         
@@ -193,7 +217,7 @@
             top: 50%;
             width: 2rem;
             height: 2px;
-            background-color: #FFA500;
+            background-color: #00cc00;
         }
         
         .bracket-round:last-child .bracket-match:after {
@@ -212,6 +236,11 @@
         .team-players {
             font-size: 0.85rem;
             color: #cccccc;
+        }
+        
+        /* Added style for team with higher hits */
+        .team.high-hits .team-name {
+            color: #00ff00;
         }
         
         .buttons {
@@ -271,6 +300,7 @@
                         <th>Wins</th>
                         <th>Losses</th>
                         <th>Win Rate</th>
+                        <th>Hits</th> <!-- Added column for hits -->
                     </tr>
                 </thead>
                 <tbody id="clan-stats-body">
@@ -300,17 +330,19 @@
                 team2: "player",
                 details: "Casual - Match Day",
                 timestamp: new Date("2025-04-10T20:00:00").getTime(),
-                live: false
+                live: false,
+                team1Hits: 0, // Added hits tracking
+                team2Hits: 0  // Added hits tracking
             },
         ];
         
         let clans = [
-            { name: "PLAYER", wins: 0, losses: 0 },
-            { name: "PLAYER", wins: 0, losses: 0 },
-            { name: "PLAYER", wins: 0, losses: 0 },
-            { name: "PLAYER", wins: 0, losses: 0 },
-            { name: "PLAYER", wins: 0, losses: 0 },
-            { name: "PLAYER", wins: 0, losses: 0 }
+            { name: "PLAYER", wins: 0, losses: 0, hits: 15 }, // Added hits field
+            { name: "PLAYER", wins: 0, losses: 0, hits: 8 },
+            { name: "PLAYER", wins: 0, losses: 0, hits: 22 },
+            { name: "PLAYER", wins: 0, losses: 0, hits: 5 },
+            { name: "PLAYER", wins: 0, losses: 0, hits: 12 },
+            { name: "PLAYER", wins: 0, losses: 0, hits: 19 }
         ];
         
         let tournament = {
@@ -321,21 +353,25 @@
                         {
                             team1: {
                                 name: "PLACEHOLDERTHIS!",
-                                players: ["OK BRO"]
+                                players: ["OK BRO"],
+                                hits: 7 // Added hits tracking
                             },
                             team2: {
                                 name: "NAME",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 3 // Added hits tracking
                             }
                         },
                         {
                             team1: {
                                 name: "NAME",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 5 // Added hits tracking
                             },
                             team2: {
                                 name: "NAME",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 9 // Added hits tracking
                             }
                         }
                     ]
@@ -346,21 +382,25 @@
                         {
                             team1: {
                                 name: "PLACEHOLDERTHIS!",
-                                players: ["OK BRO"]
+                                players: ["OK BRO"],
+                                hits: 12 // Added hits tracking
                             },
                             team2: {
                                 name: "NAME",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 8 // Added hits tracking
                             }
                         },
                         {
                             team1: {
                                 name: "NAME",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 10 // Added hits tracking
                             },
                             team2: {
                                 name: "NAME",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 15 // Added hits tracking
                             }
                         }
                     ]
@@ -371,11 +411,13 @@
                         {
                             team1: {
                                 name: "NAME",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 18 // Added hits tracking
                             },
                             team2: {
                                 name: "NAME",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 14 // Added hits tracking
                             }
                         }
                     ]
@@ -386,11 +428,13 @@
                         {
                             team1: {
                                 name: "NONE",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 0 // Added hits tracking
                             },
                             team2: {
                                 name: "NONE",
-                                players: ["SOMEONE"]
+                                players: ["SOMEONE"],
+                                hits: 0 // Added hits tracking
                             }
                         }
                     ]
@@ -420,8 +464,17 @@
                     timeDisplay = `<div>Completed</div>`;
                 }
                 
+                // Add hit display with green color
+                const team1Display = match.team1Hits > 0 ? 
+                    `${match.team1} <span class="hit-counter">(${match.team1Hits} hits)</span>` : 
+                    match.team1;
+                    
+                const team2Display = match.team2Hits > 0 ? 
+                    `${match.team2} <span class="hit-counter">(${match.team2Hits} hits)</span>` : 
+                    match.team2;
+                
                 matchElement.innerHTML = `
-                    <div class="match-teams">${match.team1} vs ${match.team2}</div>
+                    <div class="match-teams">${team1Display} vs ${team2Display}</div>
                     <div class="match-details">${match.details}</div>
                     <div class="match-time">${timeDisplay}</div>
                 `;
@@ -480,6 +533,7 @@
                     <td>${clan.wins}</td>
                     <td>${clan.losses}</td>
                     <td>${winRate}%</td>
+                    <td class="positive-stat">${clan.hits}</td> <!-- Added hits with green color -->
                 `;
                 
                 clanStatsBody.appendChild(row);
@@ -506,18 +560,28 @@
                     
                     // Team 1
                     const team1Element = document.createElement('div');
-                    team1Element.className = 'team';
+                    team1Element.className = match.team1.hits > match.team2.hits ? 'team high-hits' : 'team';
+                    
+                    // Add hits display for team 1
+                    const team1HitsDisplay = match.team1.hits > 0 ? 
+                        ` <span class="hit-counter">(${match.team1.hits} hits)</span>` : '';
+                    
                     team1Element.innerHTML = `
-                        <div class="team-name">${match.team1.name}</div>
+                        <div class="team-name">${match.team1.name}${team1HitsDisplay}</div>
                         <div class="team-players">${match.team1.players.join(', ')}</div>
                     `;
                     matchElement.appendChild(team1Element);
                     
                     // Team 2
                     const team2Element = document.createElement('div');
-                    team2Element.className = 'team';
+                    team2Element.className = match.team2.hits > match.team1.hits ? 'team high-hits' : 'team';
+                    
+                    // Add hits display for team 2
+                    const team2HitsDisplay = match.team2.hits > 0 ? 
+                        ` <span class="hit-counter">(${match.team2.hits} hits)</span>` : '';
+                    
                     team2Element.innerHTML = `
-                        <div class="team-name">${match.team2.name}</div>
+                        <div class="team-name">${match.team2.name}${team2HitsDisplay}</div>
                         <div class="team-players">${match.team2.players.join(', ')}</div>
                     `;
                     matchElement.appendChild(team2Element);
@@ -548,7 +612,7 @@
         // UTILITY FUNCTIONS FOR LATER EDITING
         
         // Function to add a new match
-        function addMatch(team1, team2, details, timestamp) {
+        function addMatch(team1, team2, details, timestamp, team1Hits = 0, team2Hits = 0) {
             const newId = matches.length > 0 ? Math.max(...matches.map(m => m.id)) + 1 : 1;
             matches.push({
                 id: newId,
@@ -556,13 +620,15 @@
                 team2: team2,
                 details: details,
                 timestamp: timestamp,
-                live: false
+                live: false,
+                team1Hits: team1Hits,
+                team2Hits: team2Hits
             });
             renderMatches();
         }
         
         // Function to update a match
-        function updateMatch(id, team1, team2, details, timestamp) {
+        function updateMatch(id, team1, team2, details, timestamp, team1Hits, team2Hits) {
             const matchIndex = matches.findIndex(m => m.id === id);
             if (matchIndex !== -1) {
                 matches[matchIndex] = {
@@ -570,7 +636,9 @@
                     team1: team1 || matches[matchIndex].team1,
                     team2: team2 || matches[matchIndex].team2,
                     details: details || matches[matchIndex].details,
-                    timestamp: timestamp || matches[matchIndex].timestamp
+                    timestamp: timestamp || matches[matchIndex].timestamp,
+                    team1Hits: team1Hits !== undefined ? team1Hits : matches[matchIndex].team1Hits,
+                    team2Hits: team2Hits !== undefined ? team2Hits : matches[matchIndex].team2Hits
                 };
                 renderMatches();
             }
@@ -583,19 +651,20 @@
         }
         
         // Function to add a clan
-        function addClan(name, wins = 0, losses = 0) {
-            clans.push({ name, wins, losses });
+        function addClan(name, wins = 0, losses = 0, hits = 0) {
+            clans.push({ name, wins, losses, hits });
             renderClanStats();
         }
         
         // Function to update clan stats
-        function updateClanStats(name, wins, losses) {
+        function updateClanStats(name, wins, losses, hits) {
             const clanIndex = clans.findIndex(c => c.name === name);
             if (clanIndex !== -1) {
                 clans[clanIndex] = {
                     name: name,
                     wins: wins !== undefined ? wins : clans[clanIndex].wins,
-                    losses: losses !== undefined ? losses : clans[clanIndex].losses
+                    losses: losses !== undefined ? losses : clans[clanIndex].losses,
+                    hits: hits !== undefined ? hits : clans[clanIndex].hits
                 };
                 renderClanStats();
             }
@@ -614,7 +683,7 @@
         }
         
         // Function to advance teams in the tournament
-        function advanceTeam(fromRoundIndex, fromMatchIndex, winningTeamNumber, players) {
+        function advanceTeam(fromRoundIndex, fromMatchIndex, winningTeamNumber, players, hits) {
             if (fromRoundIndex >= tournament.rounds.length - 1) return; // Can't advance from final
             
             const winningTeam = tournament.rounds[fromRoundIndex].matches[fromMatchIndex][`team${winningTeamNumber}`];
@@ -628,7 +697,8 @@
             // Update the next round with the winning team
             tournament.rounds[fromRoundIndex + 1].matches[toMatchIndex][toTeamSlot] = {
                 name: winningTeam.name,
-                players: players || winningTeam.players
+                players: players || winningTeam.players,
+                hits: hits || winningTeam.hits
             };
             
             renderTournament();
@@ -641,15 +711,41 @@
                 matches: [{
                     team1: {
                         name: "INSERT NAMES",
-                        players: ["dsf", "sdf", "df", "df"]
+                        players: ["dsf", "sdf", "df", "df"],
+                        hits: 0
                     },
                     team2: {
                         name: "INSERT NAMES",
-                        players: ["sdfds", "sdf", "sdf", "hello"]
+                        players: ["sdfds", "sdf", "sdf", "hello"],
+                        hits: 0
                     }
                 }]
             });
             renderTournament();
+        }
+        
+        // Function to update hits for a team in a match
+        function updateHits(matchId, team, hits) {
+            const matchIndex = matches.findIndex(m => m.id === matchId);
+            if (matchIndex !== -1) {
+                if (team === 1 || team === '1') {
+                    matches[matchIndex].team1Hits = hits;
+                } else if (team === 2 || team === '2') {
+                    matches[matchIndex].team2Hits = hits;
+                }
+                renderMatches();
+            }
+        }
+        
+        // Function to update hits for a team in tournament
+        function updateTournamentHits(roundIndex, matchIndex, team, hits) {
+            if (roundIndex < tournament.rounds.length && 
+                matchIndex < tournament.rounds[roundIndex].matches.length) {
+                
+                const teamKey = team === 1 ? 'team1' : 'team2';
+                tournament.rounds[roundIndex].matches[matchIndex][teamKey].hits = hits;
+                renderTournament();
+            }
         }
     </script>
 </body>
