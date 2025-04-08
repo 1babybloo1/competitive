@@ -21,6 +21,7 @@
             padding: 2rem 0;
             margin-bottom: 2rem;
             border-bottom: 3px solid #FFA500;
+            position: relative; /* Added for positioning the back button */
         }
         
         h1 {
@@ -28,6 +29,27 @@
             font-size: 2.5rem;
             letter-spacing: 2px;
             text-transform: uppercase;
+        }
+        
+        /* Back button styles */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #FFA500;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .back-button:hover {
+            background-color: #FFB833;
         }
         
         main {
@@ -227,6 +249,8 @@
 </head>
 <body>
     <header>
+        <!-- Back button added here -->
+        <a href="index.html" class="back-button">Back</a>
         <h1>Poxel Competitive League</h1>
     </header>
     
