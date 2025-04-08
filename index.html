@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href"https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico">
     <title>Poxel Competitive League</title>
     <style>
         body {
@@ -21,6 +21,14 @@
             padding: 2rem 0;
             margin-bottom: 2rem;
             border-bottom: 3px solid #FFA500;
+            position: relative;
+        }
+        
+        .header-container {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
         }
         
         h1 {
@@ -28,6 +36,32 @@
             font-size: 2.5rem;
             letter-spacing: 2px;
             text-transform: uppercase;
+        }
+        
+        .nav-button {
+            position: absolute;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #FFA500;
+            color: #000000;
+            font-weight: bold;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-button:hover {
+            background-color: #FFB833;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .nav-button:active {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         main {
@@ -227,7 +261,10 @@
 </head>
 <body>
     <header>
-        <h1>Poxel Competitive League</h1>
+        <div class="header-container">
+            <a href="clanwar.html" class="nav-button">Clan Wars</a>
+            <h1>Poxel Competitive League</h1>
+        </div>
     </header>
     
     <main>
@@ -291,6 +328,31 @@
         
         let tournament = {
             rounds: [
+            {
+                    name: "Qualifying",
+                    matches: [
+                        {
+                            team1: {
+                                name: "PLACEHOLDERTHIS!",
+                                players: ["OK BRO"]
+                            },
+                            team2: {
+                                name: "NAME",
+                                players: ["SOMEONE"]
+                            }
+                        },
+                        {
+                            team1: {
+                                name: "NAME",
+                                players: ["SOMEONE"]
+                            },
+                            team2: {
+                                name: "NAME",
+                                players: ["SOMEONE"]
+                            }
+                        }
+                    ]
+                },
                 {
                     name: "Quarter Finals",
                     matches: [
