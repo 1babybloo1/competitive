@@ -444,7 +444,7 @@
         <!-- Upcoming Matches Section -->
         <section id="upcoming-matches" class="content-section active">
             <h2 class="section-title">
-                <span>🎮</span> Upcoming Matches
+                <span></span> Upcoming Matches
             </h2>
             
             <div class="filter-controls">
@@ -462,7 +462,7 @@
         <!-- Leaderboard Section -->
         <section id="leaderboard" class="content-section">
             <h2 class="section-title">
-                <span>📊</span> Tournament Leaderboard
+                <span></span> Tournament Leaderboard
             </h2>
             
             <div class="filter-controls">
@@ -493,7 +493,7 @@
         <!-- Tournament Bracket Section -->
         <section id="bracket" class="content-section">
             <h2 class="section-title">
-                <span>🏆</span> Tournament Bracket
+                <span></span> Tournament Bracket
             </h2>
             
             <div class="tournament-controls">
@@ -516,12 +516,12 @@
         const matchesData = [
             {
                 id: 1,
-                date: "2025-04-12T15:00:00",
+                date: "2025-04-11T11:31:00",
                 type: "Quarterfinals",
                 team1: { id: 1, name: "Phoenix Flames", logo: "PF" },
                 team2: { id: 2, name: "Shadow Hawks", logo: "SH" },
                 venue: "East Arena",
-                streamLink: "#"
+                streamLink: "https://www.twitch.tv/poxelcompetitive/"
             },
             {
                 id: 2,
@@ -530,7 +530,7 @@
                 team1: { id: 3, name: "Neon Tigers", logo: "NT" },
                 team2: { id: 4, name: "Quantum Knights", logo: "QK" },
                 venue: "West Stadium",
-                streamLink: "#"
+                streamLink: "https://www.twitch.tv/poxelcompetitive/"
             },
 
         ];
@@ -792,7 +792,7 @@
                         </div>
                     </div>
                     <div class="match-footer">
-                        <span>📍 ${match.venue}</span>
+                        <span> ${match.venue}</span>
                         <a href="${match.streamLink}" style="color: var(--orange);">📺 Stream</a>
                     </div>
                 `;
