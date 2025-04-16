@@ -498,8 +498,8 @@
             
             <div class="tournament-controls">
                 <div class="filter-controls">
-                    <button class="filter-btn active" data-tournament="current">Current Tournament</button>
-                    <button class="filter-btn" data-tournament="previous">Previous Tournament</button>
+                    <button class="filter-btn active" data-tournament="pro">Pro Tourney</button>
+                    <button class="filter-btn" data-tournament="novice">Novice Tourney</button>
                 </div>
             </div>
             
@@ -527,145 +527,94 @@
         ];
 
         const leaderboardData = [
-            { id: 1, name: "PLAYER", avatar: "PF", matches: 0, wins: 0, losses: 0, points: 0 },
+            { id: 1, name: "PLAYER", avatar: "PF", matches: 5, wins: 4, losses: 1, points: 12 },
 
         ];
 
         const bracketData = {
-            current: {
+            pro: {
                 rounds: [
                     {
-                        name: "Quarterfinals",
+                        name: "Qualifiers",
                         matches: [
-                            {
-                                id: 1,
-                                team1: { id: 1, name: "Phoenix Flames", score: null },
-                                team2: { id: 2, name: "Shadow Hawks", score: null },
-                                winner: null,
-                                completed: false
-                            },
                             {
                                 id: 2,
-                                team1: { id: 3, name: "Neon Tigers", score: null },
-                                team2: { id: 4, name: "Quantum Knights", score: null },
+                                team1: { id: 11, name: "U-U", score: null},
+                                team2: { id: 15, name: "Cyber Legends", score: null},
                                 winner: null,
                                 completed: false
                             },
-                            {
-                                id: 3,
-                                team1: { id: 5, name: "Arctic Wolves", score: null },
-                                team2: { id: 6, name: "Crimson Dragons", score: null },
-                                winner: null,
-                                completed: false
-                            },
-                            {
-                                id: 4,
-                                team1: { id: 7, name: "Velocity Vipers", score: null },
-                                team2: { id: 8, name: "Galactic Guardians", score: null },
-                                winner: null,
-                                completed: false
-                            }
-                        ]
-                    },
-                    {
-                        name: "Semifinals",
-                        matches: [
                             {
                                 id: 5,
-                                team1: { id: 0, name: "TBD", score: null },
-                                team2: { id: 0, name: "TBD", score: null },
+                                team1: { id: 12, name: "Bloo Mizu", score: null},
+                                team2: { id: 51, name: "Team Deez Nuts", score: null},
                                 winner: null,
                                 completed: false
                             },
                             {
-                                id: 6,
-                                team1: { id: 0, name: "TBD", score: null },
-                                team2: { id: 0, name: "TBD", score: null },
+                                id: 1,
+                                team1: { id: 99, name: "TS PMO TEAM", score: null },
+                                team2: { id: 533, name: "Florescents", score: null },
+                                winner: 
+                                null,
+                                completed: false
+                            },
+                            {
+                                id: 1,
+                                team1: { id: 233, name: "4MS", score: null },
+                                team2: { id: 352, name: "Blood", score: null },
                                 winner: null,
                                 completed: false
-                            }
+                            },
+                            {
+                                id: 1,
+                                team1: { id: 233, name: "KARMA", score: null },
+                                team2: { id: 352, name: "TEAM", score: null },
+                                winner: null,
+                                completed: false
+                            },
                         ]
                     },
-                    {
-                        name: "Finals",
-                        matches: [
-                            {
-                                id: 7,
-                                team1: { id: 0, name: "TBD", score: null },
-                                team2: { id: 0, name: "TBD", score: null },
-                                winner: null,
-                                completed: false
-                            }
-                        ]
-                    }
+
+
                 ]
             },
-            previous: {
+            novice: {
                 rounds: [
                     {
                         name: "Quarterfinals",
                         matches: [
                             {
                                 id: 101,
-                                team1: { id: 1, name: "Phoenix Flames", score: 3 },
-                                team2: { id: 8, name: "Galactic Guardians", score: 1 },
-                                winner: 1,
-                                completed: true
+                                team1: { id: 101, name: "UNIQUE", score: null },
+                                team2: { id: 108, name: "Tteam", score: null },
+                                winner: 0,
+                                completed: false
                             },
                             {
                                 id: 102,
-                                team1: { id: 3, name: "Neon Tigers", score: 3 },
-                                team2: { id: 6, name: "Crimson Dragons", score: 0 },
-                                winner: 3,
-                                completed: true
+                                team1: { id: 103, name: "Fresh Talents", score: null },
+                                team2: { id: 106, name: "New Blood", score: null },
+                                winner: null,
+                                completed: false
                             },
                             {
                                 id: 103,
-                                team1: { id: 5, name: "Arctic Wolves", score: 2 },
-                                team2: { id: 4, name: "Quantum Knights", score: 3 },
-                                winner: 4,
-                                completed: true
+                                team1: { id: 105, name: "Hopeful Heroes", score: null },
+                                team2: { id: 104, name: "Eager Eagles", score: null },
+                                winner: null,
+                                completed: false
                             },
                             {
                                 id: 104,
-                                team1: { id: 7, name: "Velocity Vipers", score: 1 },
-                                team2: { id: 2, name: "Shadow Hawks", score: 3 },
-                                winner: 2,
-                                completed: true
+                                team1: { id: 107, name: "Learning Legends", score: null },
+                                team2: { id: 102, name: "Aspiring Aces", score: null },
+                                winner: null,
+                                completed: false
                             }
                         ]
                     },
-                    {
-                        name: "Semifinals",
-                        matches: [
-                            {
-                                id: 105,
-                                team1: { id: 1, name: "WOW", score: 3 },
-                                team2: { id: 4, name: "Quantum Knights", score: 2 },
-                                winner: 1,
-                                completed: true
-                            },
-                            {
-                                id: 106,
-                                team1: { id: 3, name: "Neon Tigers", score: 3 },
-                                team2: { id: 2, name: "Shadow Hawks", score: 1 },
-                                winner: 3,
-                                completed: true
-                            }
-                        ]
-                    },
-                    {
-                        name: "Finals",
-                        matches: [
-                            {
-                                id: 107,
-                                team1: { id: 1, name: "Phoenix Flames", score: 2 },
-                                team2: { id: 3, name: "Neon Tigers", score: 3 },
-                                winner: 3,
-                                completed: true
-                            }
-                        ]
-                    }
+
                 ]
             }
         };
@@ -708,7 +657,7 @@
             // Load initial data
             loadUpcomingMatches();
             loadLeaderboard();
-            loadBracket('current');
+            loadBracket('pro');
         }
         
         // Tab switching function
@@ -755,7 +704,7 @@
             if (filteredMatches.length === 0) {
                 matchesContainer.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-icon">📅</div>
+                        <div class="empty-icon"></div>
                         <h3>No matches found</h3>
                         <p>There are no upcoming matches in this category.</p>
                     </div>
@@ -783,7 +732,7 @@
                         </div>
                     </div>
                     <div class="match-footer">
-                        <span> ${match.venue}</span>
+                        <span>${match.venue}</span>
                         <a href="${match.streamLink}" style="color: var(--orange);">📺 Stream</a>
                     </div>
                 `;
@@ -847,16 +796,16 @@
         }
         
         // Load bracket data
-        function loadBracket(tournament = 'current') {
+        function loadBracket(tournament = 'pro') {
             bracketContainer.innerHTML = '';
             
             const data = bracketData[tournament];
             if (!data || !data.rounds) {
                 bracketContainer.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-icon">🏆</div>
-                        <h3>No bracket data available</h3>
-                        <p>The tournament bracket is not available at this time.</p>
+                        <div class="empty-icon"></div>
+                        <h3>No bracket available</h3>
+                        <p>The tournament bracket has not been created yet.</p>
                     </div>
                 `;
                 return;
@@ -865,15 +814,16 @@
             // Create rounds
             data.rounds.forEach((round, roundIndex) => {
                 const roundElement = document.createElement('div');
-                roundElement.className = 'round';
+                roundElement.className = 'round fade-in';
+                roundElement.style.animationDelay = `${roundIndex * 0.1}s`;
                 
                 // Add round title
-                const titleElement = document.createElement('div');
-                titleElement.className = 'round-title';
-                titleElement.textContent = round.name;
-                roundElement.appendChild(titleElement);
+                const roundTitle = document.createElement('h3');
+                roundTitle.className = 'round-title';
+                roundTitle.textContent = round.name;
+                roundElement.appendChild(roundTitle);
                 
-                // Add matches for this round
+                // Add matches
                 round.matches.forEach((match, matchIndex) => {
                     const matchElement = document.createElement('div');
                     matchElement.className = `match-bracket ${match.completed ? 'completed' : 'upcoming'}`;
@@ -896,179 +846,182 @@
                     `;
                     matchElement.appendChild(team2Element);
                     
-                    // Add connector if not the final round
+                    // Add connector line (except for final round)
                     if (roundIndex < data.rounds.length - 1) {
                         const connector = document.createElement('div');
                         connector.className = 'connector';
                         matchElement.appendChild(connector);
                     }
                     
-                    // Add match to round
                     roundElement.appendChild(matchElement);
                 });
                 
-                // Add round to bracket
                 bracketContainer.appendChild(roundElement);
             });
         }
         
-        // Function to update match scores and advance teams in bracket
-        function updateMatchResult(matchId, team1Score, team2Score) {
-            // Find the match in bracketData
-            let match;
-            let round;
-            let roundIndex;
+        // Helper function to check if a date is in the past
+        function isDatePast(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            return date < now;
+        }
+        
+        // Add icons to section titles
+// Add icons to section titles
+function addSectionIcons() {
+    const sections = {
+        'upcoming-matches': '',
+        'leaderboard': '',
+        'bracket': ''
+    };
+    
+    document.querySelectorAll('.section-title span').forEach(span => {
+        const sectionId = span.closest('.content-section').id;
+        span.textContent = sections[sectionId] || '';
+    });
+}
+
+// Create empty state element
+function createEmptyState(message, submessage) {
+    return `
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h3>${message}</h3>
+            <p>${submessage}</p>
+        </div>
+    `;
+}
+
+// Add animation on scroll
+function addScrollAnimation() {
+    const animateElements = document.querySelectorAll('.card, .round');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    animateElements.forEach(element => {
+        element.classList.remove('fade-in');
+        observer.observe(element);
+    });
+}
+
+// Add countdown timer to matches
+function addCountdownTimers() {
+    const matchElements = document.querySelectorAll('.match-card');
+    
+    matchElements.forEach(element => {
+        const dateString = element.querySelector('.match-date').textContent;
+        const matchDate = new Date(dateString);
+        
+        // Only add timer if match is in the future
+        if (matchDate > new Date()) {
+            const timerElement = document.createElement('div');
+            timerElement.className = 'match-countdown';
+            element.querySelector('.match-teams').after(timerElement);
             
-            for (const tournamentKey in bracketData) {
-                const tournament = bracketData[tournamentKey];
+            // Update timer every second
+            const interval = setInterval(() => {
+                const now = new Date();
+                const diff = matchDate - now;
                 
-                for (let i = 0; i < tournament.rounds.length; i++) {
-                    const foundMatch = tournament.rounds[i].matches.find(m => m.id === matchId);
-                    if (foundMatch) {
-                        match = foundMatch;
-                        round = tournament.rounds[i];
-                        roundIndex = i;
-                        break;
-                    }
+                if (diff <= 0) {
+                    timerElement.textContent = 'Match has started!';
+                    clearInterval(interval);
+                    return;
                 }
                 
-                if (match) break;
-            }
-            
-            if (!match) return false;
-            
-            // Update scores
-            match.team1.score = team1Score;
-            match.team2.score = team2Score;
-            match.completed = true;
-            
-            // Determine winner
-            const winnerId = team1Score > team2Score ? match.team1.id : match.team2.id;
-            match.winner = winnerId;
-            
-            // Find the winning team object
-            const winnerTeam = winnerId === match.team1.id ? match.team1 : match.team2;
-            
-            // If there's a next round, update the advancing team
-            if (roundIndex < bracketData.current.rounds.length - 1) {
-                const nextRound = bracketData.current.rounds[roundIndex + 1];
-                const matchPosition = Math.floor(match.id % 2 === 1 ? match.id / 2 : (match.id - 1) / 2);
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
                 
-                if (nextRound && nextRound.matches[matchPosition]) {
-                    // Update the appropriate team in the next round
-                    if (match.id % 2 === 1) {
-                        nextRound.matches[matchPosition].team1 = {
-                            id: winnerId,
-                            name: winnerTeam.name,
-                            score: null
-                        };
-                    } else {
-                        nextRound.matches[matchPosition].team2 = {
-                            id: winnerId,
-                            name: winnerTeam.name,
-                            score: null
-                        };
-                    }
-                }
-            }
-            
-            // Also update the leaderboard data
-            updateLeaderboardWithMatchResult(match.team1.id, match.team2.id, winnerId);
-            
-            // Refresh the UI
-            loadBracket('current');
-            loadLeaderboard();
-            return true;
-        }
-        
-        // Update leaderboard when a match result is recorded
-        function updateLeaderboardWithMatchResult(team1Id, team2Id, winnerId) {
-            // Find the teams in the leaderboard
-            const team1 = leaderboardData.find(team => team.id === team1Id);
-            const team2 = leaderboardData.find(team => team.id === team2Id);
-            
-            if (!team1 || !team2) return;
-            
-            // Update matches played
-            team1.matches += 1;
-            team2.matches += 1;
-            
-            // Update wins, losses, and points
-            if (winnerId === team1Id) {
-                team1.wins += 1;
-                team1.points += 3;
-                team2.losses += 1;
-            } else {
-                team2.wins += 1;
-                team2.points += 3;
-                team1.losses += 1;
-            }
-        }
-        
-        // Function to add a new match to the schedule
-        function addMatch(match) {
-            // Add to matchesData
-            matchesData.push(match);
-            
-            // Sort matches by date
-            matchesData.sort((a, b) => new Date(a.date) - new Date(b.date));
-            
-            // Refresh the UI
-            loadUpcomingMatches();
-        }
-        
-        // Function to update a team on the leaderboard
-        function updateTeam(teamId, updates) {
-            const team = leaderboardData.find(team => team.id === teamId);
-            if (!team) return false;
-            
-            // Apply updates
-            Object.keys(updates).forEach(key => {
-                if (team.hasOwnProperty(key)) {
-                    team[key] = updates[key];
-                }
-            });
-            
-            // Refresh the UI
-            loadLeaderboard();
-            return true;
-        }
-        
-        // Simulate a match result (for demo purposes)
-        function simulateMatchResult(matchId) {
-            // Generate random scores (1-3 for team1, 0-2 for team2)
-            const team1Score = Math.floor(Math.random() * 3) + 1;
-            const team2Score = Math.floor(Math.random() * 3);
-            
-            // Update the match result
-            return updateMatchResult(matchId, team1Score, team2Score);
-        }
-        
-        // Example function to simulate progression of the tournament
-        function simulateTournamentProgress() {
-            // Simulate quarterfinals
-            for (let i = 1; i <= 4; i++) {
-                simulateMatchResult(i);
-            }
-            
-            // Simulate semifinals
-            setTimeout(() => {
-                for (let i = 5; i <= 6; i++) {
-                    simulateMatchResult(i);
-                }
-                
-                // Simulate finals
-                setTimeout(() => {
-                    simulateMatchResult(7);
-                }, 1000);
+                timerElement.textContent = `Starts in: ${days}d ${hours}h ${minutes}m ${seconds}s`;
             }, 1000);
         }
-        
-        // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', init);
+    });
+}
 
-        // For demonstration, you can uncomment the line below to simulate tournament progression
-        // setTimeout(simulateTournamentProgress, 3000);
-    </script>
+// Add search functionality
+function initializeSearch() {
+    const searchInput = document.getElementById('search-input');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        
+        // Search in active section
+        const activeSection = document.querySelector('.content-section.active');
+        if (activeSection.id === 'leaderboard') {
+            searchLeaderboard(searchTerm);
+        } else if (activeSection.id === 'upcoming-matches') {
+            searchMatches(searchTerm);
+        }
+    });
+}
+
+function searchLeaderboard(term) {
+    const rows = document.querySelectorAll('#leaderboard-body tr');
+    
+    rows.forEach(row => {
+        const playerName = row.querySelector('.player-name').textContent.toLowerCase();
+        
+        if (playerName.includes(term)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function searchMatches(term) {
+    const matchCards = document.querySelectorAll('.match-card');
+    
+    matchCards.forEach(card => {
+        const team1 = card.querySelector('.team-name:first-of-type').textContent.toLowerCase();
+        const team2 = card.querySelector('.team-name:last-of-type').textContent.toLowerCase();
+        const type = card.querySelector('.match-type').textContent.toLowerCase();
+        
+        if (team1.includes(term) || team2.includes(term) || type.includes(term)) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// Handle data refresh
+function setupDataRefresh() {
+    // In a real application, this would fetch new data from the server
+    setInterval(() => {
+        const activeSection = document.querySelector('.content-section.active');
+        
+        if (activeSection.id === 'upcoming-matches') {
+            loadUpcomingMatches(document.querySelector('#upcoming-matches .filter-btn.active').dataset.filter);
+        } else if (activeSection.id === 'leaderboard') {
+            loadLeaderboard(document.querySelector('#leaderboard .filter-btn.active').dataset.sort);
+        }
+        
+        console.log('Data refreshed');
+    }, 60000); // Refresh every minute
+}
+
+
+// Initialize application when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    addSectionIcons();
+    addScrollAnimation();
+    initializeSearch();
+    setupDataRefresh();
+
+});
+</script>
 </body>
 </html>
