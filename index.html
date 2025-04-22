@@ -15,33 +15,33 @@
             --text: #f5f5f5;
             --text-secondary: #aaaaaa;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
             background-color: var(--dark);
             color: var(--text);
             min-height: 100vh;
         }
-        
+
         header {
             background-color: var(--dark-accent);
             padding: 1.5rem;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         }
-        
+
         .logo {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 1rem;
         }
-        
+
         .logo h1 {
             font-size: 2rem;
             background: linear-gradient(to right, var(--orange), var(--orange-light));
@@ -49,18 +49,17 @@
             background-clip: text;
             color: transparent;
         }
-        
-        .logo-icon {
-            color: var(--orange);
-            font-size: 2rem;
-        }
-        
+
+        /* Add styles for logo-icon if it exists */
+
+
         nav {
             display: flex;
             justify-content: center;
             margin-top: 1rem;
+            flex-wrap: wrap; /* Allow tabs to wrap on smaller screens */
         }
-        
+
         .nav-tab {
             background: none;
             border: none;
@@ -71,8 +70,9 @@
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
+            white-space: nowrap; /* Prevent tab text from breaking */
         }
-        
+
         .nav-tab::after {
             content: '';
             position: absolute;
@@ -83,36 +83,36 @@
             background-color: var(--orange);
             transition: width 0.3s ease;
         }
-        
+
         .nav-tab:hover {
             color: var(--text);
         }
-        
+
         .nav-tab.active {
             color: var(--orange);
         }
-        
+
         .nav-tab.active::after {
             width: 100%;
         }
-        
+
         main {
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem 1rem;
         }
-        
+
         .content-section {
             display: none;
             opacity: 0;
             transition: opacity 0.3s ease;
         }
-        
+
         .content-section.active {
             display: block;
             opacity: 1;
         }
-        
+
         .section-title {
             font-size: 1.8rem;
             margin-bottom: 2rem;
@@ -122,7 +122,10 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+         .section-title span { /* Style for potential icons */
+            color: var(--orange);
+         }
+
         .card {
             background-color: var(--dark-accent);
             border-radius: 8px;
@@ -131,35 +134,35 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        
+
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
         }
-        
+
         /* Upcoming matches section */
         .matches-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1.5rem;
         }
-        
+
         .match-card {
             border-left: 4px solid var(--orange);
         }
-        
+
         .match-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
-        
+
         .match-date {
             font-size: 0.9rem;
             color: var(--text-secondary);
         }
-        
+
         .match-type {
             background-color: var(--orange-dark);
             color: var(--text);
@@ -167,14 +170,14 @@
             padding: 0.3rem 0.6rem;
             border-radius: 4px;
         }
-        
+
         .match-teams {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
-        
+
         .team {
             display: flex;
             flex-direction: column;
@@ -182,12 +185,13 @@
             gap: 0.5rem;
             width: 40%;
         }
-        
+
         .team-name {
             font-weight: 600;
             text-align: center;
+            word-break: break-word; /* Prevent long names from breaking layout */
         }
-        
+
         .team-logo {
             width: 50px;
             height: 50px;
@@ -198,60 +202,83 @@
             justify-content: center;
             color: var(--text);
             font-weight: bold;
+            font-size: 1.2rem; /* Make initials visible */
+             overflow: hidden; /* Hide overflow if logo text is too long */
         }
-        
+
         .versus {
             font-size: 1.2rem;
             color: var(--orange);
         }
-        
+
         .match-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.9rem;
             color: var(--text-secondary);
+            flex-wrap: wrap; /* Allow footer items to wrap */
+            gap: 10px;
         }
-        
+         .match-footer a {
+             color: var(--orange);
+             text-decoration: none;
+         }
+         .match-footer a:hover {
+             text-decoration: underline;
+         }
+         .match-countdown { /* Style for countdown timer */
+            text-align: center;
+            margin: 0.5rem 0;
+            font-size: 0.9em;
+            color: var(--orange-light);
+         }
+
+
         /* Leaderboard section */
         .leaderboard-table {
             width: 100%;
             border-collapse: collapse;
+             overflow-x: auto; /* Allow horizontal scroll on small screens */
+             display: block; /* Needed for overflow-x */
         }
-        
+
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+             white-space: nowrap; /* Prevent cell content from wrapping */
+        }
+
         .leaderboard-table th {
             text-align: left;
-            padding: 1rem;
             background-color: rgba(255, 87, 34, 0.1);
             color: var(--orange);
             font-weight: 600;
+             position: sticky; /* Keep header visible on scroll */
+             top: 0; /* Stick to the top */
+             z-index: 1; /* Keep header above body */
         }
-        
-        .leaderboard-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #333;
-        }
-        
+
         .leaderboard-table tr:hover {
             background-color: rgba(255, 87, 34, 0.05);
         }
-        
+
         .rank {
             width: 60px;
             text-align: center;
             font-weight: bold;
         }
-        
+
         .top-rank {
             color: var(--orange);
         }
-        
+
         .player {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
-        
+
         .player-avatar {
             width: 40px;
             height: 40px;
@@ -261,100 +288,123 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
+             flex-shrink: 0; /* Prevent avatar from shrinking */
         }
-        
+         .player-name {
+             font-weight: 500;
+         }
+
         .stats {
             text-align: center;
         }
-        
+
         /* Bracket section */
         .tournament-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
+             flex-wrap: wrap; /* Allow controls to wrap */
+             gap: 1rem;
         }
-        
+
         .bracket-container {
             overflow-x: auto;
             padding: 1rem 0;
+            background-color: rgba(0,0,0,0.1); /* Slight background */
+             border-radius: 4px;
         }
-        
+
         .bracket {
             display: flex;
-            justify-content: space-between;
-            min-width: 900px;
+            /* justify-content: space-between; */ /* Let rounds flow naturally */
+             gap: 30px; /* Space between rounds */
+            min-width: 800px; /* Ensure minimum width for scrolling */
+             padding: 10px; /* Padding inside scroll container */
         }
-        
+
         .round {
             display: flex;
             flex-direction: column;
-            width: 200px;
-            justify-content: space-around;
+            width: 220px; /* Slightly wider rounds */
+            /* justify-content: space-around; */ /* Removed for natural flow */
+             gap: 15px; /* Space between matches */
+             flex-shrink: 0; /* Prevent rounds from shrinking */
         }
-        
+
         .round-title {
             text-align: center;
             margin-bottom: 1rem;
             color: var(--orange);
             font-weight: 600;
+            font-size: 1.1rem;
         }
-        
+
         .match-bracket {
             background-color: var(--dark-accent);
             border-radius: 4px;
             padding: 0.8rem;
-            margin: 0.5rem;
+            /* margin: 0.5rem; */ /* Removed margin, using gap in .round */
             position: relative;
+            border: 1px solid #333; /* Add subtle border */
+             min-height: 70px; /* Ensure minimum height */
+             display: flex;
+             flex-direction: column;
+             justify-content: space-between; /* Space out teams */
         }
-        
+
         .match-bracket.completed {
             border-left: 3px solid var(--orange);
         }
-        
+
         .match-bracket.upcoming {
             border-left: 3px solid var(--text-secondary);
         }
-        
+
+        /* Connector lines (Basic - requires JS for complex connections) */
         .connector {
-            position: absolute;
-            right: -15px;
-            top: 50%;
-            width: 15px;
-            height: 2px;
-            background-color: #444;
+             /* Basic visual only, dynamic lines are complex */
+             display: none;
         }
-        
+
         .bracket-team {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
+            align-items: center; /* Align score and name */
+            /* margin-bottom: 0.5rem; */ /* Removed */
         }
-        
-        .bracket-team:last-child {
-            margin-bottom: 0;
-        }
-        
+
+
         .bracket-team-name {
             font-size: 0.9rem;
+            flex-grow: 1; /* Allow name to take space */
+            margin-right: 10px; /* Space before score */
+             overflow: hidden;
+             text-overflow: ellipsis;
+             white-space: nowrap;
         }
-        
+
         .bracket-score {
             font-weight: bold;
+            font-size: 0.9rem;
+             flex-shrink: 0; /* Prevent score from shrinking */
         }
-        
-        .bracket-winner {
+
+        .bracket-winner .bracket-team-name,
+        .bracket-winner .bracket-score { /* Highlight winner */
             color: var(--orange);
+             font-weight: bold;
         }
-        
+
+
         /* Filters and controls */
         .filter-controls {
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.5rem; /* Consistent margin */
         }
-        
+
         .filter-btn {
             background-color: var(--dark-accent);
             border: 1px solid #444;
@@ -363,52 +413,67 @@
             border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 0.9rem; /* Slightly smaller buttons */
         }
-        
+
         .filter-btn:hover {
             background-color: #333;
             color: var(--text);
         }
-        
+
         .filter-btn.active {
             background-color: var(--orange-dark);
             color: var(--text);
             border-color: var(--orange);
         }
-        
+
         /* Responsive */
         @media (max-width: 768px) {
             nav {
                 overflow-x: auto;
                 justify-content: flex-start;
                 padding-bottom: 0.5rem;
+                 /* Add scrollbar styling for better UX on mobile */
+                scrollbar-width: thin;
+                scrollbar-color: var(--orange) var(--dark-accent);
             }
-            
+             nav::-webkit-scrollbar { height: 5px; }
+             nav::-webkit-scrollbar-track { background: var(--dark-accent); }
+             nav::-webkit-scrollbar-thumb { background-color: var(--orange); border-radius: 6px; }
+
             .matches-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .tournament-controls {
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
+                align-items: stretch; /* Stretch buttons full width */
+                gap: 0.8rem;
             }
-            
-            .filter-controls {
+            .tournament-controls .filter-controls {
                 justify-content: center;
             }
+
+             .leaderboard-table {
+                font-size: 0.9rem; /* Smaller text on mobile */
+             }
+             .leaderboard-table th, .leaderboard-table td {
+                padding: 0.6rem;
+             }
+             .player { gap: 0.5rem; }
+             .player-avatar { width: 30px; height: 30px; font-size: 0.8rem; }
         }
-        
+
         /* Animation */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .fade-in {
             animation: fadeIn 0.5s ease forwards;
         }
-        
+
         /* Empty state */
         .empty-state {
             display: flex;
@@ -418,59 +483,77 @@
             padding: 3rem;
             text-align: center;
             color: var(--text-secondary);
+            background-color: var(--dark-accent);
+            border-radius: 8px;
+            margin-top: 1.5rem;
+             width: 100%;
         }
-        
+
         .empty-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
             color: var(--orange-dark);
         }
+        .loading-state { /* Simple text loading indicator */
+             padding: 2rem;
+             text-align: center;
+             color: var(--text-secondary);
+             font-style: italic;
+        }
+
     </style>
 </head>
 <body>
     <header>
         <div class="logo">
-            <div class="logo-icon"></div>
+            <!-- If you have a logo image/icon, place it here -->
+            <!-- <img src="path/to/logo.png" alt="Poxel Logo" class="logo-icon"> -->
+             <div class="logo-icon"></div> <!-- Placeholder if no image -->
             <h1>Poxel Competitive</h1>
         </div>
         <nav>
             <button class="nav-tab active" data-section="upcoming-matches">Upcoming Matches</button>
             <button class="nav-tab" data-section="leaderboard">Leaderboard</button>
             <button class="nav-tab" data-section="bracket">Tournament Bracket</button>
+            <!-- Consider adding link to Admin page (maybe hidden unless logged in?) -->
+            <!-- <a href="admin.html" class="nav-tab" style="color: var(--orange-light);">Admin Panel</a> -->
         </nav>
     </header>
-    
+
     <main>
         <!-- Upcoming Matches Section -->
         <section id="upcoming-matches" class="content-section active">
             <h2 class="section-title">
-                <span></span> Upcoming Matches
+                <span>📅</span> Upcoming Matches
             </h2>
-            
+
             <div class="filter-controls">
                 <button class="filter-btn active" data-filter="all">All Matches</button>
+                <button class="filter-btn" data-filter="qualifiers">Qualifiers</button> <!-- Added Qualifiers filter -->
                 <button class="filter-btn" data-filter="quarterfinals">Quarterfinals</button>
                 <button class="filter-btn" data-filter="semifinals">Semifinals</button>
                 <button class="filter-btn" data-filter="finals">Finals</button>
             </div>
-            
+
             <div class="matches-grid" id="matches-container">
+                <div class="loading-state">Loading matches...</div>
                 <!-- Matches will be populated here via JavaScript -->
             </div>
         </section>
-        
+
         <!-- Leaderboard Section -->
         <section id="leaderboard" class="content-section">
             <h2 class="section-title">
-                <span></span> Tournament Leaderboard
+                <span>🏆</span> Tournament Leaderboard
             </h2>
-            
+
             <div class="filter-controls">
                 <button class="filter-btn active" data-sort="rank">Rank</button>
                 <button class="filter-btn" data-sort="wins">Wins</button>
                 <button class="filter-btn" data-sort="points">Points</button>
+                 <button class="filter-btn" data-sort="name">Name</button> <!-- Added Name sort -->
             </div>
-            
+
             <div class="card">
                 <table class="leaderboard-table" id="leaderboard-table">
                     <thead>
@@ -484,544 +567,499 @@
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
+                         <tr><td colspan="6" class="loading-state">Loading leaderboard...</td></tr>
                         <!-- Leaderboard data will be populated here via JavaScript -->
                     </tbody>
                 </table>
             </div>
         </section>
-        
+
         <!-- Tournament Bracket Section -->
         <section id="bracket" class="content-section">
             <h2 class="section-title">
-                <span></span> Tournament Bracket
+                <span>⚔️</span> Tournament Bracket
             </h2>
-            
+
             <div class="tournament-controls">
                 <div class="filter-controls">
                     <button class="filter-btn active" data-tournament="pro">Pro Tourney</button>
                     <button class="filter-btn" data-tournament="novice">Novice Tourney</button>
                 </div>
+                 <!-- Add View Full Bracket Link? -->
             </div>
-            
+
             <div class="bracket-container">
-                <div class="bracket" id="bracket-container">
+                <div class="bracket" id="bracket-display-container">
+                     <div class="loading-state">Loading bracket...</div>
                     <!-- Bracket will be populated here via JavaScript -->
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- Firebase SDK -->
+    <!-- Use the same SDK versions as in admin.html for consistency -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <!-- <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> --> <!-- Auth not strictly needed unless checking login status -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
     <script>
-        // Sample data - in a real application, this would come from an API or database
-        const matchesData = [
-            {
-                id: 1,
-                date: "2025-04-11T11:31:00",
-                type: "Qualifiers",
-                team1: { id: 1, name: "PLAYER NAME", logo: "PN" },
-                team2: { id: 2, name: "PLAYER NAME", logo: "PN" },
-                venue: "East Arena",
-                streamLink: "https://www.twitch.tv/poxelcompetitive/"
-            },
-
-        ];
-
-        const leaderboardData = [
-            { id: 1, name: "PLAYER", avatar: "PF", matches: 5, wins: 4, losses: 1, points: 12 },
-
-        ];
-
-        const bracketData = {
-            pro: {
-                rounds: [
-                    {
-                        name: "Qualifiers",
-                        matches: [
-                            {
-                                id: 2,
-                                team1: { id: 11, name: "U-U", score: null},
-                                team2: { id: 15, name: "Cyber Legends", score: null},
-                                winner: null,
-                                completed: false
-                            },
-                            {
-                                id: 5,
-                                team1: { id: 12, name: "Bloo Mizu", score: null},
-                                team2: { id: 51, name: "Team Deez Nuts", score: null},
-                                winner: null,
-                                completed: false
-                            },
-                            {
-                                id: 1,
-                                team1: { id: 99, name: "TS PMO TEAM", score: null },
-                                team2: { id: 533, name: "Florescents", score: null },
-                                winner: 
-                                null,
-                                completed: false
-                            },
-                            {
-                                id: 1,
-                                team1: { id: 233, name: "4MS", score: null },
-                                team2: { id: 352, name: "Blood", score: null },
-                                winner: null,
-                                completed: false
-                            },
-                            {
-                                id: 1,
-                                team1: { id: 233, name: "KARMA", score: null },
-                                team2: { id: 352, name: "Tteam", score: null },
-                                winner: null,
-                                completed: false
-                            },
-                        ]
-                    },
-
-
-                ]
-            },
-            novice: {
-                rounds: [
-                    {
-                        name: "Quarterfinals",
-                        matches: [
-                            {
-                                id: 101,
-                                team1: { id: 101, name: "UNIQUE", score: null },
-                                team2: { id: 108, name: "Tteam", score: null },
-                                winner: 0,
-                                completed: false
-                            },
-                            {
-                                id: 102,
-                                team1: { id: 103, name: "Fresh Talents", score: null },
-                                team2: { id: 106, name: "New Blood", score: null },
-                                winner: null,
-                                completed: false
-                            },
-                            {
-                                id: 103,
-                                team1: { id: 105, name: "Hopeful Heroes", score: null },
-                                team2: { id: 104, name: "Eager Eagles", score: null },
-                                winner: null,
-                                completed: false
-                            },
-                            {
-                                id: 104,
-                                team1: { id: 107, name: "Learning Legends", score: null },
-                                team2: { id: 102, name: "Aspiring Aces", score: null },
-                                winner: null,
-                                completed: false
-                            }
-                        ]
-                    },
-
-                ]
-            }
+        // IMPORTANT: Replace with your actual Firebase project configuration
+        // Use the SAME config as in admin.html
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
+            authDomain: "poxelcomp.firebaseapp.com",
+            projectId: "poxelcomp",
+            storageBucket: "poxelcomp.firebasestorage.app",
+            messagingSenderId: "620490990104",
+            appId: "1:620490990104:web:709023eb464c7d886b996d",
         };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- REMOVED HARDCODED DATA ---
+        // const matchesData = [ ... ];
+        // const leaderboardData = [ ... ];
+        // const bracketData = { ... };
 
         // DOM Elements
         const tabButtons = document.querySelectorAll('.nav-tab');
         const contentSections = document.querySelectorAll('.content-section');
         const matchesContainer = document.getElementById('matches-container');
         const leaderboardBody = document.getElementById('leaderboard-body');
-        const bracketContainer = document.getElementById('bracket-container');
-        
-        // Initialize the application
+        const bracketDisplayContainer = document.getElementById('bracket-display-container'); // Updated ID
+
+        // Global state to hold fetched data (optional, but can help filtering/sorting)
+        let currentMatches = [];
+        let currentLeaderboard = [];
+        let currentBracket = {}; // Holds { pro: {...}, novice: {...} }
+
+
+        // --- Helper Functions ---
+        function createEmptyState(message, submessage) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <h3>${message}</h3>
+                    <p>${submessage}</p>
+                </div>
+            `;
+        }
+
+        function formatDate(date) {
+             // Check if it's already a Date object, if not, try to convert from Firestore Timestamp
+            const d = (date instanceof Date) ? date : (date && date.toDate ? date.toDate() : null);
+            if (!d) return 'Invalid Date';
+
+            return d.toLocaleString('en-US', {
+                // weekday: 'short', // Optional: Add if needed
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric', // Added year
+                hour: 'numeric', // Use numeric for clearer AM/PM
+                minute: '2-digit',
+                hour12: true // Use AM/PM
+            });
+        }
+
+        // --- Initialization ---
         function init() {
             // Set up navigation tabs
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => switchTab(button.dataset.section));
             });
-            
-            // Set up filter buttons
+
+            // Set up filter/sort buttons
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    // Find all siblings and remove active class
-                    const siblings = [...e.target.parentElement.children];
-                    siblings.forEach(sibling => sibling.classList.remove('active'));
-                    
-                    // Add active class to clicked button
+                    const parentControls = e.target.closest('.filter-controls, .tournament-controls');
+                    // Remove active class from siblings within the same control group
+                    parentControls.querySelectorAll('.filter-btn').forEach(sibling => sibling.classList.remove('active'));
                     e.target.classList.add('active');
-                    
-                    // Handle filtering based on the section
-                    if (e.target.parentElement.parentElement.id === 'upcoming-matches') {
-                        filterMatches(e.target.dataset.filter);
-                    } else if (e.target.parentElement.parentElement.id === 'leaderboard') {
-                        sortLeaderboard(e.target.dataset.sort);
-                    } else if (e.target.parentElement.parentElement.classList.contains('tournament-controls')) {
-                        loadBracket(e.target.dataset.tournament);
+
+                    // Handle filtering/sorting based on the section
+                    const section = e.target.closest('.content-section, .tournament-controls');
+                     if (section.id === 'upcoming-matches' || section.querySelector('#upcoming-matches')) {
+                        filterAndDisplayMatches(e.target.dataset.filter);
+                    } else if (section.id === 'leaderboard' || section.querySelector('#leaderboard')) {
+                        sortAndDisplayLeaderboard(e.target.dataset.sort);
+                    } else if (section.classList.contains('tournament-controls') || section.querySelector('#bracket')) {
+                         const tournamentType = parentControls.querySelector('.filter-btn.active[data-tournament]').dataset.tournament;
+                         displayBracket(tournamentType); // Re-display based on active tournament
                     }
                 });
             });
-            
-            // Load initial data
-            loadUpcomingMatches();
-            loadLeaderboard();
-            loadBracket('pro');
+
+            // Load initial data using Firestore listeners for real-time updates
+            setupFirestoreListeners();
         }
-        
-        // Tab switching function
+
+        // --- Tab Switching ---
         function switchTab(sectionId) {
-            // Update active tab button
-            tabButtons.forEach(button => {
-                if (button.dataset.section === sectionId) {
-                    button.classList.add('active');
-                } else {
-                    button.classList.remove('active');
-                }
-            });
-            
-            // Update visible section
-            contentSections.forEach(section => {
-                if (section.id === sectionId) {
-                    section.classList.add('active');
-                } else {
-                    section.classList.remove('active');
-                }
-            });
+            tabButtons.forEach(button => button.classList.toggle('active', button.dataset.section === sectionId));
+            contentSections.forEach(section => section.classList.toggle('active', section.id === sectionId));
+             // Potentially trigger scroll animation if needed when switching tabs
+            // addScrollAnimation();
         }
-        
-        // Format date for display
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleString('en-US', { 
-                weekday: 'short',
-                month: 'short', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+
+
+        // --- Firestore Data Loading & Real-time Updates ---
+        let matchesListener = null;
+        let leaderboardListener = null;
+        let proBracketListener = null;
+        let noviceBracketListener = null;
+
+        function setupFirestoreListeners() {
+            // --- Matches Listener ---
+            if (matchesListener) matchesListener(); // Unsubscribe previous listener if exists
+            matchesListener = db.collection('matches')
+                .orderBy('date', 'asc') // Order by date
+                .onSnapshot(snapshot => {
+                    currentMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                     const activeFilter = document.querySelector('#upcoming-matches .filter-btn.active')?.dataset.filter || 'all';
+                    filterAndDisplayMatches(activeFilter); // Display initial/filtered data
+                    console.log("Matches updated from Firestore");
+                }, error => {
+                    console.error("Error fetching matches:", error);
+                    matchesContainer.innerHTML = createEmptyState('Error loading matches', 'Could not fetch data from the server.');
+                });
+
+            // --- Leaderboard Listener ---
+            if (leaderboardListener) leaderboardListener();
+             // Note: Firestore doesn't directly support ordering by a dynamically calculated rank.
+             // We fetch ordered by points (primary) and wins (secondary), then calculate rank in JS.
+             leaderboardListener = db.collection('leaderboard')
+                .orderBy('points', 'desc')
+                 .orderBy('wins', 'desc') // Secondary sort for tie-breaking
+                .onSnapshot(snapshot => {
+                    currentLeaderboard = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                     const activeSort = document.querySelector('#leaderboard .filter-btn.active')?.dataset.sort || 'rank';
+                    sortAndDisplayLeaderboard(activeSort); // Display initial/sorted data
+                    console.log("Leaderboard updated from Firestore");
+                }, error => {
+                    console.error("Error fetching leaderboard:", error);
+                     leaderboardBody.innerHTML = `<tr><td colspan="6">${createEmptyState('Error loading leaderboard', 'Could not fetch data.')}</td></tr>`;
+                });
+
+             // --- Bracket Listeners (Pro & Novice) ---
+            if (proBracketListener) proBracketListener();
+             proBracketListener = db.collection('brackets').doc('pro')
+                .onSnapshot(doc => {
+                    if (doc.exists) {
+                        currentBracket.pro = { id: doc.id, ...doc.data() };
+                    } else {
+                        currentBracket.pro = null; // Indicate no data
+                    }
+                    // Re-display if Pro is the active bracket
+                    if(document.querySelector('#bracket .filter-btn.active[data-tournament="pro"]')) {
+                        displayBracket('pro');
+                    }
+                    console.log("Pro Bracket updated from Firestore");
+                }, error => {
+                    console.error("Error fetching pro bracket:", error);
+                     if(document.querySelector('#bracket .filter-btn.active[data-tournament="pro"]')) {
+                        bracketDisplayContainer.innerHTML = createEmptyState('Error loading Pro bracket', 'Could not fetch data.');
+                     }
+                });
+
+             if (noviceBracketListener) noviceBracketListener();
+             noviceBracketListener = db.collection('brackets').doc('novice')
+                 .onSnapshot(doc => {
+                    if (doc.exists) {
+                        currentBracket.novice = { id: doc.id, ...doc.data() };
+                    } else {
+                        currentBracket.novice = null;
+                    }
+                     // Re-display if Novice is the active bracket
+                     if(document.querySelector('#bracket .filter-btn.active[data-tournament="novice"]')) {
+                        displayBracket('novice');
+                    }
+                    console.log("Novice Bracket updated from Firestore");
+                }, error => {
+                    console.error("Error fetching novice bracket:", error);
+                     if(document.querySelector('#bracket .filter-btn.active[data-tournament="novice"]')) {
+                        bracketDisplayContainer.innerHTML = createEmptyState('Error loading Novice bracket', 'Could not fetch data.');
+                    }
+                });
         }
-        
-        // Load upcoming matches
-        function loadUpcomingMatches(filter = 'all') {
-            matchesContainer.innerHTML = '';
-            
-            const filteredMatches = filter === 'all' 
-                ? matchesData 
-                : matchesData.filter(match => match.type.toLowerCase() === filter.toLowerCase());
-            
+
+        // --- Display Logic ---
+
+        function filterAndDisplayMatches(filter = 'all') {
+            matchesContainer.innerHTML = ''; // Clear previous
+            stopAllCountdowns(); // Clear existing timers
+
+            const filteredMatches = currentMatches.filter(match => {
+                 // Ensure match has a date before trying to compare
+                if (!match.date || !match.date.toDate) return false;
+                const matchDate = match.date.toDate();
+                const now = new Date();
+                // Basic filter: Only show matches starting from *today* onwards for "Upcoming"
+                 if (matchDate < new Date(now.setHours(0,0,0,0))) return false; // Filter out past days
+
+                 // Apply type filter if not 'all'
+                 if (filter === 'all') return true;
+                return match.type?.toLowerCase() === filter.toLowerCase();
+            });
+
             if (filteredMatches.length === 0) {
-                matchesContainer.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon"></div>
-                        <h3>No matches found</h3>
-                        <p>There are no upcoming matches in this category.</p>
-                    </div>
-                `;
+                 let message = 'No upcoming matches found.';
+                 if (filter !== 'all') message = `No upcoming ${filter} matches found.`;
+                matchesContainer.innerHTML = createEmptyState(message, 'Check back later or view all matches.');
                 return;
             }
-            
+
             filteredMatches.forEach(match => {
                 const matchElement = document.createElement('div');
                 matchElement.className = 'card match-card fade-in';
                 matchElement.innerHTML = `
                     <div class="match-header">
-                        <span class="match-date">${formatDate(match.date)}</span>
-                        <span class="match-type">${match.type}</span>
+                        <span class="match-date" data-date="${match.date.toDate ? match.date.toDate().toISOString() : ''}">${formatDate(match.date)}</span>
+                        <span class="match-type">${match.type || 'TBD'}</span>
                     </div>
+                     <div class="match-countdown" data-match-id="${match.id}"></div>
                     <div class="match-teams">
                         <div class="team">
-                            <div class="team-logo">${match.team1.logo}</div>
-                            <span class="team-name">${match.team1.name}</span>
+                            <div class="team-logo">${match.team1?.logo || 'T1'}</div>
+                            <span class="team-name">${match.team1?.name || 'Team 1'}</span>
                         </div>
                         <div class="versus">VS</div>
                         <div class="team">
-                            <div class="team-logo">${match.team2.logo}</div>
-                            <span class="team-name">${match.team2.name}</span>
+                            <div class="team-logo">${match.team2?.logo || 'T2'}</div>
+                            <span class="team-name">${match.team2?.name || 'Team 2'}</span>
                         </div>
                     </div>
                     <div class="match-footer">
-                        <span>${match.venue}</span>
-                        <a href="${match.streamLink}" style="color: var(--orange);">📺 Stream</a>
+                        <span>${match.venue || 'Venue TBD'}</span>
+                        ${match.streamLink ? `<a href="${match.streamLink}" target="_blank" rel="noopener noreferrer">📺 Watch Stream</a>` : '<span>📺 No Stream Link</span>'}
                     </div>
                 `;
                 matchesContainer.appendChild(matchElement);
+                 // Add countdown timer for this specific match
+                 addCountdownTimer(matchElement, match.id, match.date);
             });
+             // Add scroll animations after content is loaded
+             // addScrollAnimation();
         }
-        
-        // Filter matches function
-        function filterMatches(filter) {
-            loadUpcomingMatches(filter);
-        }
-        
-        // Load leaderboard data
-        function loadLeaderboard(sortBy = 'rank') {
-            leaderboardBody.innerHTML = '';
-            
-            // Sort the data based on the selected criteria
-            let sortedData = [...leaderboardData];
+
+
+        function sortAndDisplayLeaderboard(sortBy = 'rank') {
+            leaderboardBody.innerHTML = ''; // Clear previous
+
+            let sortedData = [...currentLeaderboard]; // Use the fetched data
+
+            // Apply sorting based on selection
             if (sortBy === 'wins') {
-                sortedData.sort((a, b) => b.wins - a.wins);
+                sortedData.sort((a, b) => (b.wins || 0) - (a.wins || 0));
             } else if (sortBy === 'points') {
-                sortedData.sort((a, b) => b.points - a.points);
-            } else {
-                // Default sorting by rank (which is based on points, then wins)
-                sortedData.sort((a, b) => {
-                    if (b.points !== a.points) return b.points - a.points;
-                    if (b.wins !== a.wins) return b.wins - a.wins;
-                    return a.name.localeCompare(b.name);
-                });
+                sortedData.sort((a, b) => (b.points || 0) - (a.points || 0));
+            } else if (sortBy === 'name') {
+                sortedData.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            } else { // Default 'rank' sorting (already done by Firestore query: points desc, wins desc)
+               // Data is likely already sorted correctly by points/wins from Firestore
+               // No additional JS sort needed for default 'rank' if Firestore query is set up
             }
-            
+
+            if (sortedData.length === 0) {
+                 leaderboardBody.innerHTML = `<tr><td colspan="6">${createEmptyState('Leaderboard is empty', 'No players found.')}</td></tr>`;
+                return;
+            }
+
             // Create table rows
             sortedData.forEach((player, index) => {
                 const row = document.createElement('tr');
                 row.className = 'fade-in';
                 row.style.animationDelay = `${index * 0.05}s`;
-                
-                const rankClass = index < 3 ? 'top-rank' : '';
-                
+
+                const rank = index + 1; // Calculate rank based on sorted position
+                const rankClass = rank <= 3 ? 'top-rank' : '';
+
                 row.innerHTML = `
-                    <td class="rank ${rankClass}">${index + 1}</td>
+                    <td class="rank ${rankClass}">${rank}</td>
                     <td>
                         <div class="player">
-                            <div class="player-avatar">${player.avatar}</div>
-                            <div class="player-name">${player.name}</div>
+                            <div class="player-avatar">${player.avatar || '?'}</div>
+                            <div class="player-name">${player.name || 'Unknown Player'}</div>
                         </div>
                     </td>
-                    <td class="stats">${player.matches}</td>
-                    <td class="stats">${player.wins}</td>
-                    <td class="stats">${player.losses}</td>
-                    <td class="stats">${player.points}</td>
+                    <td class="stats">${player.matches || 0}</td>
+                    <td class="stats">${player.wins || 0}</td>
+                    <td class="stats">${player.losses || 0}</td>
+                    <td class="stats">${player.points || 0}</td>
                 `;
-                
                 leaderboardBody.appendChild(row);
             });
         }
-        
-        // Sort leaderboard function
-        function sortLeaderboard(sortBy) {
-            loadLeaderboard(sortBy);
-        }
-        
-        // Load bracket data
-        function loadBracket(tournament = 'pro') {
-            bracketContainer.innerHTML = '';
-            
-            const data = bracketData[tournament];
-            if (!data || !data.rounds) {
-                bracketContainer.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon"></div>
-                        <h3>No bracket available</h3>
-                        <p>The tournament bracket has not been created yet.</p>
-                    </div>
-                `;
+
+        function displayBracket(tournament = 'pro') {
+            bracketDisplayContainer.innerHTML = ''; // Clear previous
+
+            const data = currentBracket[tournament];
+
+            if (!data || !data.rounds || data.rounds.length === 0) {
+                bracketDisplayContainer.innerHTML = createEmptyState(
+                    `No ${tournament} bracket available`,
+                    'The tournament bracket has not been set up or loaded yet.'
+                );
                 return;
             }
-            
+
             // Create rounds
             data.rounds.forEach((round, roundIndex) => {
                 const roundElement = document.createElement('div');
                 roundElement.className = 'round fade-in';
                 roundElement.style.animationDelay = `${roundIndex * 0.1}s`;
-                
-                // Add round title
+
                 const roundTitle = document.createElement('h3');
                 roundTitle.className = 'round-title';
-                roundTitle.textContent = round.name;
+                roundTitle.textContent = round.name || `Round ${roundIndex + 1}`;
                 roundElement.appendChild(roundTitle);
-                
+
                 // Add matches
-                round.matches.forEach((match, matchIndex) => {
+                round.matches.forEach((match) => {
                     const matchElement = document.createElement('div');
+                     // Determine winner based on stored winner identifier (could be name or ID)
+                     let team1Winner = false;
+                     let team2Winner = false;
+                     if (match.winner) {
+                         // Prioritize checking ID if teams have IDs, otherwise check name
+                         team1Winner = (match.team1.id && match.winner === match.team1.id) || (!match.team1.id && match.winner === match.team1.name);
+                         team2Winner = (match.team2.id && match.winner === match.team2.id) || (!match.team2.id && match.winner === match.team2.name);
+                     }
+
                     matchElement.className = `match-bracket ${match.completed ? 'completed' : 'upcoming'}`;
-                    
+
                     // Team 1
                     const team1Element = document.createElement('div');
-                    team1Element.className = `bracket-team ${match.winner === match.team1.id ? 'bracket-winner' : ''}`;
+                    team1Element.className = `bracket-team ${team1Winner ? 'bracket-winner' : ''}`;
                     team1Element.innerHTML = `
-                        <span class="bracket-team-name">${match.team1.name}</span>
-                        <span class="bracket-score">${match.team1.score !== null ? match.team1.score : '-'}</span>
+                        <span class="bracket-team-name">${match.team1?.name || 'TBD'}</span>
+                        <span class="bracket-score">${match.completed && match.team1?.score !== null ? match.team1.score : '-'}</span>
                     `;
                     matchElement.appendChild(team1Element);
-                    
+
                     // Team 2
                     const team2Element = document.createElement('div');
-                    team2Element.className = `bracket-team ${match.winner === match.team2.id ? 'bracket-winner' : ''}`;
+                    team2Element.className = `bracket-team ${team2Winner ? 'bracket-winner' : ''}`;
                     team2Element.innerHTML = `
-                        <span class="bracket-team-name">${match.team2.name}</span>
-                        <span class="bracket-score">${match.team2.score !== null ? match.team2.score : '-'}</span>
+                        <span class="bracket-team-name">${match.team2?.name || 'TBD'}</span>
+                        <span class="bracket-score">${match.completed && match.team2?.score !== null ? match.team2.score : '-'}</span>
                     `;
                     matchElement.appendChild(team2Element);
-                    
-                    // Add connector line (except for final round)
-                    if (roundIndex < data.rounds.length - 1) {
-                        const connector = document.createElement('div');
-                        connector.className = 'connector';
-                        matchElement.appendChild(connector);
-                    }
-                    
+
+                     // Add connector div (basic, no lines drawn by default)
+                     // if (roundIndex < data.rounds.length - 1) {
+                     //    const connector = document.createElement('div');
+                     //    connector.className = 'connector';
+                     //    matchElement.appendChild(connector);
+                     // }
+
                     roundElement.appendChild(matchElement);
                 });
-                
-                bracketContainer.appendChild(roundElement);
+
+                bracketDisplayContainer.appendChild(roundElement);
             });
+             // addScrollAnimation(); // Apply animation after rendering
         }
-        
-        // Helper function to check if a date is in the past
-        function isDatePast(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            return date < now;
-        }
-        
-        // Add icons to section titles
-// Add icons to section titles
-function addSectionIcons() {
-    const sections = {
-        'upcoming-matches': '',
-        'leaderboard': '',
-        'bracket': ''
-    };
-    
-    document.querySelectorAll('.section-title span').forEach(span => {
-        const sectionId = span.closest('.content-section').id;
-        span.textContent = sections[sectionId] || '';
-    });
-}
 
-// Create empty state element
-function createEmptyState(message, submessage) {
-    return `
-        <div class="empty-state">
-            <div class="empty-icon">📭</div>
-            <h3>${message}</h3>
-            <p>${submessage}</p>
-        </div>
-    `;
-}
 
-// Add animation on scroll
-function addScrollAnimation() {
-    const animateElements = document.querySelectorAll('.card, .round');
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in');
-                observer.unobserve(entry.target);
+        // --- Countdown Timer Logic ---
+        const countdownIntervals = {}; // Store interval IDs: { matchId: intervalId }
+
+         function stopAllCountdowns() {
+             Object.values(countdownIntervals).forEach(clearInterval);
+             // Clear the storage object itself
+             for (let key in countdownIntervals) {
+                 delete countdownIntervals[key];
+             }
+         }
+
+        function addCountdownTimer(matchElement, matchId, matchDateTimestamp) {
+            const timerElement = matchElement.querySelector('.match-countdown');
+            if (!timerElement || !matchDateTimestamp || !matchDateTimestamp.toDate) return; // Exit if no element or invalid date
+
+            const matchDate = matchDateTimestamp.toDate();
+
+            // Clear existing timer for this match ID if it exists
+            if (countdownIntervals[matchId]) {
+                clearInterval(countdownIntervals[matchId]);
             }
-        });
-    }, { threshold: 0.1 });
-    
-    animateElements.forEach(element => {
-        element.classList.remove('fade-in');
-        observer.observe(element);
-    });
-}
 
-// Add countdown timer to matches
-function addCountdownTimers() {
-    const matchElements = document.querySelectorAll('.match-card');
-    
-    matchElements.forEach(element => {
-        const dateString = element.querySelector('.match-date').textContent;
-        const matchDate = new Date(dateString);
-        
-        // Only add timer if match is in the future
-        if (matchDate > new Date()) {
-            const timerElement = document.createElement('div');
-            timerElement.className = 'match-countdown';
-            element.querySelector('.match-teams').after(timerElement);
-            
-            // Update timer every second
-            const interval = setInterval(() => {
+            const updateTimer = () => {
                 const now = new Date();
                 const diff = matchDate - now;
-                
+
                 if (diff <= 0) {
-                    timerElement.textContent = 'Match has started!';
-                    clearInterval(interval);
+                    timerElement.textContent = 'Match may have started!';
+                    timerElement.style.color = 'var(--orange)';
+                    clearInterval(countdownIntervals[matchId]);
+                    delete countdownIntervals[matchId]; // Remove from tracking
                     return;
                 }
-                
+
                 const days = Math.floor(diff / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                
-                timerElement.textContent = `Starts in: ${days}d ${hours}h ${minutes}m ${seconds}s`;
-            }, 1000);
+
+                let timerString = "Starts in: ";
+                 if (days > 0) timerString += `${days}d `;
+                 if (days > 0 || hours > 0) timerString += `${hours}h `;
+                 timerString += `${minutes}m ${seconds}s`;
+
+                 timerElement.textContent = timerString;
+                 timerElement.style.color = 'var(--orange-light)'; // Default color
+            };
+
+            updateTimer(); // Initial call
+            countdownIntervals[matchId] = setInterval(updateTimer, 1000); // Store interval ID
         }
-    });
-}
 
-// Add search functionality
-function initializeSearch() {
-    const searchInput = document.getElementById('search-input');
-    if (!searchInput) return;
-    
-    searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        
-        // Search in active section
-        const activeSection = document.querySelector('.content-section.active');
-        if (activeSection.id === 'leaderboard') {
-            searchLeaderboard(searchTerm);
-        } else if (activeSection.id === 'upcoming-matches') {
-            searchMatches(searchTerm);
+
+        // --- Optional Enhancements (Keep commented out if not used) ---
+
+        /*
+        // Add animation on scroll (Example - needs IntersectionObserver setup)
+        function addScrollAnimation() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('fade-in');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            // Observe newly added elements (call this after rendering content)
+            document.querySelectorAll('.card:not(.fade-in), .round:not(.fade-in)').forEach(element => {
+                 observer.observe(element);
+            });
         }
-    });
-}
+        */
 
-function searchLeaderboard(term) {
-    const rows = document.querySelectorAll('#leaderboard-body tr');
-    
-    rows.forEach(row => {
-        const playerName = row.querySelector('.player-name').textContent.toLowerCase();
-        
-        if (playerName.includes(term)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
+        /*
+        // Add icons to section titles (Example)
+        function addSectionIcons() {
+            const sections = {
+                'upcoming-matches': '📅',
+                'leaderboard': '🏆',
+                'bracket': '⚔️'
+            };
+            document.querySelectorAll('.section-title span').forEach(span => {
+                const sectionId = span.closest('.content-section').id;
+                span.textContent = sections[sectionId] || '❔'; // Default icon
+            });
         }
-    });
-}
+        */
 
-function searchMatches(term) {
-    const matchCards = document.querySelectorAll('.match-card');
-    
-    matchCards.forEach(card => {
-        const team1 = card.querySelector('.team-name:first-of-type').textContent.toLowerCase();
-        const team2 = card.querySelector('.team-name:last-of-type').textContent.toLowerCase();
-        const type = card.querySelector('.match-type').textContent.toLowerCase();
-        
-        if (team1.includes(term) || team2.includes(term) || type.includes(term)) {
-            card.style.display = '';
-        } else {
-            card.style.display = 'none';
-        }
-    });
-}
+        // --- Initialize application ---
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            // addSectionIcons(); // Uncomment if using icons
+        });
 
-// Handle data refresh
-function setupDataRefresh() {
-    // In a real application, this would fetch new data from the server
-    setInterval(() => {
-        const activeSection = document.querySelector('.content-section.active');
-        
-        if (activeSection.id === 'upcoming-matches') {
-            loadUpcomingMatches(document.querySelector('#upcoming-matches .filter-btn.active').dataset.filter);
-        } else if (activeSection.id === 'leaderboard') {
-            loadLeaderboard(document.querySelector('#leaderboard .filter-btn.active').dataset.sort);
-        }
-        
-        console.log('Data refreshed');
-    }, 60000); // Refresh every minute
-}
-
-
-// Initialize application when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    init();
-    addSectionIcons();
-    addScrollAnimation();
-    initializeSearch();
-    setupDataRefresh();
-
-});
-</script>
+    </script>
 </body>
 </html>
