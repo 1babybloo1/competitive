@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Profile - Poxel Competitive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ======================================== */
+        /* Base Styles & Variables (from index.html) */
+        /* ======================================== */
+        :root {
+            --bg-dark: #121212; /* Very dark grey */
+            --bg-secondary: #1e1e1e; /* Slightly lighter dark */
+            --text-light: #e0e0e0; /* Light grey text */
+            --text-dark: #121212;
+            --primary-orange: #ff6600; /* Vibrant orange */
+            --primary-orange-darker: #e65c00; /* Darker orange for hover */
+            --border-light: #444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        main {
+             flex-grow: 1; /* Takes up remaining vertical space */
+             /* Remove flex centering from index.html main */
+             padding: 0; /* Reset padding if needed, profile container handles it */
+        }
+
+        /* ======================================== */
+        /* Header & Navigation (Shared)           */
+        /* ======================================== */
+        header {
+            background-color: var(--bg-secondary);
+            padding: 1rem 0; /* Padding top/bottom */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            width: 100%;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto; /* Center container */
+            padding: 0 2rem; /* Padding left/right */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-light);
+            text-decoration: none; /* Ensure logo link has no underline */
+        }
+
+        .auth-buttons button, .auth-buttons a.btn { /* Style both button and anchor tags */
+            margin-left: 0.8rem;
+        }
+
+        /* ======================================== */
+        /* Buttons (Shared)                       */
+        /* ======================================== */
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none; /* Crucial for <a> tags styled as buttons */
+            display: inline-block; /* Ensure proper spacing and sizing */
+            text-align: center;
+        }
+
+        .btn:active {
+            transform: scale(0.97); /* Slight press effect */
+        }
+
+        /* Primary Button (Orange) */
+        .btn-primary {
+            background-color: var(--primary-orange);
+            color: var(--text-dark); /* Dark text on orange for contrast */
+            border: 2px solid var(--primary-orange);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-orange-darker);
+            border-color: var(--primary-orange-darker);
+            box-shadow: 0 0 10px rgba(255, 102, 0, 0.5); /* Subtle glow */
+            color: var(--text-dark); /* Ensure text color remains correct on hover */
+        }
+
+        /* Secondary Button (Outline/Ghost) */
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-light);
+            border: 2px solid var(--border-light);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(224, 224, 224, 0.1); /* Slight background tint */
+            border-color: var(--text-light);
+            color: var(--text-light);
+        }
+
+
+        /* ======================================== */
+        /* Profile Page Specific Styles           */
+        /* ======================================== */
+
+        /* --- Main Profile Container --- */
+        .profile-container {
+            max-width: 800px;           /* Adjust max width as desired */
+            margin: 3rem auto;          /* Center horizontally, add top/bottom margin */
+            padding: 2.5rem 3rem;       /* Generous padding */
+            background-color: var(--bg-secondary); /* Use secondary dark bg */
+            border-radius: 10px;        /* Slightly rounder corners */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Deeper shadow */
+            text-align: center;         /* Center content by default */
+        }
+
+        /* --- Profile Header (Pic + Name/Email) --- */
+        .profile-header {
+            display: flex;
+            flex-direction: column;     /* Stack vertically */
+            align-items: center;        /* Center items horizontally */
+            margin-bottom: 3rem;        /* Space below header */
+            gap: 1rem;                  /* Space between picture and text block */
+        }
+
+        #profile-pic {
+            width: 120px;               /* Size of the circle */
+            height: 120px;
+            background-color: var(--primary-orange); /* Orange background */
+            color: var(--text-dark);    /* Dark text for contrast */
+            border-radius: 50%;         /* Make it a circle */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4.5rem;          /* Large letter */
+            font-weight: 700;           /* Bold letter */
+            line-height: 1;             /* Prevent extra space affecting centering */
+            border: 4px solid var(--primary-orange-darker); /* Darker orange border */
+            box-shadow: 0 0 20px rgba(255, 102, 0, 0.55); /* Enhanced glow */
+            text-transform: uppercase;  /* Ensure letter is uppercase */
+        }
+
+        #profile-username {
+            font-size: 2.2rem;          /* Prominent username */
+            font-weight: 700;
+            color: var(--text-light);   /* Standard light text */
+            margin-bottom: 0.2rem;      /* Small space before email */
+        }
+
+        #profile-email {
+            font-size: 1rem;
+            color: #aaa;                /* Subdued color for email */
+            font-weight: 400;           /* Normal weight */
+            margin-top: 0;              /* Reset margin */
+        }
+
+        /* --- Profile Stats Section --- */
+        .profile-stats {
+            margin-top: 2.5rem;         /* Space above stats */
+            border-top: 1px solid var(--border-light); /* Separator line */
+            padding-top: 2.5rem;        /* Space below separator line */
+        }
+
+        .profile-stats h3 {
+            margin-bottom: 2rem;        /* Space below 'Your Stats' title */
+            color: var(--primary-orange); /* Orange title */
+            font-size: 1.7rem;          /* Stat section title size */
+            font-weight: 600;
+            text-align: center;         /* Ensure title is centered */
+        }
+
+        /* --- Stats Grid Layout --- */
+        .stats-grid {
+            display: grid;
+            /* Responsive grid: columns at least 160px wide, fitting as many as possible */
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1.8rem;                /* Space between stat items */
+            text-align: left;           /* Align text inside items to the left */
+        }
+
+        /* Style the "Loading stats..." placeholder if it's a direct child paragraph */
+        .stats-grid > p {
+            color: #aaa;
+            font-style: italic;
+            grid-column: 1 / -1;        /* Make placeholder span all columns */
+            text-align: center;         /* Center the placeholder text */
+            padding: 1rem 0;
+        }
+
+        /* --- Individual Stat Item --- */
+        .stat-item {
+            background-color: var(--bg-dark); /* Darker background for contrast */
+            padding: 1.3rem 1.6rem;       /* Padding inside stat item */
+            border-radius: 8px;           /* Rounded corners for item */
+            border-left: 5px solid var(--primary-orange); /* Orange accent border */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; /* Hover effect */
+        }
+
+        .stat-item:hover {
+            transform: translateY(-4px); /* Slight lift on hover */
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
+        }
+
+        .stat-item h4 { /* Stat Title (e.g., "Rank", "Wins") */
+            margin-bottom: 0.6rem;      /* Space below title */
+            color: #ccc;                /* Slightly dimmer text color */
+            font-size: 0.9rem;          /* Smaller font size for title */
+            font-weight: 600;
+            text-transform: uppercase;  /* Uppercase title */
+            letter-spacing: 0.5px;      /* Slight letter spacing */
+        }
+
+        .stat-item p { /* Stat Value (e.g., "#123", "42") */
+            font-size: 1.7rem;          /* Large, prominent value */
+            font-weight: 700;
+            color: var(--primary-orange); /* Orange color for value */
+            line-height: 1.2;           /* Adjust line height */
+            margin: 0;                  /* Reset paragraph margin */
+        }
+
+        /* --- Loading / Not Logged In States --- */
+        /* Apply container styles to keep them consistent */
+        #loading-profile,
+        #not-logged-in {
+            /* Reuse profile-container styles */
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 4rem 2rem; /* Extra vertical padding */
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            text-align: center;
+
+            /* Specific styles */
+            font-size: 1.2rem;
+            color: #aaa;
+            min-height: 300px; /* Ensure container has a decent minimum height */
+            display: flex; /* Use flex to center content vertically */
+            justify-content: center;
+            align-items: center;
+            /* display: none; / display: flex; will be controlled by JS */
+        }
+
+        /* ======================================== */
+        /* Footer (Shared)                        */
+        /* ======================================== */
+        footer {
+            text-align: center;
+            padding: 1rem;
+            margin-top: auto; /* Pushes footer to bottom */
+            background-color: var(--bg-secondary);
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* ======================================== */
+        /* Responsive Adjustments                 */
+        /* ======================================== */
+
+        /* Adjustments for Header/Nav (Shared) */
+         @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem; /* Space between logo and buttons */
+            }
+            .auth-buttons {
+                margin-top: 0.5rem;
+            }
+         }
+         @media (max-width: 480px) {
+             .logo {
+                 font-size: 1.5rem;
+             }
+             .btn {
+                 padding: 0.6rem 1.2rem;
+                 font-size: 0.9rem;
+             }
+              .auth-buttons button, .auth-buttons a.btn {
+                 margin-left: 0.5rem;
+              }
+         }
+
+        /* Adjustments for Profile Page Elements */
+        @media (max-width: 768px) {
+            .profile-container {
+                margin: 2rem auto;
+                padding: 2rem;
+            }
+            #profile-pic {
+                width: 100px;
+                height: 100px;
+                font-size: 3.5rem;
+            }
+            #profile-username {
+                font-size: 1.9rem;
+            }
+            .profile-stats h3 {
+                font-size: 1.5rem;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 1.2rem;
+            }
+            .stat-item p {
+                font-size: 1.5rem;
+            }
+            #loading-profile,
+            #not-logged-in {
+                min-height: 250px;
+                padding: 3rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .profile-container {
+                margin: 1.5rem auto;
+                padding: 1.5rem 1.2rem;
+                border-radius: 8px;
+            }
+            .profile-header {
+                margin-bottom: 2rem;
+            }
+            #profile-pic {
+                width: 85px;
+                height: 85px;
+                font-size: 3rem;
+                border-width: 3px;
+            }
+            #profile-username {
+                font-size: 1.6rem;
+            }
+            #profile-email {
+                font-size: 0.9rem;
+            }
+            .profile-stats {
+                padding-top: 1.8rem;
+            }
+             .profile-stats h3 {
+                font-size: 1.4rem;
+                margin-bottom: 1.5rem;
+            }
+            /* Stack stats grid items vertically on very small screens */
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .stat-item {
+                padding: 1rem 1.2rem;
+            }
+             .stat-item h4 {
+                 font-size: 0.85rem;
+             }
+            .stat-item p {
+                font-size: 1.4rem;
+            }
+             #loading-profile,
+             #not-logged-in {
+                min-height: 200px;
+                padding: 2rem 1rem;
+                font-size: 1.1rem;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+     <!-- Header -->
+    <header>
+        <div class="nav-container">
+             <a href="index.html" class="logo">Poxel Competitive</a>
+             <div class="auth-buttons">
+                 <a href="main.html" class="btn btn-secondary">Matches</a>
+                <button class="btn btn-primary" id="profile-logout-btn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Profile Content (Initially Hidden) -->
+        <div class="profile-container" id="profile-content" style="display: none;">
+            <div class="profile-header">
+                <div id="profile-pic">?</div> <!-- Letter dynamically added by JS -->
+                <div>
+                    <h2 id="profile-username">Username</h2> <!-- Dynamically added by JS -->
+                    <p id="profile-email">user@example.com</p> <!-- Dynamically added by JS -->
+                </div>
+            </div>
+
+            <div class="profile-stats">
+                <h3>Your Stats</h3>
+                <div class="stats-grid" id="stats-display">
+                    <!-- Placeholder while loading -->
+                     <p>Loading stats...</p>
+                     <!-- Actual stats will be loaded here by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Message -->
+        <div class="profile-container" id="loading-profile">
+            <p>Loading profile...</p>
+        </div>
+
+        <!-- Not Logged In Message (Initially Hidden) -->
+         <div class="profile-container" id="not-logged-in" style="display: none;">
+             <p>You need to be logged in to view this page. Redirecting...</p>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2025 Poxel Competitive. All rights reserved.</p> <!-- Updated year -->
+    </footer>
+
+<!-- 1. Firebase App (Core) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+
+<!-- 2. Firebase Auth -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+
+<!-- 3. Firestore -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+<!-- Add other Firebase services here if needed (e.g., Storage) -->
+
+<!-- 4. Your Profile Script -->
+<script src="profile.js"></script>
+
+
+
+</body>
+</html>
