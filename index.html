@@ -59,7 +59,7 @@
             /* Example: .logo span { color: var(--primary-orange); } */
         }
 
-        .auth-buttons button {
+        .auth-buttons button, .auth-buttons a.btn { /* Style both button and anchor tags if needed */
             margin-left: 0.8rem;
         }
 
@@ -72,7 +72,7 @@
             font-size: 0.95rem;
             font-weight: 600;
             transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-            text-decoration: none; /* For potential <a> tags styled as buttons */
+            text-decoration: none; /* Crucial for <a> tags styled as buttons */
             display: inline-block; /* Ensure proper spacing and sizing */
             text-align: center;
         }
@@ -92,6 +92,7 @@
             background-color: var(--primary-orange-darker);
             border-color: var(--primary-orange-darker);
             box-shadow: 0 0 10px rgba(255, 102, 0, 0.5); /* Subtle glow */
+            color: var(--text-dark); /* Ensure text color remains correct on hover */
         }
 
         /* Secondary Button (Outline/Ghost) */
@@ -120,7 +121,7 @@
             text-align: center;
         }
 
-        /* Call to Action Button (Go to Matches) */
+        /* Call to Action Button/Link (Go to Matches) */
         .btn-cta {
             font-size: 1.6rem;
             padding: 1.2rem 3rem;
@@ -151,7 +152,7 @@
         /* Apply animation on hover */
         .btn-cta:hover {
             background-color: var(--primary-orange);
-            color: var(--text-dark);
+            color: var(--text-dark); /* Text color changes on hover */
             /* Apply the animation - fast duration (0.6s) */
             animation: pulse-outline 0.6s infinite;
             /* Ensure border stays consistent or changes as desired */
@@ -192,9 +193,9 @@
                 padding: 0.6rem 1.2rem;
                 font-size: 0.9rem;
             }
-             .auth-buttons button {
+             .auth-buttons button, .auth-buttons a.btn {
                 margin-left: 0.5rem;
-            }
+             }
              .btn-cta {
                 font-size: 1.2rem;
                 padding: 0.9rem 2rem;
@@ -216,23 +217,28 @@
 
     <main>
         <div class="hero-section">
-            <button class="btn btn-cta" id="main.html">Go to Matches</button>
+            <!-- Changed to an anchor tag linking to main.html -->
+            <a href="main.html" class="btn btn-cta">Go to Matches</a>
         </div>
     </main>
 
     <footer>
         <!-- Optional: Add footer content here -->
-        <p>© 2025 Poxel Competitive. All rights reserved.</p>
+        <p>© 2023 Poxel Competitive. All rights reserved.</p> <!-- Updated year -->
     </footer>
 
-    <!-- Reference the external JS file -->
+    <!-- You might want to adjust or remove the JS for the matches button if it's no longer needed -->
     <script src="script.js"></script>
     <!--
-        OR include JS directly here like this:
+        If using inline script, make sure the part selecting '#matches-btn' or '#main.html' is removed or updated
         <script>
-            // Paste JavaScript code here
             const loginBtn = document.getElementById('login-btn');
-            // ... rest of the JS code ...
+            const signupBtn = document.getElementById('signup-btn');
+            // const matchesBtn = document.getElementById('matches-btn'); // REMOVE or comment out this line if it exists
+
+            if (loginBtn) { ... }
+            if (signupBtn) { ... }
+            // if (matchesBtn) { ... } // REMOVE or comment out this block if it exists
         </script>
     -->
 </body>
