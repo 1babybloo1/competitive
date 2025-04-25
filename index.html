@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poxel Competitive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- Global Styles & Variables --- */
+        :root {
+            --bg-dark: #121212; /* Very dark grey */
+            --bg-secondary: #1e1e1e; /* Slightly lighter dark */
+            --text-light: #e0e0e0; /* Light grey text */
+            --text-dark: #121212;
+            --primary-orange: #ff6600; /* Vibrant orange */
+            --primary-orange-darker: #e65c00; /* Darker orange for hover */
+            --border-light: #444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header & Navigation --- */
+        header {
+            background-color: var(--bg-secondary);
+            padding: 1rem 0; /* Padding top/bottom */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            width: 100%;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto; /* Center container */
+            padding: 0 2rem; /* Padding left/right */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-light);
+            /* Optional: Add a touch of orange to the logo */
+            /* Example: .logo span { color: var(--primary-orange); } */
+        }
+
+        .auth-buttons button {
+            margin-left: 0.8rem;
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none; /* For potential <a> tags styled as buttons */
+            display: inline-block; /* Ensure proper spacing and sizing */
+            text-align: center;
+        }
+
+        .btn:active {
+            transform: scale(0.97); /* Slight press effect */
+        }
+
+        /* Primary Button (Orange) */
+        .btn-primary {
+            background-color: var(--primary-orange);
+            color: var(--text-dark); /* Dark text on orange for contrast */
+            border: 2px solid var(--primary-orange);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-orange-darker);
+            border-color: var(--primary-orange-darker);
+            box-shadow: 0 0 10px rgba(255, 102, 0, 0.5); /* Subtle glow */
+        }
+
+        /* Secondary Button (Outline/Ghost) */
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-light);
+            border: 2px solid var(--border-light);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(224, 224, 224, 0.1); /* Slight background tint */
+            border-color: var(--text-light);
+            color: var(--text-light);
+        }
+
+        /* --- Main Content & Hero Section --- */
+        main {
+            flex-grow: 1; /* Takes up remaining vertical space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .hero-section {
+            text-align: center;
+        }
+
+        /* Call to Action Button (Go to Matches) */
+        .btn-cta {
+            font-size: 1.6rem;
+            padding: 1.2rem 3rem;
+            background-color: transparent;
+            color: var(--primary-orange);
+            border: 3px solid var(--primary-orange);
+            border-radius: 8px;
+            position: relative; /* Needed for potential pseudo-elements if used */
+            overflow: hidden; /* Contain effects */
+            /* Keep transition for non-animation properties */
+             transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease;
+        }
+
+        /* --- Pulse Animation --- */
+        @keyframes pulse-outline {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 102, 0, 0.7);
+            }
+            70% {
+                /* Increase the spread (third value) for the outline effect */
+                box-shadow: 0 0 0 12px rgba(255, 102, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 102, 0, 0);
+            }
+        }
+
+        /* Apply animation on hover */
+        .btn-cta:hover {
+            background-color: var(--primary-orange);
+            color: var(--text-dark);
+            /* Apply the animation - fast duration (0.6s) */
+            animation: pulse-outline 0.6s infinite;
+            /* Ensure border stays consistent or changes as desired */
+            /* border-color: var(--primary-orange); */ /* Redundant if bg changes */
+        }
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 1rem;
+            margin-top: auto; /* Pushes footer to bottom */
+            background-color: var(--bg-secondary);
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* --- Responsive (Basic Example) --- */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem; /* Space between logo and buttons */
+            }
+            .auth-buttons {
+                margin-top: 0.5rem;
+            }
+            .btn-cta {
+                font-size: 1.3rem;
+                padding: 1rem 2.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 1.5rem;
+            }
+            .btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+             .auth-buttons button {
+                margin-left: 0.5rem;
+            }
+             .btn-cta {
+                font-size: 1.2rem;
+                padding: 0.9rem 2rem;
+            }
+        }
+    </style>
+
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <h1 class="logo">Poxel Competitive</h1>
+            <div class="auth-buttons">
+                <button class="btn btn-secondary" id="login-btn">Login</button>
+                <button class="btn btn-primary" id="signup-btn">Sign Up</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero-section">
+            <button class="btn btn-cta" id="matches-btn">Go to Matches</button>
+        </div>
+    </main>
+
+    <footer>
+        <!-- Optional: Add footer content here -->
+        <p>© 2025 Poxel Competitive. All rights reserved.</p>
+    </footer>
+
+    <!-- Reference the external JS file -->
+    <script src="script.js"></script>
+    <!--
+        OR include JS directly here like this:
+        <script>
+            // Paste JavaScript code here
+            const loginBtn = document.getElementById('login-btn');
+            // ... rest of the JS code ...
+        </script>
+    -->
+</body>
+</html>
