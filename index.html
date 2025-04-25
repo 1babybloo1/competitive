@@ -201,45 +201,173 @@
                 padding: 0.9rem 2rem;
             }
         }
-    </style>
 
+/* --- Modal Styles --- */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex; /* Show when active */
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            margin: auto;
+            padding: 30px;
+            border: 1px solid var(--border-light);
+            width: 80%;
+            max-width: 450px;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            color: var(--text-light);
+        }
+
+        .close-btn {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: var(--text-light);
+            text-decoration: none;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--primary-orange);
+        }
+
+        .modal-content form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .modal-content form input[type="text"],
+        .modal-content form input[type="email"],
+        .modal-content form input[type="password"] {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+         .modal-content form input[type="text"]:focus,
+        .modal-content form input[type="email"]:focus,
+        .modal-content form input[type="password"]:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 5px rgba(255, 102, 0, 0.5);
+        }
+
+        .modal-content form button {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .error-message {
+            color: #ff4d4d; /* Light red for errors */
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            min-height: 1.2em; /* Reserve space */
+        }
+    </style>
 </head>
 <body>
     <header>
         <div class="nav-container">
             <h1 class="logo">Poxel Competitive</h1>
             <div class="auth-buttons">
+                <!-- Updated buttons to open modals -->
                 <button class="btn btn-secondary" id="login-btn">Login</button>
                 <button class="btn btn-primary" id="signup-btn">Sign Up</button>
+                <!-- Logged-in state (initially hidden) -->
+                <a href="profile.html" class="btn btn-secondary" id="profile-btn" style="display: none;">Profile</a>
+                <button class="btn btn-primary" id="logout-btn" style="display: none;">Logout</button>
             </div>
         </div>
     </header>
 
     <main>
         <div class="hero-section">
-            <!-- Changed to an anchor tag linking to main.html -->
             <a href="main.html" class="btn btn-cta">Go to Matches</a>
         </div>
     </main>
 
     <footer>
-        <!-- Optional: Add footer content here -->
-        <p>© 2023 Poxel Competitive. All rights reserved.</p> <!-- Updated year -->
+        <p>© 2024 Poxel Competitive. All rights reserved.</p> <!-- Updated year -->
     </footer>
 
-    <!-- You might want to adjust or remove the JS for the matches button if it's no longer needed -->
-    <script src="script.js"></script>
-    <!--
-        If using inline script, make sure the part selecting '#matches-btn' or '#main.html' is removed or updated
-        <script>
-            const loginBtn = document.getElementById('login-btn');
-            const signupBtn = document.getElementById('signup-btn');
-            // const matchesBtn = document.getElementById('matches-btn'); // REMOVE or comment out this line if it exists
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-login">×</span>
+            <h2>Login</h2>
+            <form id="login-form">
+                <label for="login-email">Email:</label>
+                <input type="email" id="login-email" name="email" required>
 
-            if (loginBtn) { ... }
-            if (signupBtn) { ... }
-            // if (matchesBtn) { ... } // REMOVE or comment out this block if it exists
-        </script>
-    -->
+                <label for="login-password">Password:</label>
+                <input type="password" id="login-password" name="password" required>
+
+                <button type="submit" class="btn btn-primary">Login</button>
+                <p class="error-message" id="login-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signup-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-signup">×</span>
+            <h2>Sign Up</h2>
+            <form id="signup-form">
+                 <label for="signup-username">Username:</label>
+                <input type="text" id="signup-username" name="username" required>
+
+                <label for="signup-email">Email:</label>
+                <input type="email" id="signup-email" name="email" required>
+
+                <label for="signup-password">Password:</label>
+                <input type="password" id="signup-password" name="password" required minlength="6"> <!-- Added minlength -->
+
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+                 <p class="error-message" id="signup-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+
+    <!-- Your new Auth script -->
+    <script src="auth.js"></script>
+  
+
+
 </body>
 </html>
