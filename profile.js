@@ -33,7 +33,7 @@ const adminEmails = [
 // Add emails (lowercase) of users who should get each badge
 const badgeConfig = {
     verified: {
-        emails: ['jackdmbell@outlook.com', 'anotheremail'].map(e => e.toLowerCase()), // Replace with actual emails
+        emails: ['jackdmbell@outlook.com', 'myrrr@myrrr.myrrr'].map(e => e.toLowerCase()), // Replace with actual emails
         className: 'badge-verified',
         title: 'Verified'
     },
