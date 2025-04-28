@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Updated Title -->
     <title>User Profile - Poxel Competitive</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
     <style>
         /* ======================================== */
         /* Base Styles & Variables                */
@@ -22,31 +24,43 @@
             --rank-gold-bg: #ffd700;
             --rank-default-bg: #555; /* For unranked/other */
             --text-secondary: #aaa;
-            --red-error: #ff4d4d; /* Ban color */
-            --red-error-bg: rgba(255, 0, 0, 0.1);
-            --red-dark-bg: #3d1111; /* Banned profile background */
             /* Badge Colors */
-            --badge-verified-color: #00acee; /* Blue */
-            --badge-creator-color: #a970ff;  /* Purple */
-            --badge-moderator-color: #ff6600; /* Orange */
+            --badge-verified-bg: #00acee; /* Blue */
+            --badge-creator-bg: #a970ff;  /* Purple */
+            --badge-moderator-bg: #ff6600; /* Orange (matches primary) */
             --badge-tick-color: #ffffff;
+            /* --- ADDED: Ban Colors --- */
+            --red-error: #ff4d4d;
+            --red-error-bg: rgba(255, 0, 0, 0.1);
+            --red-dark-bg: #3d1111;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-dark); color: var(--text-light); line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
         main { flex-grow: 1; padding: 0; }
 
         /* ======================================== */
         /* Header & Navigation (Shared)           */
         /* ======================================== */
-        header { background-color: var(--bg-secondary); padding: 1rem 0; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); width: 100%; position: sticky; top: 0; z-index: 100; }
-        .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+        header { background-color: var(--bg-secondary); padding: 1rem 0; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); width: 100%; }
+        .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; } /* Added flex-wrap/gap */
         .logo { font-size: 1.8rem; font-weight: 700; color: var(--text-light); text-decoration: none; }
         .auth-buttons button, .auth-buttons a.btn { margin-left: 0.8rem; }
 
         /* ======================================== */
         /* Buttons (Shared)                       */
         /* ======================================== */
-        .btn { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: all 0.2s ease; text-decoration: none; display: inline-block; text-align: center; }
+        .btn { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease; text-decoration: none; display: inline-block; text-align: center; }
         .btn:active { transform: scale(0.97); }
         .btn-primary { background-color: var(--primary-orange); color: var(--text-dark); border: 2px solid var(--primary-orange); }
         .btn-primary:hover { background-color: var(--primary-orange-darker); border-color: var(--primary-orange-darker); box-shadow: 0 0 10px rgba(255, 102, 0, 0.5); color: var(--text-dark); }
@@ -56,88 +70,162 @@
         /* ======================================== */
         /* Profile Page Specific Styles           */
         /* ======================================== */
-        .profile-container { max-width: 800px; margin: 3rem auto; padding: 2.5rem 3rem; background-color: var(--bg-secondary); border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); text-align: center; transition: background-color 0.3s ease, border 0.3s ease, box-shadow 0.3s ease; }
-        .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 2.5rem; gap: 1rem; }
-        #profile-pic { width: 120px; height: 120px; background-color: var(--primary-orange); color: var(--text-dark); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 4.5rem; font-weight: 700; line-height: 1; border: 4px solid var(--primary-orange-darker); box-shadow: 0 0 20px rgba(255, 102, 0, 0.55); text-transform: uppercase; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
-        .profile-info { display: flex; flex-direction: column; align-items: center; }
+        /* --- Main Content Container --- */
+        #profile-content { /* Using ID selector now */
+             max-width: 800px; margin: 3rem auto; padding: 2.5rem 3rem;
+             background-color: var(--bg-secondary); border-radius: 10px;
+             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+             transition: background-color 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+             /* display: none; set by default in HTML */
+        }
+
+        .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; gap: 1rem; /* Reduced margin-bottom */ }
+        #profile-pic { width: 120px; height: 120px; background-color: var(--primary-orange); color: var(--text-dark); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 4.5rem; font-weight: 700; line-height: 1; border: 4px solid var(--primary-orange-darker); box-shadow: 0 0 20px rgba(255, 102, 0, 0.55); text-transform: uppercase; transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease; }
+
+        /* Container for Username, Badges, Admin Tag */
         .profile-name-container { display: flex; align-items: center; justify-content: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.2rem; }
         #profile-username { font-size: 2.2rem; font-weight: 700; color: var(--text-light); margin: 0; }
-        #profile-badges-container { display: inline-flex; align-items: center; gap: 0.5rem; line-height: 1; vertical-align: middle; }
-        /* Badge Styles using SVG */
-        .profile-badge { display: inline-block; width: 1.5em; height: 1.5em; font-size: 0.8em; vertical-align: middle; position: relative; background-repeat: no-repeat; background-position: center; background-size: contain; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='currentColor' d='M50,0 L61.8,38.2 L100,38.2 L69.1,61.8 L80.9,100 L50,76.4 L19.1,100 L30.9,61.8 L0,38.2 L38.2,38.2 Z' transform='rotate(18 50 50) scale(1.1)' /%3E%3Cpath fill='currentColor' d='M50,5 L60,39 L95,41 L68,62 L75,95 L50,78 L25,95 L32,62 L5,41 L40,39 Z' /%3E%3C/svg%3E"); }
-        .profile-badge::before { content: '✔'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: block; font-size: 0.9em; font-weight: bold; color: var(--badge-tick-color); line-height: 1; }
-        .badge-verified { color: var(--badge-verified-color); } .badge-creator { color: var(--badge-creator-color); } .badge-moderator { color: var(--badge-moderator-color); }
-        /* Admin Tag */
-        .admin-tag { display: none; background-color: var(--primary-orange); color: var(--text-dark); padding: 0.2em 0.6em; border-radius: 4px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; vertical-align: middle; line-height: 1; }
-        /* Email (Hidden by default) */
-        #profile-email { display: none; font-size: 1rem; color: var(--text-secondary); font-weight: 400; margin-top: 0.3rem; margin-bottom: 0; word-break: break-all; }
+        #profile-badges-container { display: inline-flex; align-items: center; gap: 0.4rem; line-height: 1; vertical-align: middle; }
 
-        /* Rank and Title */
+        /* --- Badge Styles --- */
+        .profile-badge { display: inline-flex; align-items: center; justify-content: center; width: 1.8em; height: 1.8em; border-radius: 50%; font-size: 0.8em; font-weight: bold; color: var(--badge-tick-color); line-height: 1; vertical-align: middle; position: relative; }
+        .profile-badge::before { content: '✔'; display: block; }
+        .badge-verified { background-color: var(--badge-verified-bg); }
+        .badge-creator { background-color: var(--badge-creator-bg); }
+        .badge-moderator { background-color: var(--badge-moderator-bg); }
+        /* --- End Badge Styles --- */
+
+        /* --- Admin Tag Styling --- */
+        .admin-tag { display: none; background-color: var(--primary-orange); color: var(--text-dark); padding: 0.2em 0.6em; border-radius: 4px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; vertical-align: middle; line-height: 1; }
+
+        /* --- Rank and Title Styles --- */
         .profile-identifiers { margin-top: 0.5rem; margin-bottom: 0.3rem; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.8rem; position: relative; }
         .profile-rank-display { background-color: var(--rank-default-bg); color: var(--text-light); padding: 0.2em 0.7em; border-radius: 15px; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; display: inline-block; transition: background-color 0.3s ease, color 0.3s ease; }
         .rank-unranked { background-color: var(--rank-default-bg); color: #ccc; } .rank-bronze { background-color: var(--rank-bronze-bg); color: var(--text-dark); } .rank-silver { background-color: var(--rank-silver-bg); color: var(--text-dark); } .rank-gold { background-color: var(--rank-gold-bg); color: var(--text-dark); } .rank-veteran { background-color: var(--primary-orange-darker); color: var(--text-dark); } .rank-legend { background: linear-gradient(to right, var(--primary-orange), #ffae00); color: var(--text-dark); }
         .profile-title-display { color: var(--primary-orange); font-size: 1rem; font-weight: 600; font-style: italic; display: inline-block; transition: color 0.2s ease; }
         #profile-title.selectable-title { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--primary-orange); }
         #profile-title.selectable-title:hover { color: var(--primary-orange-darker); text-decoration-color: var(--primary-orange-darker); }
-        /* Title Selector Dropdown */
+        /* --- End Rank/Title Styles --- */
+
+        /* --- Title Selector Dropdown Styles --- */
         .title-selector { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 0.5rem; min-width: 180px; max-width: 90%; background-color: var(--bg-dark); border: 1px solid var(--border-light); border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); padding: 0.5rem 0; z-index: 10; max-height: 200px; overflow-y: auto; }
         .title-option { display: block; background: none; border: none; color: var(--text-light); padding: 0.6rem 1rem; text-align: left; width: 100%; cursor: pointer; font-size: 0.95rem; transition: background-color 0.2s ease; white-space: nowrap; position: relative; }
         .title-option:hover { background-color: var(--bg-secondary); }
         .title-option.currently-equipped { font-weight: bold; color: var(--primary-orange); padding-left: 2.2rem; }
         .title-option.currently-equipped::before { content: '✔'; position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--primary-orange); font-size: 1em; line-height: 1; }
+        /* --- End Title Selector Styles --- */
 
-        /* Ban Status Display */
-        #ban-status-display { display: none; color: var(--red-error); background-color: var(--red-error-bg); border: 1px solid var(--red-error); padding: 0.8rem 1.2rem; border-radius: 5px; margin-top: 1.5rem; margin-bottom: -1rem; text-align: center; z-index: 5; position: relative; }
-        #ban-status-display strong { font-size: 1.6rem; display: block; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
-        #ban-status-display span { font-size: 0.95rem; color: var(--text-secondary); display: block;}
-        /* Banned Profile Container Styling */
-        .profile-container.banned-profile { background-color: var(--red-dark-bg); border: 2px solid var(--red-error); box-shadow: 0 5px 20px rgba(255, 0, 0, 0.4); }
-        .profile-container.banned-profile #profile-pic { border-color: var(--red-error); box-shadow: 0 0 15px rgba(255, 77, 77, 0.6); background-color: var(--red-error); color: white; }
-        .profile-container.banned-profile .profile-title-display { color: var(--text-secondary); }
-        .profile-container.banned-profile .profile-rank-display { background-color: var(--rank-default-bg); color: var(--text-secondary); }
+        #profile-email { display: none; /* Initially hidden, shown by JS for own profile */ font-size: 1rem; color: var(--text-secondary); font-weight: 400; margin-top: 0.3rem; /* Space below identifiers */ margin-bottom: 0; word-break: break-all; text-align: center; /* Ensure email is centered if shown */ }
 
-        /* Profile Stats */
-        .profile-stats { margin-top: 2.5rem; border-top: 1px solid var(--border-light); padding-top: 2.5rem; }
+        /* --- ADDED: Ban Status Display --- */
+        #ban-status-display {
+            display: none; /* Initially hidden */
+            color: var(--red-error);
+            background-color: var(--red-error-bg);
+            border: 1px solid var(--red-error);
+            padding: 0.8rem 1.2rem;
+            border-radius: 5px;
+            margin-top: 1.5rem; /* Space above */
+            margin-bottom: 2.5rem; /* Space below before stats */
+            text-align: center;
+            z-index: 5;
+            position: relative;
+        }
+        #ban-status-display strong {
+            font-size: 1.6rem; display: block; margin-bottom: 0.4rem;
+            text-transform: uppercase; letter-spacing: 1px; font-weight: 700;
+        }
+        #ban-status-display span {
+            font-size: 0.95rem; color: var(--text-secondary); display: block;
+        }
+        /* --- END: Ban Status Display --- */
+
+        /* --- ADDED: Banned Profile Container Styling --- */
+        /* Target the main container where profile content is shown */
+        #profile-content.banned-profile {
+             background-color: var(--red-dark-bg);
+             border: 2px solid var(--red-error);
+             box-shadow: 0 5px 20px rgba(255, 0, 0, 0.4);
+        }
+        #profile-content.banned-profile #profile-pic {
+            border-color: var(--red-error);
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.6);
+            background-color: var(--red-error);
+            color: white;
+        }
+        #profile-content.banned-profile .profile-title-display {
+            color: var(--text-secondary); /* Grey out title */
+             text-decoration: none; /* Remove potential dotted underline */
+             cursor: default; /* Remove pointer */
+        }
+        #profile-content.banned-profile .profile-rank-display {
+            background-color: var(--rank-default-bg); /* Default grey rank */
+            color: var(--text-secondary);
+        }
+        #profile-content.banned-profile .admin-tag {
+             display: none; /* Hide admin tag if banned */
+        }
+        #profile-content.banned-profile #profile-badges-container {
+             opacity: 0.5; /* Dim badges */
+        }
+        /* --- END: Banned Profile Container Styling --- */
+
+        .profile-stats { margin-top: 0; /* Remove top margin as ban display adds space */ border-top: 1px solid var(--border-light); padding-top: 2.5rem; }
         .profile-stats h3 { margin-bottom: 2rem; color: var(--primary-orange); font-size: 1.7rem; font-weight: 600; text-align: center; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.8rem; text-align: left; }
-        .stats-grid > p { color: var(--text-secondary); font-style: italic; grid-column: 1 / -1; text-align: center; padding: 1rem 0; }
+        .stats-grid > p { color: var(--text-secondary); font-style: italic; grid-column: 1 / -1; text-align: center; padding: 1rem 0; } /* For loading/error messages */
         .stat-item { background-color: var(--bg-dark); padding: 1.3rem 1.6rem; border-radius: 8px; border-left: 5px solid var(--primary-orange); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; }
         .stat-item:hover { transform: translateY(-4px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4); }
         .stat-item h4 { margin-bottom: 0.6rem; color: #ccc; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-item p { font-size: 1.7rem; font-weight: 700; color: var(--primary-orange); line-height: 1.2; margin: 0; }
 
-        /* Loading / Not Logged In States */
-        .message-container { /* Common styling for loading/error */ max-width: 800px; margin: 3rem auto; padding: 4rem 2rem; background-color: var(--bg-secondary); border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); text-align: center; font-size: 1.2rem; color: var(--text-secondary); min-height: 300px; display: flex; justify-content: center; align-items: center; }
+        /* --- Loading / Not Logged In States --- */
+        #loading-profile, #not-logged-in {
+             max-width: 800px; margin: 3rem auto; padding: 4rem 2rem;
+             background-color: var(--bg-secondary); border-radius: 10px;
+             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); text-align: center;
+             font-size: 1.2rem; color: var(--text-secondary); min-height: 300px;
+             display: flex; justify-content: center; align-items: center;
+        }
 
-        /* Footer */
+        /* ======================================== */
+        /* Footer (Shared)                        */
+        /* ======================================== */
         footer { text-align: center; padding: 1.5rem; margin-top: auto; background-color: var(--bg-secondary); color: var(--text-secondary); font-size: 0.9rem; border-top: 1px solid var(--border-light); }
 
-        /* Responsive */
+        /* ======================================== */
+        /* Responsive Adjustments                 */
+        /* ======================================== */
         @media (max-width: 768px) {
-            .nav-container { justify-content: center; }
-            .profile-container { margin: 2rem auto; padding: 2rem; }
+            .nav-container { flex-direction: column; align-items: center; gap: 0.5rem; } /* Stack nav items */
+            .auth-buttons { margin-top: 0.5rem; }
+            #profile-content, #loading-profile, #not-logged-in { margin: 2rem auto; padding: 2rem; } /* Consistent margin/padding */
             #profile-pic { width: 100px; height: 100px; font-size: 3.5rem; }
             #profile-username { font-size: 1.9rem; }
             .profile-stats h3 { font-size: 1.5rem; }
             .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.2rem; }
             .stat-item p { font-size: 1.5rem; }
-            .message-container { min-height: 250px; padding: 3rem 1.5rem; }
+            #loading-profile, #not-logged-in { min-height: 250px; padding: 3rem 1.5rem; }
+            .profile-badge { font-size: 0.75em; } /* Adjust badge size */
+            #ban-status-display strong { font-size: 1.4rem; }
+            #ban-status-display span { font-size: 0.9rem; }
         }
         @media (max-width: 480px) {
             .logo { font-size: 1.5rem; }
             .btn { padding: 0.6rem 1.2rem; font-size: 0.9rem; }
-            .profile-container { margin: 1.5rem auto; padding: 1.5rem 1.2rem; border-radius: 8px; }
+            .auth-buttons button, .auth-buttons a.btn { margin-left: 0.5rem; }
+            #profile-content, #loading-profile, #not-logged-in { margin: 1.5rem auto; padding: 1.5rem 1.2rem; border-radius: 8px; }
             .profile-header { margin-bottom: 2rem; }
             #profile-pic { width: 85px; height: 85px; font-size: 3rem; border-width: 3px; }
             #profile-username { font-size: 1.6rem; }
             #profile-email { font-size: 0.9rem; }
             .profile-stats { padding-top: 1.8rem; }
             .profile-stats h3 { font-size: 1.4rem; margin-bottom: 1.5rem; }
-            .stats-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 1rem; } /* Single column stats */
             .stat-item { padding: 1rem 1.2rem; }
             .stat-item h4 { font-size: 0.85rem; }
             .stat-item p { font-size: 1.4rem; }
-            .message-container { min-height: 200px; padding: 2rem 1rem; font-size: 1.1rem; }
+            #loading-profile, #not-logged-in { min-height: 200px; padding: 2rem 1rem; font-size: 1.1rem; }
             .profile-name-container { gap: 0.3rem; }
             .profile-badge { font-size: 0.7em; }
             .profile-identifiers { gap: 0.5rem; }
@@ -145,72 +233,86 @@
             .profile-title-display { font-size: 0.9rem; }
             .title-selector { min-width: 150px; }
             .title-option { font-size: 0.9rem; padding: 0.5rem 0.8rem; }
-            .title-option.currently-equipped { padding-left: 2rem; } .title-option.currently-equipped::before { left: 0.6rem; }
+            .title-option.currently-equipped { padding-left: 2rem; }
+            .title-option.currently-equipped::before { left: 0.6rem; }
+            #ban-status-display { margin-top: 1rem; margin-bottom: 1.5rem; padding: 0.6rem 1rem;}
+            #ban-status-display strong { font-size: 1.2rem; }
+            #ban-status-display span { font-size: 0.85rem; }
         }
     </style>
 </head>
+
 <body>
      <!-- Header -->
-     <header>
-         <div class="nav-container">
-              <a href="index.html" class="logo">Poxel Competitive</a>
-              <div class="auth-buttons">
-                   <a href="index.html" class="btn btn-secondary">Home</a>
-                   <a href="main.html" class="btn btn-secondary">Matches</a> <!-- Link to your matches page -->
-                  <button class="btn btn-primary" id="profile-logout-btn" style="display: none;">Logout</button>
-             </div>
-         </div>
-     </header>
+    <header>
+        <div class="nav-container">
+             <a href="index.html" class="logo">Poxel Competitive</a>
+             <div class="auth-buttons">
+                  <!-- Updated Home Button -->
+                  <a href="index.html" class="btn btn-secondary">Home</a>
+                 <a href="main.html" class="btn btn-secondary">Matches</a>
+                <!-- Logout Button - visibility controlled by JS -->
+                <button class="btn btn-primary" id="profile-logout-btn" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </header>
 
     <!-- Main Content -->
     <main>
-        <!-- Profile Content Area -->
-        <div id="profile-content" style="display: none;"> <!-- Initially hidden -->
-            <div class="profile-container" id="profile-container"> <!-- Add ID here -->
-                <div class="profile-header">
-                    <div id="profile-pic">?</div>
-                    <div class="profile-info">
-                        <div class="profile-name-container">
-                            <h2 id="profile-username">Loading...</h2>
-                            <span id="profile-badges-container"></span>
-                            <span id="admin-tag" class="admin-tag">Admin</span>
-                        </div>
-                        <div class="profile-identifiers">
-                            <span id="profile-rank" class="profile-rank-display">...</span>
-                            <span id="profile-title" class="profile-title-display" style="display: none;"></span>
-                            <!-- Title selector div is appended here by JS -->
-                        </div>
-                        <p id="profile-email" style="display: none;">user@example.com</p>
-                    </div>
+        <!-- Profile Content (Initially Hidden) -->
+        <div id="profile-content" style="display: none;"> <!-- Changed from .profile-container -->
+            <div class="profile-header">
+                <div id="profile-pic">?</div>
+                 <!-- Removed extra div wrapper around name/rank/email -->
+                <!-- Username, Badges, and Admin Tag Container -->
+                <div class="profile-name-container">
+                    <h2 id="profile-username">Username</h2>
+                    <span id="profile-badges-container"></span> <!-- Badges will be added here -->
+                    <span id="admin-tag" class="admin-tag">Admin</span>
                 </div>
 
-                <!-- Ban Status Display -->
-                <div id="ban-status-display">
-                    <!-- Content added dynamically by JS -->
+                <!-- Rank and Title Display -->
+                <div class="profile-identifiers">
+                    <span id="profile-rank" class="profile-rank-display">...</span>
+                    <span id="profile-title" class="profile-title-display" style="display: none;"></span>
+                    <!-- Title selector div will be dynamically appended here by JS -->
                 </div>
 
-                <div class="profile-stats">
-                    <h3>User Stats</h3>
-                    <div class="stats-grid" id="stats-display">
-                        <p>Loading stats...</p>
-                    </div>
+                <!-- Email (Shown for own profile by JS) -->
+                <p id="profile-email" style="display: none;">user@example.com</p>
+            </div>
+
+            <!-- ADDED: Ban Status Display (Initially Hidden) -->
+            <div id="ban-status-display" style="display: none;">
+                <!-- Content will be added by JavaScript: e.g.,
+                <strong>BANNED</strong>
+                <span>Reason: Breaking rules</span>
+                -->
+            </div>
+
+            <div class="profile-stats">
+                <!-- Updated heading to be more general -->
+                <h3>User Stats</h3>
+                <div class="stats-grid" id="stats-display">
+                    <p>Loading stats...</p>
                 </div>
             </div>
         </div>
 
         <!-- Loading Message -->
-        <div class="message-container" id="loading-profile" style="display: flex;"> <!-- Show loading initially -->
-            <p>Loading profile...</p>
+        <div id="loading-profile" style="display: flex;"> <!-- Use flex to center content -->
+             <p>Loading profile...</p>
         </div>
 
-        <!-- Not Logged In / Error Message -->
-         <div class="message-container" id="not-logged-in" style="display: none;">
-             <p>Profile information is unavailable. Please log in or check the User ID.</p>
-         </div>
+        <!-- Not Logged In / Error Message (Initially Hidden) -->
+         <div id="not-logged-in" style="display: none;">
+             <p>Profile information unavailable. Please log in or check the User ID.</p> <!-- Generic error message -->
+        </div>
     </main>
 
     <!-- Footer -->
     <footer>
+        <!-- Corrected Year Script -->
         <p>© <script>document.write(new Date().getFullYear())</script> Poxel Competitive. All rights reserved.</p>
     </footer>
 
@@ -220,7 +322,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
     <!-- Your Profile Script -->
-    <script src="profile.js"></script> <!-- Link to the rewritten profile.js -->
+    <script src="profile.js"></script> <!-- Assumes profile.js contains the necessary logic -->
 
 </body>
 </html>
