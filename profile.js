@@ -1,7 +1,7 @@
 // --- Firebase Configuration ---
 // IMPORTANT: Replace with your actual Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
+    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Replace with your real key
     authDomain: "poxelcomp.firebaseapp.com",
     projectId: "poxelcomp",
     storageBucket: "poxelcomp.firebasestorage.app",
@@ -125,7 +125,7 @@ auth.onAuthStateChanged(user => {
         notLoggedInMsg.style.display = 'none';
         profileContent.style.display = 'block';
         fetchAllAchievements();
-        loadCombinedUserData(targetUid); // Call the function with debugging logs
+        loadCombinedUserData(targetUid); // Load the specific profile
         profileLogoutBtn.style.display = (loggedInUser && loggedInUser.uid === targetUid) ? 'inline-block' : 'none';
     } else {
         console.log('No user logged in and no profile UID in URL.');
@@ -203,39 +203,34 @@ function saveCombinedDataToCache(viewedUserId, combinedData) {
 }
 
 // --- Load Combined User Data (Handles Client-Side Profile Creation) ---
-// *** MODIFIED WITH DEBUGGING LOGS ***
 async function loadCombinedUserData(targetUserId) {
     console.log(`Loading combined user data for TARGET UID: ${targetUserId}`);
 
-    // Try loading from cache first
     const cacheLoaded = loadCombinedDataFromCache(targetUserId);
-    if (!cacheLoaded) { // Show initial loading only if cache is empty
+    if (!cacheLoaded) {
         statsDisplay.innerHTML = '<p>Loading stats...</p>';
-        updateProfileTitlesAndRank(null, false); // Clear rank/title, disable interaction initially
+        updateProfileTitlesAndRank(null, false);
     }
 
-    // --- References ---
     const userProfileRef = db.collection('users').doc(targetUserId);
     const leaderboardStatsRef = db.collection('leaderboard').doc(targetUserId);
 
     try {
-        // --- Get Profile Data & Handle Missing ---
-        console.log(`DEBUG: Attempting to get profile for ${targetUserId}`); // <<< DEBUG LOG ADDED
+        console.log(`DEBUG: Attempting to get profile for ${targetUserId}`);
         let profileSnap = await userProfileRef.get();
         let profileData = null;
 
-        // ***** DEBUG LOGS ADDED HERE *****
         console.log('DEBUG: Result of userProfileRef.get():', profileSnap);
         console.log('DEBUG: Type of profileSnap:', typeof profileSnap);
-        if (profileSnap) {
+         if (profileSnap) {
              console.log('DEBUG: profileSnap constructor name:', profileSnap.constructor?.name);
-             console.log('DEBUG: Does profileSnap have .exists?', 'exists' in profileSnap);
-             console.log('DEBUG: Does profileSnap have .data?', 'data' in profileSnap);
+             console.log('DEBUG: Does profileSnap have .exists property?', 'exists' in profileSnap); // Check property
+             console.log('DEBUG: Does profileSnap have .data method?', 'data' in profileSnap && typeof profileSnap.data === 'function'); // Check method
         }
-        // **********************************
 
-        // Now check existence (the line that previously failed)
-        if (!profileSnap || !profileSnap.exists()) { // Added check for profileSnap itself first
+        // <<< --- CORRECTED CHECK --- >>>
+        // Check existence using the 'exists' PROPERTY
+        if (!profileSnap || !profileSnap.exists) { // Access the 'exists' property
             console.warn(`User profile document does NOT exist (or fetch result invalid) for UID: ${targetUserId}`);
             if (loggedInUser && loggedInUser.uid === targetUserId) {
                  profileData = await createUserProfileDocument(targetUserId, loggedInUser);
@@ -249,13 +244,14 @@ async function loadCombinedUserData(targetUserId) {
                  return;
             }
         } else {
-            // Profile existed, use its data
+            // Profile existed, use its data (data() IS a function in Compat)
             profileData = { id: profileSnap.id, ...profileSnap.data() };
         }
 
-        // --- Get Leaderboard Stats ---
+        // <<< --- CORRECTED CHECK --- >>>
         const statsSnap = await leaderboardStatsRef.get();
-        const statsData = statsSnap.exists() ? { id: statsSnap.id, ...statsSnap.data() } : null;
+        // Correct check for statsSnap too using 'exists' PROPERTY
+        const statsData = statsSnap.exists ? { id: statsSnap.id, ...statsSnap.data() } : null; // Use statsSnap.exists property
 
         // --- Combine and Update State ---
         viewingUserProfileData = {
@@ -269,7 +265,6 @@ async function loadCombinedUserData(targetUserId) {
         displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats);
         saveCombinedDataToCache(targetUserId, viewingUserProfileData);
 
-        // Check achievements only if viewing your OWN profile and stats exist
         if (loggedInUser && loggedInUser.uid === targetUserId && viewingUserProfileData.stats) {
             if (!allAchievements) await fetchAllAchievements();
             if (allAchievements) {
@@ -294,20 +289,16 @@ async function loadCombinedUserData(targetUserId) {
         }
 
     } catch (error) {
-        // ***** DEBUG LOGS ADDED HERE *****
         console.error(`Error in loadCombinedUserData for TARGET UID ${targetUserId}:`, error);
-        // Log the full stack trace if available
         if (error.stack) {
             console.error("DEBUG: Full error stack:", error.stack);
         }
-        // ********************************
-
         if (!cacheLoaded) {
             statsDisplay.innerHTML = '<p>Error loading data.</p>';
             updateProfileTitlesAndRank(null, false);
         } else {
             console.warn("Error fetching fresh data, restoring cached view.");
-            loadCombinedDataFromCache(targetUserId); // Re-apply cached view
+            loadCombinedDataFromCache(targetUserId);
         }
     }
 }
@@ -344,7 +335,9 @@ async function checkAndGrantAchievements(userId, currentUserProfile, currentUser
     try {
         const userAchievementsRef = db.collection('userAchievements').doc(userId);
         const userAchievementsDoc = await userAchievementsRef.get();
-        const unlockedIds = userAchievementsDoc.exists ? userAchievementsDoc.data().unlocked || [] : [];
+        // <<< --- CORRECTED CHECK --- >>>
+        const unlockedIds = userAchievementsDoc.exists ? (userAchievementsDoc.data()?.unlocked || []) : []; // Use .exists property
+
         let newAchievementsUnlocked = [], rewardsToApply = { titles: [], rank: null, rankPoints: 0 }, needsDbUpdate = false;
 
         for (const achievementId in allAchievements) {
