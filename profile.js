@@ -1,12 +1,12 @@
 // --- Firebase Configuration ---
 // IMPORTANT: Replace with your actual Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Replace with your real key
-    authDomain: "poxelcomp.firebaseapp.com",
-    projectId: "poxelcomp",
-    storageBucket: "poxelcomp.appspot.com", // *** Ensure this is correct ***
-    messagingSenderId: "620490990104",
-    appId: "1:620490990104:web:709023eb464c7d886b996d",
+  apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
+  authDomain: "poxelcomp.firebaseapp.com",
+  projectId: "poxelcomp",
+  storageBucket: "poxelcomp.firebasestorage.app",
+  messagingSenderId: "620490990104",
+  appId: "1:620490990104:web:709023eb464c7d886b996d",
 };
 
 // --- Initialize Firebase (Compat Version) ---
