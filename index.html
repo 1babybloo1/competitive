@@ -9,20 +9,17 @@
     <style>
         /* --- Global Styles & Variables --- */
         :root {
-            --bg-dark: #121212; /* Very dark grey */
-            --bg-secondary: #1e1e1e; /* Slightly lighter dark */
-            --text-light: #e0e0e0; /* Light grey text */
+            --bg-dark: #121212;
+            --bg-secondary: #1e1e1e;
+            --text-light: #e0e0e0;
             --text-dark: #121212;
-            --primary-orange: #ff6600; /* Vibrant orange */
-            --primary-orange-darker: #e65c00; /* Darker orange for hover */
+            --primary-orange: #ff6600;
+            --primary-orange-darker: #e65c00;
             --border-light: #444;
+            --text-secondary: #aaa; /* Added for placeholder/dropdown text */
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Poppins', sans-serif;
@@ -37,271 +34,180 @@
         /* --- Header & Navigation --- */
         header {
             background-color: var(--bg-secondary);
-            padding: 1rem 0; /* Padding top/bottom */
+            padding: 1rem 0;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
             width: 100%;
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 100; /* Ensure header stays on top */
         }
 
         .nav-container {
             max-width: 1200px;
-            margin: 0 auto; /* Center container */
-            padding: 0 2rem; /* Padding left/right */
+            margin: 0 auto;
+            padding: 0 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 1rem; /* Add some gap between items */
         }
 
         .logo {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--text-light);
-            /* Optional: Add a touch of orange to the logo */
-            /* Example: .logo span { color: var(--primary-orange); } */
+            flex-shrink: 0; /* Prevent logo from shrinking */
         }
 
-        .auth-buttons button, .auth-buttons a.btn { /* Style both button and anchor tags if needed */
+        /* --- NEW: Search Bar Container --- */
+        .search-container {
+            position: relative; /* For dropdown positioning */
+            flex-grow: 1; /* Allow search to take available space */
+            max-width: 400px; /* Limit max width */
+            margin: 0 1rem; /* Add some margin */
+        }
+
+        #user-search-input {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 20px; /* Rounded corners */
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #user-search-input::placeholder {
+            color: var(--text-secondary);
+        }
+         #user-search-input:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 8px rgba(255, 102, 0, 0.4);
+         }
+
+        /* --- NEW: Search Results Dropdown --- */
+        .search-results-dropdown {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: calc(100% + 5px); /* Position below input with 5px gap */
+            left: 0;
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            max-height: 300px; /* Limit height and allow scrolling */
+            overflow-y: auto;
+            z-index: 110; /* Must be higher than header */
+        }
+         .search-result-item {
+            padding: 0.8rem 1rem;
+            color: var(--text-light);
+            cursor: pointer;
+            display: block; /* Treat as block for full width click */
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid var(--border-light); /* Separator */
+            text-decoration: none; /* If using <a> tags */
+         }
+          .search-result-item:last-child {
+             border-bottom: none; /* No border on last item */
+         }
+         .search-result-item:hover {
+            background-color: var(--bg-dark);
+            color: var(--primary-orange);
+         }
+         .search-result-item.no-results {
+             font-style: italic;
+             color: var(--text-secondary);
+             cursor: default;
+         }
+          .search-result-item.no-results:hover {
+             background-color: transparent; /* Don't highlight "no results" */
+             color: var(--text-secondary);
+         }
+
+
+        .auth-buttons {
+             flex-shrink: 0; /* Prevent buttons from shrinking */
+             display: flex; /* Align buttons */
+             align-items: center;
+        }
+        .auth-buttons button, .auth-buttons a.btn {
             margin-left: 0.8rem;
         }
 
-        /* --- Buttons --- */
-        .btn {
-            padding: 0.7rem 1.5rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-            text-decoration: none; /* Crucial for <a> tags styled as buttons */
-            display: inline-block; /* Ensure proper spacing and sizing */
-            text-align: center;
-        }
+        /* --- Buttons (Keep existing styles) --- */
+        .btn { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease; text-decoration: none; display: inline-block; text-align: center; }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background-color: var(--primary-orange); color: var(--text-dark); border: 2px solid var(--primary-orange); }
+        .btn-primary:hover { background-color: var(--primary-orange-darker); border-color: var(--primary-orange-darker); box-shadow: 0 0 10px rgba(255, 102, 0, 0.5); color: var(--text-dark); }
+        .btn-secondary { background-color: transparent; color: var(--text-light); border: 2px solid var(--border-light); }
+        .btn-secondary:hover { background-color: rgba(224, 224, 224, 0.1); border-color: var(--text-light); color: var(--text-light); }
 
-        .btn:active {
-            transform: scale(0.97); /* Slight press effect */
-        }
+        /* --- Main Content & Hero Section (Keep existing styles) --- */
+        main { flex-grow: 1; display: flex; justify-content: center; align-items: center; padding: 2rem; }
+        .hero-section { text-align: center; }
+        .btn-cta { font-size: 1.6rem; padding: 1.2rem 3rem; background-color: transparent; color: var(--primary-orange); border: 3px solid var(--primary-orange); border-radius: 8px; position: relative; overflow: hidden; transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease; }
+        @keyframes pulse-outline { 0% { box-shadow: 0 0 0 0 rgba(255, 102, 0, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(255, 102, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 102, 0, 0); } }
+        .btn-cta:hover { background-color: var(--primary-orange); color: var(--text-dark); animation: pulse-outline 0.6s infinite; }
 
-        /* Primary Button (Orange) */
-        .btn-primary {
-            background-color: var(--primary-orange);
-            color: var(--text-dark); /* Dark text on orange for contrast */
-            border: 2px solid var(--primary-orange);
-        }
+        /* --- Footer (Keep existing styles) --- */
+        footer { text-align: center; padding: 1rem; margin-top: auto; background-color: var(--bg-secondary); color: #aaa; font-size: 0.9rem; }
 
-        .btn-primary:hover {
-            background-color: var(--primary-orange-darker);
-            border-color: var(--primary-orange-darker);
-            box-shadow: 0 0 10px rgba(255, 102, 0, 0.5); /* Subtle glow */
-            color: var(--text-dark); /* Ensure text color remains correct on hover */
-        }
-
-        /* Secondary Button (Outline/Ghost) */
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--text-light);
-            border: 2px solid var(--border-light);
-        }
-
-        .btn-secondary:hover {
-            background-color: rgba(224, 224, 224, 0.1); /* Slight background tint */
-            border-color: var(--text-light);
-            color: var(--text-light);
-        }
-
-        /* --- Main Content & Hero Section --- */
-        main {
-            flex-grow: 1; /* Takes up remaining vertical space */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-        }
-
-        .hero-section {
-            text-align: center;
-        }
-
-        /* Call to Action Button/Link (Go to Matches) */
-        .btn-cta {
-            font-size: 1.6rem;
-            padding: 1.2rem 3rem;
-            background-color: transparent;
-            color: var(--primary-orange);
-            border: 3px solid var(--primary-orange);
-            border-radius: 8px;
-            position: relative; /* Needed for potential pseudo-elements if used */
-            overflow: hidden; /* Contain effects */
-            /* Keep transition for non-animation properties */
-             transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease;
-        }
-
-        /* --- Pulse Animation --- */
-        @keyframes pulse-outline {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 102, 0, 0.7);
-            }
-            70% {
-                /* Increase the spread (third value) for the outline effect */
-                box-shadow: 0 0 0 12px rgba(255, 102, 0, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 102, 0, 0);
-            }
-        }
-
-        /* Apply animation on hover */
-        .btn-cta:hover {
-            background-color: var(--primary-orange);
-            color: var(--text-dark); /* Text color changes on hover */
-            /* Apply the animation - fast duration (0.6s) */
-            animation: pulse-outline 0.6s infinite;
-            /* Ensure border stays consistent or changes as desired */
-            /* border-color: var(--primary-orange); */ /* Redundant if bg changes */
-        }
-
-        /* --- Footer --- */
-        footer {
-            text-align: center;
-            padding: 1rem;
-            margin-top: auto; /* Pushes footer to bottom */
-            background-color: var(--bg-secondary);
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-
-        /* --- Responsive (Basic Example) --- */
+        /* --- Responsive --- */
         @media (max-width: 768px) {
             .nav-container {
-                flex-direction: column;
-                align-items: center;
-                gap: 0.5rem; /* Space between logo and buttons */
+                flex-wrap: wrap; /* Allow wrapping */
+                justify-content: center; /* Center items when wrapped */
+                padding: 0 1rem;
             }
-            .auth-buttons {
-                margin-top: 0.5rem;
-            }
-            .btn-cta {
-                font-size: 1.3rem;
-                padding: 1rem 2.5rem;
-            }
+            .logo { margin-bottom: 0.5rem; text-align: center; width: 100%; }
+            .search-container { order: 3; width: 100%; max-width: none; margin: 0.5rem 0; } /* Search below logo */
+            .auth-buttons { order: 2; margin-bottom: 0.5rem; width: 100%; justify-content: center;} /* Buttons above search */
+             .auth-buttons button, .auth-buttons a.btn { margin: 0 0.4rem; }
+
+            .btn-cta { font-size: 1.3rem; padding: 1rem 2.5rem; }
         }
 
         @media (max-width: 480px) {
-            .logo {
-                font-size: 1.5rem;
-            }
-            .btn {
-                padding: 0.6rem 1.2rem;
-                font-size: 0.9rem;
-            }
-             .auth-buttons button, .auth-buttons a.btn {
-                margin-left: 0.5rem;
-             }
-             .btn-cta {
-                font-size: 1.2rem;
-                padding: 0.9rem 2rem;
-            }
+            .logo { font-size: 1.5rem; }
+            .btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
+            .auth-buttons button, .auth-buttons a.btn { margin: 0 0.3rem; }
+             .btn-cta { font-size: 1.2rem; padding: 0.9rem 2rem; }
+             #user-search-input { font-size: 0.9rem; padding: 0.5rem 0.8rem; }
+             .search-result-item { padding: 0.7rem 0.8rem; font-size: 0.9rem;}
         }
 
-/* --- Modal Styles --- */
-        .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1000; /* Sit on top */
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.active {
-            display: flex; /* Show when active */
-        }
-
-        .modal-content {
-            background-color: var(--bg-secondary);
-            margin: auto;
-            padding: 30px;
-            border: 1px solid var(--border-light);
-            width: 80%;
-            max-width: 450px;
-            border-radius: 8px;
-            position: relative;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            color: var(--text-light);
-        }
-
-        .close-btn {
-            color: #aaa;
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close-btn:hover,
-        .close-btn:focus {
-            color: var(--text-light);
-            text-decoration: none;
-        }
-
-        .modal-content h2 {
-            margin-bottom: 1.5rem;
-            text-align: center;
-            color: var(--primary-orange);
-        }
-
-        .modal-content form label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        .modal-content form input[type="text"],
-        .modal-content form input[type="email"],
-        .modal-content form input[type="password"] {
-            width: 100%;
-            padding: 0.8rem;
-            margin-bottom: 1rem;
-            border: 1px solid var(--border-light);
-            border-radius: 4px;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            font-size: 1rem;
-        }
-         .modal-content form input[type="text"]:focus,
-        .modal-content form input[type="email"]:focus,
-        .modal-content form input[type="password"]:focus {
-            outline: none;
-            border-color: var(--primary-orange);
-            box-shadow: 0 0 5px rgba(255, 102, 0, 0.5);
-        }
-
-        .modal-content form button {
-            width: 100%;
-            margin-top: 0.5rem;
-        }
-
-        .error-message {
-            color: #ff4d4d; /* Light red for errors */
-            margin-top: 1rem;
-            text-align: center;
-            font-size: 0.9rem;
-            min-height: 1.2em; /* Reserve space */
-        }
+        /* --- Modal Styles (Keep existing styles) --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background-color: var(--bg-secondary); margin: auto; padding: 30px; border: 1px solid var(--border-light); width: 80%; max-width: 450px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); color: var(--text-light); }
+        .close-btn { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover, .close-btn:focus { color: var(--text-light); text-decoration: none; }
+        .modal-content h2 { margin-bottom: 1.5rem; text-align: center; color: var(--primary-orange); }
+        .modal-content form label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .modal-content form input[type="text"], .modal-content form input[type="email"], .modal-content form input[type="password"] { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid var(--border-light); border-radius: 4px; background-color: var(--bg-dark); color: var(--text-light); font-size: 1rem; }
+        .modal-content form input[type="text"]:focus, .modal-content form input[type="email"]:focus, .modal-content form input[type="password"]:focus { outline: none; border-color: var(--primary-orange); box-shadow: 0 0 5px rgba(255, 102, 0, 0.5); }
+        .modal-content form button { width: 100%; margin-top: 0.5rem; }
+        .error-message { color: #ff4d4d; margin-top: 1rem; text-align: center; font-size: 0.9rem; min-height: 1.2em; }
     </style>
 </head>
 <body>
     <header>
         <div class="nav-container">
             <h1 class="logo">Poxel Competitive</h1>
+
+            <!-- NEW: Search Bar Added -->
+            <div class="search-container">
+                <input type="search" id="user-search-input" placeholder="Search players...">
+                <div id="user-search-results" class="search-results-dropdown">
+                    <!-- Search results will be populated here by JS -->
+                </div>
+            </div>
+
             <div class="auth-buttons">
-                <!-- Updated buttons to open modals -->
+                <!-- Original Auth buttons -->
                 <button class="btn btn-secondary" id="login-btn">Login</button>
                 <button class="btn btn-primary" id="signup-btn">Sign Up</button>
                 <!-- Logged-in state (initially hidden) -->
@@ -318,7 +224,7 @@
     </main>
 
     <footer>
-        <p>© 2024 Poxel Competitive. All rights reserved.</p> <!-- Updated year -->
+        <p>© 2024 Poxel Competitive. All rights reserved.</p>
     </footer>
 
     <!-- Login Modal -->
@@ -329,10 +235,8 @@
             <form id="login-form">
                 <label for="login-email">Email:</label>
                 <input type="email" id="login-email" name="email" required>
-
                 <label for="login-password">Password:</label>
                 <input type="password" id="login-password" name="password" required>
-
                 <button type="submit" class="btn btn-primary">Login</button>
                 <p class="error-message" id="login-error"></p>
             </form>
@@ -347,13 +251,10 @@
             <form id="signup-form">
                  <label for="signup-username">Username:</label>
                 <input type="text" id="signup-username" name="username" required>
-
                 <label for="signup-email">Email:</label>
                 <input type="email" id="signup-email" name="email" required>
-
                 <label for="signup-password">Password:</label>
-                <input type="password" id="signup-password" name="password" required minlength="6"> <!-- Added minlength -->
-
+                <input type="password" id="signup-password" name="password" required minlength="6">
                 <button type="submit" class="btn btn-primary">Sign Up</button>
                  <p class="error-message" id="signup-error"></p>
             </form>
@@ -363,11 +264,11 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <!-- ** IMPORTANT: Add Firestore SDK ** -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
-    <!-- Your new Auth script -->
+    <!-- Your Auth script -->
     <script src="auth.js"></script>
-  
-
 
 </body>
 </html>
