@@ -3,1131 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico">
     <title>Poxel Competitive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
     <style>
+        /* --- Global Styles & Variables --- */
         :root {
-            --dark: #121212;
-            --dark-accent: #1e1e1e;
-            --orange: #ff5722; /* Main orange */
-            --orange-light: #ff7e47;
-            --orange-dark: #e64a19; /* Darker orange for hover */
-            --text: #f5f5f5;
-            --text-secondary: #aaaaaa;
+            --bg-dark: #121212;
+            --bg-secondary: #1e1e1e;
+            --text-light: #e0e0e0;
+            --text-dark: #121212;
+            --primary-orange: #ff6600;
+            --primary-orange-darker: #e65c00;
+            --border-light: #444;
+            --text-secondary: #aaa; /* Added for placeholder/dropdown text */
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background-color: var(--dark);
-            color: var(--text);
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- Header --- */
+        /* --- Header & Navigation --- */
         header {
-            background-color: var(--dark-accent);
-            padding-top: 1rem; /* Add top padding */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            background-color: var(--bg-secondary);
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 100; /* Ensure header stays on top */
         }
 
-        .header-top-row {
+        .nav-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 1rem 1rem 1rem; /* Padding L/R/B */
+            padding: 0 2rem;
             display: flex;
-            justify-content: space-between; /* Pushes items apart */
+            justify-content: space-between;
             align-items: center;
-            gap: 1rem; /* Space between items if they get close */
-        }
-
-        /* Home Button Style */
-        .btn { /* Base button styles */
-            padding: 0.7rem 1.5rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .btn-home {
-            background-color: var(--orange);
-            color: var(--text); /* White text on orange */
-            border: 2px solid var(--orange);
-            padding: 0.6rem 1.3rem; /* Adjust padding */
-            font-size: 0.9rem;
-            flex-shrink: 0; /* Prevent button from shrinking */
-        }
-
-        .btn-home:hover {
-            background-color: var(--orange-dark);
-            border-color: var(--orange-dark);
-            color: var(--text);
-            box-shadow: 0 0 8px rgba(255, 87, 34, 0.5);
+            gap: 1rem; /* Add some gap between items */
         }
 
         .logo {
-            display: flex;
-            align-items: center;
-            /* justify-content: center; /* Removed to allow space-between */
-            gap: 1rem;
-            flex-grow: 1; /* Allow logo to take available space if needed */
-            justify-content: center; /* Center logo elements internally */
-        }
-
-        .logo h1 {
-            font-size: 2rem;
-            background: linear-gradient(to right, var(--orange), var(--orange-light));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-align: center; /* Ensure text is centered if it wraps */
-            white-space: nowrap; /* Prevent title wrapping if possible */
-        }
-
-        .logo-icon {
-            /* Add styles if you have a logo image/icon */
-             width: 30px; /* Example size */
-             height: 30px; /* Example size */
-             /* background-color: var(--orange); /* Example placeholder */
-             /* border-radius: 50%; */
-        }
-
-        /* --- Navigation Tabs --- */
-        nav {
-            display: flex;
-            justify-content: center;
-            /* margin-top: 1rem; /* Removed, spacing handled by header-top-row padding */
-            flex-wrap: wrap;
-            max-width: 1200px; /* Limit width */
-            margin: 0 auto 1rem auto; /* Center nav and add bottom margin */
-            padding: 0 1rem; /* Padding for smaller screens */
-        }
-
-        .nav-tab {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 1rem;
-            font-weight: 600;
-            padding: 0.8rem 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            white-space: nowrap;
-        }
-
-        .nav-tab::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 3px;
-            background-color: var(--orange);
-            transition: width 0.3s ease;
-        }
-
-        .nav-tab:hover {
-            color: var(--text);
-        }
-
-        .nav-tab.active {
-            color: var(--orange);
-        }
-
-        .nav-tab.active::after {
-            width: 100%;
-        }
-
-        /* --- Main Content --- */
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        .content-section {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .content-section.active {
-            display: block;
-            opacity: 1;
-        }
-
-        .section-title {
             font-size: 1.8rem;
-            margin-bottom: 2rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--orange-dark);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-         .section-title span { /* Style for potential icons */
-            color: var(--orange);
-         }
-
-        .card {
-            background-color: var(--dark-accent);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            font-weight: 700;
+            color: var(--text-light);
+            flex-shrink: 0; /* Prevent logo from shrinking */
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        /* --- NEW: Search Bar Container --- */
+        .search-container {
+            position: relative; /* For dropdown positioning */
+            flex-grow: 1; /* Allow search to take available space */
+            max-width: 400px; /* Limit max width */
+            margin: 0 1rem; /* Add some margin */
         }
 
-        /* Upcoming matches section */
-        .matches-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .match-card {
-            border-left: 4px solid var(--orange);
-        }
-
-        .match-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap; /* Allow wrapping */
-            gap: 0.5rem; /* Space if wraps */
-        }
-
-        .match-date {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .match-type {
-            background-color: var(--orange-dark);
-            color: var(--text);
-            font-size: 0.8rem;
-            padding: 0.3rem 0.6rem;
-            border-radius: 4px;
-            white-space: nowrap; /* Prevent wrapping */
-        }
-
-        .match-teams {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .team {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            width: 40%;
-        }
-
-        .team-name {
-            font-weight: 600;
-            text-align: center;
-            word-break: break-word;
-        }
-
-        .team-logo {
-            width: 50px;
-            height: 50px;
-            background-color: #333;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text);
-            font-weight: bold;
-            font-size: 1.2rem;
-             overflow: hidden;
-        }
-
-        .versus {
-            font-size: 1.2rem;
-            color: var(--orange);
-             margin: 0 0.5rem; /* Add horizontal space */
-        }
-
-        .match-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-         .match-footer a {
-             color: var(--orange);
-             text-decoration: none;
-         }
-         .match-footer a:hover {
-             text-decoration: underline;
-         }
-         .match-countdown {
-            text-align: center;
-            margin: 0.5rem 0;
-            font-size: 0.9em;
-            color: var(--orange-light);
-            width: 100%; /* Ensure it takes full width */
-             order: -1; /* Move countdown above teams visually */
-             margin-bottom: 1rem; /* Add space below countdown */
-         }
-
-
-        /* Leaderboard section */
-        .leaderboard-table {
+        #user-search-input {
             width: 100%;
-            border-collapse: collapse;
-             overflow-x: auto;
-             display: block;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 20px; /* Rounded corners */
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
-
-        .leaderboard-table th, .leaderboard-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #333;
-             white-space: nowrap;
-        }
-
-        .leaderboard-table th {
-            text-align: left;
-            background-color: rgba(255, 87, 34, 0.1);
-            color: var(--orange);
-            font-weight: 600;
-             position: sticky;
-             top: 0;
-             z-index: 1;
-             background-color: var(--dark-accent); /* Match header for sticky effect */
-        }
-
-        .leaderboard-table tr:hover {
-            background-color: rgba(255, 87, 34, 0.05);
-        }
-
-        .rank {
-            width: 60px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .top-rank {
-            color: var(--orange);
-        }
-
-        .player {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .player-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-             flex-shrink: 0;
-        }
-         .player-name {
-             font-weight: 500;
-         }
-
-        .stats {
-            text-align: center;
-        }
-
-        /* Bracket section */
-        .tournament-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-             flex-wrap: wrap;
-             gap: 1rem;
-        }
-
-        .bracket-container {
-            overflow-x: auto;
-            padding: 1rem 0;
-            background-color: rgba(0,0,0,0.1);
-             border-radius: 4px;
-             /* Styling for scrollbar */
-            scrollbar-width: thin;
-            scrollbar-color: var(--orange) var(--dark-accent);
-        }
-         .bracket-container::-webkit-scrollbar { height: 8px; }
-         .bracket-container::-webkit-scrollbar-track { background: var(--dark-accent); border-radius: 4px; }
-         .bracket-container::-webkit-scrollbar-thumb { background-color: var(--orange); border-radius: 4px; }
-
-
-        .bracket {
-            display: flex;
-             gap: 30px;
-            min-width: 800px;
-             padding: 10px;
-        }
-
-        .round {
-            display: flex;
-            flex-direction: column;
-            width: 220px;
-             gap: 15px;
-             flex-shrink: 0;
-        }
-
-        .round-title {
-            text-align: center;
-            margin-bottom: 1rem;
-            color: var(--orange);
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .match-bracket {
-            background-color: var(--dark-accent);
-            border-radius: 4px;
-            padding: 0.8rem;
-            position: relative;
-            border: 1px solid #333;
-             min-height: 70px;
-             display: flex;
-             flex-direction: column;
-             justify-content: space-between;
-        }
-
-        .match-bracket.completed {
-            border-left: 3px solid var(--orange);
-        }
-
-        .match-bracket.upcoming {
-            border-left: 3px solid var(--text-secondary);
-        }
-
-        .bracket-team {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .bracket-team-name {
-            font-size: 0.9rem;
-            flex-grow: 1;
-            margin-right: 10px;
-             overflow: hidden;
-             text-overflow: ellipsis;
-             white-space: nowrap;
-        }
-
-        .bracket-score {
-            font-weight: bold;
-            font-size: 0.9rem;
-             flex-shrink: 0;
-        }
-
-        .bracket-winner .bracket-team-name,
-        .bracket-winner .bracket-score {
-            color: var(--orange);
-             font-weight: bold;
-        }
-
-
-        /* Filters and controls */
-        .filter-controls {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-
-        .filter-btn {
-            background-color: var(--dark-accent);
-            border: 1px solid #444;
+        #user-search-input::placeholder {
             color: var(--text-secondary);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
+        }
+         #user-search-input:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 8px rgba(255, 102, 0, 0.4);
+         }
+
+        /* --- NEW: Search Results Dropdown --- */
+        .search-results-dropdown {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: calc(100% + 5px); /* Position below input with 5px gap */
+            left: 0;
+            width: 100%;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            max-height: 300px; /* Limit height and allow scrolling */
+            overflow-y: auto;
+            z-index: 110; /* Must be higher than header */
+        }
+         .search-result-item {
+            padding: 0.8rem 1rem;
+            color: var(--text-light);
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .filter-btn:hover {
-            background-color: #333;
-            color: var(--text);
-        }
-
-        .filter-btn.active {
-            background-color: var(--orange-dark);
-            color: var(--text);
-            border-color: var(--orange);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-             .header-top-row {
-                 padding: 0 0.5rem 0.5rem 0.5rem;
-             }
-             .logo h1 {
-                 font-size: 1.6rem; /* Smaller logo */
-                 white-space: normal; /* Allow wrapping if needed */
-             }
-             .btn-home {
-                 padding: 0.5rem 1rem; /* Adjust button padding */
-                 font-size: 0.85rem;
-             }
-
-            nav {
-                overflow-x: auto;
-                justify-content: flex-start;
-                padding-bottom: 0.5rem;
-                scrollbar-width: thin;
-                scrollbar-color: var(--orange) var(--dark-accent);
-                 margin-bottom: 0.5rem; /* Reduce bottom margin */
-            }
-             nav::-webkit-scrollbar { height: 5px; }
-             nav::-webkit-scrollbar-track { background: var(--dark-accent); }
-             nav::-webkit-scrollbar-thumb { background-color: var(--orange); border-radius: 6px; }
-             .nav-tab { padding: 0.6rem 1rem; font-size: 0.9rem; } /* Smaller tabs */
-
-            .matches-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .tournament-controls {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.8rem;
-            }
-            .tournament-controls .filter-controls {
-                justify-content: center;
-            }
-
-             .leaderboard-table {
-                font-size: 0.9rem;
-             }
-             .leaderboard-table th, .leaderboard-table td {
-                padding: 0.6rem;
-             }
-             .player { gap: 0.5rem; }
-             .player-avatar { width: 30px; height: 30px; font-size: 0.8rem; }
-        }
-         @media (max-width: 480px) {
-             .header-top-row {
-                 flex-wrap: wrap; /* Allow button and logo to wrap */
-                 justify-content: center; /* Center items when wrapped */
-             }
-             .logo h1 {
-                 font-size: 1.4rem;
-             }
-             .btn-home {
-                 order: -1; /* Move home button to top when wrapped */
-                 margin-bottom: 0.5rem; /* Add space below button */
-                 width: 100%; /* Make button full width */
-                 text-align: center;
-             }
-             .nav-tab { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
-             .filter-controls { gap: 0.5rem; }
-             .filter-btn { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
-             .card { padding: 1rem; }
-             .section-title { font-size: 1.5rem; }
+            display: block; /* Treat as block for full width click */
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid var(--border-light); /* Separator */
+            text-decoration: none; /* If using <a> tags */
          }
-
-
-        /* Animation */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease forwards;
-        }
-
-        /* Empty state & Loading */
-        .empty-state, .loading-state {
-             display: flex;
-             flex-direction: column;
-             align-items: center;
-             justify-content: center;
-             padding: 3rem 1rem;
-             text-align: center;
-             color: var(--text-secondary);
-             background-color: var(--dark-accent);
-             border-radius: 8px;
-             margin-top: 1.5rem;
-             width: 100%;
-             min-height: 150px; /* Ensure it has some height */
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: var(--orange-dark);
-        }
-         .loading-state {
+          .search-result-item:last-child {
+             border-bottom: none; /* No border on last item */
+         }
+         .search-result-item:hover {
+            background-color: var(--bg-dark);
+            color: var(--primary-orange);
+         }
+         .search-result-item.no-results {
              font-style: italic;
-             padding: 2rem 1rem;
+             color: var(--text-secondary);
+             cursor: default;
+         }
+          .search-result-item.no-results:hover {
+             background-color: transparent; /* Don't highlight "no results" */
+             color: var(--text-secondary);
          }
 
+
+        .auth-buttons {
+             flex-shrink: 0; /* Prevent buttons from shrinking */
+             display: flex; /* Align buttons */
+             align-items: center;
+        }
+        .auth-buttons button, .auth-buttons a.btn {
+            margin-left: 0.8rem;
+        }
+
+        /* --- Buttons (Keep existing styles) --- */
+        .btn { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease; text-decoration: none; display: inline-block; text-align: center; }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background-color: var(--primary-orange); color: var(--text-dark); border: 2px solid var(--primary-orange); }
+        .btn-primary:hover { background-color: var(--primary-orange-darker); border-color: var(--primary-orange-darker); box-shadow: 0 0 10px rgba(255, 102, 0, 0.5); color: var(--text-dark); }
+        .btn-secondary { background-color: transparent; color: var(--text-light); border: 2px solid var(--border-light); }
+        .btn-secondary:hover { background-color: rgba(224, 224, 224, 0.1); border-color: var(--text-light); color: var(--text-light); }
+
+        /* --- Main Content & Hero Section (Keep existing styles) --- */
+        main { flex-grow: 1; display: flex; justify-content: center; align-items: center; padding: 2rem; }
+        .hero-section { text-align: center; }
+        .btn-cta { font-size: 1.6rem; padding: 1.2rem 3rem; background-color: transparent; color: var(--primary-orange); border: 3px solid var(--primary-orange); border-radius: 8px; position: relative; overflow: hidden; transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease; }
+        @keyframes pulse-outline { 0% { box-shadow: 0 0 0 0 rgba(255, 102, 0, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(255, 102, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 102, 0, 0); } }
+        .btn-cta:hover { background-color: var(--primary-orange); color: var(--text-dark); animation: pulse-outline 0.6s infinite; }
+
+        /* --- Footer (Keep existing styles) --- */
+        footer { text-align: center; padding: 1rem; margin-top: auto; background-color: var(--bg-secondary); color: #aaa; font-size: 0.9rem; }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-wrap: wrap; /* Allow wrapping */
+                justify-content: center; /* Center items when wrapped */
+                padding: 0 1rem;
+            }
+            .logo { margin-bottom: 0.5rem; text-align: center; width: 100%; }
+            .search-container { order: 3; width: 100%; max-width: none; margin: 0.5rem 0; } /* Search below logo */
+            .auth-buttons { order: 2; margin-bottom: 0.5rem; width: 100%; justify-content: center;} /* Buttons above search */
+             .auth-buttons button, .auth-buttons a.btn { margin: 0 0.4rem; }
+
+            .btn-cta { font-size: 1.3rem; padding: 1rem 2.5rem; }
+        }
+
+        @media (max-width: 480px) {
+            .logo { font-size: 1.5rem; }
+            .btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
+            .auth-buttons button, .auth-buttons a.btn { margin: 0 0.3rem; }
+             .btn-cta { font-size: 1.2rem; padding: 0.9rem 2rem; }
+             #user-search-input { font-size: 0.9rem; padding: 0.5rem 0.8rem; }
+             .search-result-item { padding: 0.7rem 0.8rem; font-size: 0.9rem;}
+        }
+
+        /* --- Modal Styles (Keep existing styles) --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background-color: var(--bg-secondary); margin: auto; padding: 30px; border: 1px solid var(--border-light); width: 80%; max-width: 450px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5); color: var(--text-light); }
+        .close-btn { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover, .close-btn:focus { color: var(--text-light); text-decoration: none; }
+        .modal-content h2 { margin-bottom: 1.5rem; text-align: center; color: var(--primary-orange); }
+        .modal-content form label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .modal-content form input[type="text"], .modal-content form input[type="email"], .modal-content form input[type="password"] { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid var(--border-light); border-radius: 4px; background-color: var(--bg-dark); color: var(--text-light); font-size: 1rem; }
+        .modal-content form input[type="text"]:focus, .modal-content form input[type="email"]:focus, .modal-content form input[type="password"]:focus { outline: none; border-color: var(--primary-orange); box-shadow: 0 0 5px rgba(255, 102, 0, 0.5); }
+        .modal-content form button { width: 100%; margin-top: 0.5rem; }
+        .error-message { color: #ff4d4d; margin-top: 1rem; text-align: center; font-size: 0.9rem; min-height: 1.2em; }
     </style>
 </head>
 <body>
     <header>
-        <div class="header-top-row"> <!-- New container for top elements -->
-            <a href="index.html" class="btn btn-home">Home</a> <!-- Home Button -->
-            <div class="logo">
-                <!-- If you have a logo image/icon, place it here -->
-                <!-- <img src="path/to/logo.png" alt="Poxel Logo" class="logo-icon"> -->
-                 <div class="logo-icon"></div> <!-- Placeholder if no image -->
-                <h1>Poxel Competitive</h1>
+        <div class="nav-container">
+            <h1 class="logo">Poxel Competitive</h1>
+
+            <!-- NEW: Search Bar Added -->
+            <div class="search-container">
+                <input type="search" id="user-search-input" placeholder="Search players...">
+                <div id="user-search-results" class="search-results-dropdown">
+                    <!-- Search results will be populated here by JS -->
+                </div>
             </div>
-            <!-- Auth Buttons could go here if needed -->
+
+            <div class="auth-buttons">
+                <!-- Original Auth buttons -->
+                <button class="btn btn-secondary" id="login-btn">Login</button>
+                <button class="btn btn-primary" id="signup-btn">Sign Up</button>
+                <!-- Logged-in state (initially hidden) -->
+                <a href="profile.html" class="btn btn-secondary" id="profile-btn" style="display: none;">Profile</a>
+                <button class="btn btn-primary" id="logout-btn" style="display: none;">Logout</button>
+            </div>
         </div>
-        <nav>
-            <button class="nav-tab active" data-section="upcoming-matches">Upcoming Matches</button>
-            <button class="nav-tab" data-section="leaderboard">Leaderboard</button>
-            <button class="nav-tab" data-section="bracket">Tournament Bracket</button>
-            <!-- <a href="admin.html" class="nav-tab" style="color: var(--orange-light);">Admin Panel</a> -->
-        </nav>
     </header>
 
     <main>
-        <!-- Upcoming Matches Section -->
-        <section id="upcoming-matches" class="content-section active">
-            <h2 class="section-title">
-                <span>📅</span> Upcoming Matches
-            </h2>
-
-            <div class="filter-controls">
-                <button class="filter-btn active" data-filter="all">All Matches</button>
-                <button class="filter-btn" data-filter="qualifiers">Qualifiers</button>
-                <button class="filter-btn" data-filter="quarterfinals">Quarterfinals</button>
-                <button class="filter-btn" data-filter="semifinals">Semifinals</button>
-                <button class="filter-btn" data-filter="finals">Finals</button>
-            </div>
-
-            <div class="matches-grid" id="matches-container">
-                <div class="loading-state">Loading matches...</div>
-                <!-- Matches will be populated here via JavaScript -->
-            </div>
-        </section>
-
-        <!-- Leaderboard Section -->
-        <section id="leaderboard" class="content-section">
-            <h2 class="section-title">
-                <span>🏆</span> Tournament Leaderboard
-            </h2>
-
-            <div class="filter-controls">
-                <button class="filter-btn active" data-sort="rank">Rank</button>
-                <button class="filter-btn" data-sort="wins">Wins</button>
-                <button class="filter-btn" data-sort="points">Points</button>
-                 <button class="filter-btn" data-sort="name">Name</button>
-            </div>
-
-            <div class="card"> <!-- Wrap table in card for consistency -->
-                <div style="overflow-x:auto;"> <!-- Make only table scrollable -->
-                    <table class="leaderboard-table" id="leaderboard-table">
-                        <thead>
-                            <tr>
-                                <th class="rank">Rank</th>
-                                <th>Player</th>
-                                <th class="stats">Matches</th>
-                                <th class="stats">Wins</th>
-                                <th class="stats">Losses</th>
-                                <th class="stats">Points</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leaderboard-body">
-                            <tr><td colspan="6" class="loading-state">Loading leaderboard...</td></tr>
-                            <!-- Leaderboard data will be populated here via JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Tournament Bracket Section -->
-        <section id="bracket" class="content-section">
-            <h2 class="section-title">
-                <span>⚔️</span> Tournament Bracket
-            </h2>
-
-            <div class="tournament-controls">
-                <div class="filter-controls">
-                    <button class="filter-btn active" data-tournament="pro">Pro Tourney</button>
-                    <button class="filter-btn" data-tournament="novice">Novice Tourney</button>
-                </div>
-            </div>
-
-            <div class="bracket-container">
-                <div class="bracket" id="bracket-display-container">
-                     <div class="loading-state">Loading bracket...</div>
-                    <!-- Bracket will be populated here via JavaScript -->
-                </div>
-            </div>
-        </section>
+        <div class="hero-section">
+            <a href="main.html" class="btn btn-cta">Go to Matches</a>
+        </div>
     </main>
 
+    <footer>
+        <p>© 2024 Poxel Competitive. All rights reserved.</p>
+    </footer>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-login">×</span>
+            <h2>Login</h2>
+            <form id="login-form">
+                <label for="login-email">Email:</label>
+                <input type="email" id="login-email" name="email" required>
+                <label for="login-password">Password:</label>
+                <input type="password" id="login-password" name="password" required>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <p class="error-message" id="login-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signup-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-signup">×</span>
+            <h2>Sign Up</h2>
+            <form id="signup-form">
+                 <label for="signup-username">Username:</label>
+                <input type="text" id="signup-username" name="username" required>
+                <label for="signup-email">Email:</label>
+                <input type="email" id="signup-email" name="email" required>
+                <label for="signup-password">Password:</label>
+                <input type="password" id="signup-password" name="password" required minlength="6">
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+                 <p class="error-message" id="signup-error"></p>
+            </form>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <!-- ** IMPORTANT: Add Firestore SDK ** -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
-    <script>
-        // IMPORTANT: Replace with your actual Firebase project configuration
-        const firebaseConfig = {
-           apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
-            authDomain: "poxelcomp.firebaseapp.com",
-            projectId: "poxelcomp",
-            storageBucket: "poxelcomp.firebasestorage.app",
-            messagingSenderId: "620490990104",
-            appId: "1:620490990104:web:709023eb464c7d886b996d",
-        };
+    <!-- Your Auth script -->
+    <script src="auth.js"></script>
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // DOM Elements
-        const tabButtons = document.querySelectorAll('.nav-tab');
-        const contentSections = document.querySelectorAll('.content-section');
-        const matchesContainer = document.getElementById('matches-container');
-        const leaderboardBody = document.getElementById('leaderboard-body');
-        const bracketDisplayContainer = document.getElementById('bracket-display-container');
-
-        // Global state
-        let currentMatches = [];
-        let currentLeaderboard = [];
-        let currentBracket = {};
-        const countdownIntervals = {}; // Store countdown interval IDs
-
-        // --- Helper Functions ---
-        function createEmptyState(message, submessage) {
-            return `
-                <div class="empty-state">
-                    <div class="empty-icon">📭</div>
-                    <h3>${message}</h3>
-                    <p>${submessage || ''}</p>
-                </div>
-            `;
-        }
-
-        function formatDate(date) {
-            const d = (date instanceof Date) ? date : (date && date.toDate ? date.toDate() : null);
-            if (!d) return 'Date TBD';
-            try {
-                 return d.toLocaleString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric',
-                    hour: 'numeric', minute: '2-digit', hour12: true
-                });
-            } catch (e) {
-                console.error("Error formatting date:", d, e);
-                return "Invalid Date";
-            }
-        }
-
-        function stopAllCountdowns() {
-            Object.values(countdownIntervals).forEach(clearInterval);
-            for (let key in countdownIntervals) delete countdownIntervals[key];
-        }
-
-        function addCountdownTimer(matchElement, matchId, matchDateTimestamp) {
-            const timerElement = matchElement.querySelector('.match-countdown');
-            if (!timerElement || !matchDateTimestamp || typeof matchDateTimestamp.toDate !== 'function') return;
-
-            const matchDate = matchDateTimestamp.toDate();
-
-            if (countdownIntervals[matchId]) clearInterval(countdownIntervals[matchId]);
-
-            const updateTimer = () => {
-                const now = new Date();
-                const diff = matchDate - now;
-
-                if (diff <= 0) {
-                    timerElement.textContent = 'Match may have started!';
-                    timerElement.style.color = 'var(--orange)';
-                    if (countdownIntervals[matchId]) clearInterval(countdownIntervals[matchId]);
-                    delete countdownIntervals[matchId];
-                    return;
-                }
-
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                let timerString = "Starts in: ";
-                if (days > 0) timerString += `${days}d `;
-                if (days > 0 || hours > 0) timerString += `${hours}h `;
-                timerString += `${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-
-                timerElement.textContent = timerString;
-                timerElement.style.color = 'var(--orange-light)';
-            };
-
-            updateTimer();
-            countdownIntervals[matchId] = setInterval(updateTimer, 1000);
-        }
-
-
-        // --- Initialization ---
-        function init() {
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => switchTab(button.dataset.section));
-            });
-
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => handleFilterSortClick(e.target));
-            });
-
-            setupFirestoreListeners();
-
-            // Display content for initially active tab
-             const initialSection = document.querySelector('.nav-tab.active')?.dataset.section || 'upcoming-matches';
-             switchTab(initialSection, true); // Force initial load display
-        }
-
-        // --- Tab Switching ---
-        function switchTab(sectionId, forceDisplay = false) {
-             const alreadyActive = document.querySelector(`.nav-tab[data-section="${sectionId}"]`)?.classList.contains('active');
-
-             // Only update UI if switching to a different tab or forcing display
-             if (!alreadyActive || forceDisplay) {
-                 tabButtons.forEach(button => button.classList.toggle('active', button.dataset.section === sectionId));
-                 contentSections.forEach(section => section.classList.toggle('active', section.id === sectionId));
-
-                 // Refresh data display for the newly activated tab
-                 if (sectionId === 'upcoming-matches') {
-                     const activeFilter = document.querySelector('#upcoming-matches .filter-btn.active')?.dataset.filter || 'all';
-                     filterAndDisplayMatches(activeFilter);
-                 } else if (sectionId === 'leaderboard') {
-                     const activeSort = document.querySelector('#leaderboard .filter-btn.active')?.dataset.sort || 'rank';
-                     sortAndDisplayLeaderboard(activeSort);
-                 } else if (sectionId === 'bracket') {
-                     const activeTournament = document.querySelector('#bracket .filter-btn.active[data-tournament]')?.dataset.tournament || 'pro';
-                     displayBracket(activeTournament);
-                 }
-             }
-        }
-
-
-        // --- Filter/Sort Click Handler ---
-         function handleFilterSortClick(buttonElement) {
-             const parentControls = buttonElement.closest('.filter-controls, .tournament-controls');
-             if (!parentControls) return;
-
-             // Update active state
-             parentControls.querySelectorAll('.filter-btn').forEach(sibling => sibling.classList.remove('active'));
-             buttonElement.classList.add('active');
-
-             // Determine context and trigger appropriate display function
-             const sectionId = buttonElement.closest('.content-section')?.id;
-             const isTournamentControl = parentControls.classList.contains('tournament-controls');
-
-             if (sectionId === 'upcoming-matches' || parentControls.closest('#upcoming-matches')) {
-                 filterAndDisplayMatches(buttonElement.dataset.filter);
-             } else if (sectionId === 'leaderboard' || parentControls.closest('#leaderboard')) {
-                 sortAndDisplayLeaderboard(buttonElement.dataset.sort);
-             } else if (isTournamentControl || sectionId === 'bracket' || parentControls.closest('#bracket')) {
-                  const tournamentType = parentControls.querySelector('.filter-btn.active[data-tournament]').dataset.tournament;
-                  displayBracket(tournamentType);
-             }
-         }
-
-
-        // --- Firestore Data Loading & Real-time Updates ---
-        let matchesListener = null;
-        let leaderboardListener = null;
-        let proBracketListener = null;
-        let noviceBracketListener = null;
-
-        function setupFirestoreListeners() {
-            const now = new Date();
-            const startOfToday = new Date(now.setHours(0, 0, 0, 0));
-
-            // Matches Listener (only future matches)
-            if (matchesListener) matchesListener();
-            matchesListener = db.collection('matches')
-                .where('date', '>=', startOfToday) // Fetch matches from today onwards
-                .orderBy('date', 'asc')
-                .onSnapshot(snapshot => {
-                    currentMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                     // Update display only if matches tab is active
-                     if (document.getElementById('upcoming-matches').classList.contains('active')) {
-                         const activeFilter = document.querySelector('#upcoming-matches .filter-btn.active')?.dataset.filter || 'all';
-                         filterAndDisplayMatches(activeFilter);
-                     }
-                    console.log("Matches updated from Firestore");
-                }, error => {
-                    console.error("Error fetching matches:", error);
-                     if (document.getElementById('upcoming-matches').classList.contains('active')) {
-                        matchesContainer.innerHTML = createEmptyState('Error loading matches', 'Could not fetch data.');
-                     }
-                });
-
-            // Leaderboard Listener
-            if (leaderboardListener) leaderboardListener();
-             leaderboardListener = db.collection('leaderboard')
-                .orderBy('points', 'desc')
-                .orderBy('wins', 'desc')
-                .onSnapshot(snapshot => {
-                    currentLeaderboard = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                     if (document.getElementById('leaderboard').classList.contains('active')) {
-                        const activeSort = document.querySelector('#leaderboard .filter-btn.active')?.dataset.sort || 'rank';
-                        sortAndDisplayLeaderboard(activeSort);
-                     }
-                    console.log("Leaderboard updated from Firestore");
-                }, error => {
-                    console.error("Error fetching leaderboard:", error);
-                     if (document.getElementById('leaderboard').classList.contains('active')) {
-                         leaderboardBody.innerHTML = `<tr><td colspan="6" class="loading-state">Error loading leaderboard.</td></tr>`;
-                     }
-                });
-
-             // Bracket Listeners
-            if (proBracketListener) proBracketListener();
-             proBracketListener = db.collection('brackets').doc('pro')
-                .onSnapshot(doc => {
-                    currentBracket.pro = doc.exists ? { id: doc.id, ...doc.data() } : null;
-                     if (document.getElementById('bracket').classList.contains('active') && document.querySelector('#bracket .filter-btn.active[data-tournament="pro"]')) {
-                         displayBracket('pro');
-                     }
-                    console.log("Pro Bracket updated from Firestore");
-                }, error => console.error("Error fetching pro bracket:", error));
-
-             if (noviceBracketListener) noviceBracketListener();
-             noviceBracketListener = db.collection('brackets').doc('novice')
-                 .onSnapshot(doc => {
-                    currentBracket.novice = doc.exists ? { id: doc.id, ...doc.data() } : null;
-                     if (document.getElementById('bracket').classList.contains('active') && document.querySelector('#bracket .filter-btn.active[data-tournament="novice"]')) {
-                         displayBracket('novice');
-                     }
-                    console.log("Novice Bracket updated from Firestore");
-                }, error => console.error("Error fetching novice bracket:", error));
-        }
-
-        // --- Display Logic ---
-
-        function filterAndDisplayMatches(filter = 'all') {
-            matchesContainer.innerHTML = '<div class="loading-state">Filtering matches...</div>'; // Show loading state briefly
-            stopAllCountdowns();
-
-            const filteredMatches = currentMatches.filter(match => {
-                if (!match.date || typeof match.date.toDate !== 'function') return false; // Skip invalid dates
-                // Filter logic remains: check date >= today and type matches filter
-                const matchDate = match.date.toDate();
-                 // const now = new Date();
-                 // const startOfToday = new Date(now.setHours(0, 0, 0, 0));
-                 // Already filtered by Firestore query >= today
-                 // if (matchDate < startOfToday) return false;
-
-                if (filter === 'all') return true;
-                return match.type?.toLowerCase() === filter.toLowerCase();
-            });
-
-            // Use setTimeout to allow loading state to render before blocking thread with DOM manipulation
-            setTimeout(() => {
-                matchesContainer.innerHTML = ''; // Clear loading state
-                if (filteredMatches.length === 0) {
-                    let message = 'No upcoming matches found.';
-                    if (filter !== 'all') message = `No upcoming ${filter} matches found.`;
-                    matchesContainer.innerHTML = createEmptyState(message, 'Check back later or view all matches.');
-                    return;
-                }
-
-                filteredMatches.forEach((match, index) => {
-                    const matchElement = document.createElement('div');
-                    matchElement.className = 'card match-card fade-in';
-                     matchElement.style.animationDelay = `${index * 0.05}s`; // Stagger animation
-
-                    // Ensure team data exists or provide defaults gracefully
-                    const team1Name = match.team1?.name || 'Team 1';
-                    const team1Logo = match.team1?.logo || team1Name.substring(0, 2).toUpperCase() || 'T1'; // Use initials if no logo
-                    const team2Name = match.team2?.name || 'Team 2';
-                    const team2Logo = match.team2?.logo || team2Name.substring(0, 2).toUpperCase() || 'T2';
-
-
-                    matchElement.innerHTML = `
-                        <div class="match-header">
-                            <span class="match-date">${formatDate(match.date)}</span>
-                            <span class="match-type">${match.type || 'TBD'}</span>
-                        </div>
-                        <div class="match-countdown" data-match-id="${match.id}"></div>
-                        <div class="match-teams">
-                            <div class="team">
-                                <div class="team-logo">${team1Logo}</div>
-                                <span class="team-name">${team1Name}</span>
-                            </div>
-                            <div class="versus">VS</div>
-                            <div class="team">
-                                <div class="team-logo">${team2Logo}</div>
-                                <span class="team-name">${team2Name}</span>
-                            </div>
-                        </div>
-                        <div class="match-footer">
-                            <span>📍 ${match.venue || 'Venue TBD'}</span>
-                            ${match.streamLink ? `<a href="${match.streamLink}" target="_blank" rel="noopener noreferrer">📺 Watch Stream</a>` : '<span>📺 No Stream Link</span>'}
-                        </div>
-                    `;
-                    matchesContainer.appendChild(matchElement);
-                    addCountdownTimer(matchElement, match.id, match.date);
-                });
-            }, 10); // Small delay
-        }
-
-
-        function sortAndDisplayLeaderboard(sortBy = 'rank') {
-            leaderboardBody.innerHTML = `<tr><td colspan="6" class="loading-state">Sorting leaderboard...</td></tr>`;
-
-             // Use setTimeout for responsiveness
-             setTimeout(() => {
-                let sortedData = [...currentLeaderboard];
-
-                if (sortBy === 'wins') {
-                    sortedData.sort((a, b) => (b.wins || 0) - (a.wins || 0) || (a.name || '').localeCompare(b.name || '')); // Add name as tiebreaker
-                } else if (sortBy === 'points') {
-                    sortedData.sort((a, b) => (b.points || 0) - (a.points || 0) || (b.wins || 0) - (a.wins || 0) || (a.name || '').localeCompare(b.name || '')); // Points -> Wins -> Name
-                } else if (sortBy === 'name') {
-                    sortedData.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-                } else { // 'rank' - Use Firestore order (points desc, wins desc)
-                    // Assign rank based on this order
-                }
-
-                 leaderboardBody.innerHTML = ''; // Clear loading state
-
-                if (sortedData.length === 0) {
-                    leaderboardBody.innerHTML = `<tr><td colspan="6">${createEmptyState('Leaderboard is empty', 'No players found.')}</td></tr>`;
-                    return;
-                }
-
-                sortedData.forEach((player, index) => {
-                    const row = document.createElement('tr');
-                    row.className = 'fade-in';
-                    row.style.animationDelay = `${index * 0.05}s`;
-
-                    const rank = index + 1;
-                    const rankClass = rank <= 3 ? 'top-rank' : '';
-                     const playerAvatar = player.avatar || player.name?.substring(0,1).toUpperCase() || '?'; // Use first initial if no avatar
-
-                    row.innerHTML = `
-                        <td class="rank ${rankClass}">${rank}</td>
-                        <td>
-                            <div class="player">
-                                <div class="player-avatar">${playerAvatar}</div>
-                                <div class="player-name">${player.name || 'Unknown Player'}</div>
-                            </div>
-                        </td>
-                        <td class="stats">${player.matchesPlayed || player.matches || 0}</td> <!-- Prefer matchesPlayed if available -->
-                        <td class="stats">${player.wins || 0}</td>
-                        <td class="stats">${player.losses || 0}</td>
-                        <td class="stats">${player.points || 0}</td>
-                    `;
-                    leaderboardBody.appendChild(row);
-                });
-             }, 10); // Small delay
-        }
-
-        function displayBracket(tournament = 'pro') {
-            bracketDisplayContainer.innerHTML = '<div class="loading-state">Loading bracket...</div>';
-
-             // Use setTimeout for responsiveness
-            setTimeout(() => {
-                const data = currentBracket[tournament];
-
-                if (!data || !data.rounds || data.rounds.length === 0) {
-                    bracketDisplayContainer.innerHTML = createEmptyState(
-                        `No ${tournament} bracket available`,
-                        'Check back later or select a different tournament.'
-                    );
-                    return;
-                }
-
-                 bracketDisplayContainer.innerHTML = ''; // Clear loading state
-
-                data.rounds.forEach((round, roundIndex) => {
-                    const roundElement = document.createElement('div');
-                    roundElement.className = 'round fade-in';
-                    roundElement.style.animationDelay = `${roundIndex * 0.1}s`;
-
-                    const roundTitle = document.createElement('h3');
-                    roundTitle.className = 'round-title';
-                    roundTitle.textContent = round.name || `Round ${roundIndex + 1}`;
-                    roundElement.appendChild(roundTitle);
-
-                    round.matches.forEach((match) => {
-                        const matchElement = document.createElement('div');
-                        let team1Winner = false;
-                        let team2Winner = false;
-                         // Check winner using name primarily, fallback to ID if names aren't set? (adjust logic as needed)
-                        if (match.winner) {
-                             const t1Name = match.team1?.name;
-                             const t2Name = match.team2?.name;
-                             team1Winner = t1Name && match.winner === t1Name;
-                             team2Winner = t2Name && match.winner === t2Name;
-                             // Fallback check if winner might be an ID (less likely if names are always set)
-                             // if (!team1Winner && match.team1?.id) team1Winner = match.winner === match.team1.id;
-                             // if (!team2Winner && match.team2?.id) team2Winner = match.winner === match.team2.id;
-                        }
-
-                         // Determine status: completed if winner exists, otherwise upcoming
-                         const matchStatus = match.winner ? 'completed' : 'upcoming';
-                        matchElement.className = `match-bracket ${matchStatus}`;
-
-                        // Team 1
-                        const team1Element = document.createElement('div');
-                        team1Element.className = `bracket-team ${team1Winner ? 'bracket-winner' : ''}`;
-                        team1Element.innerHTML = `
-                            <span class="bracket-team-name">${match.team1?.name || 'TBD'}</span>
-                            <span class="bracket-score">${matchStatus === 'completed' && match.team1?.score != null ? match.team1.score : '-'}</span>
-                        `;
-                        matchElement.appendChild(team1Element);
-
-                        // Team 2
-                        const team2Element = document.createElement('div');
-                        team2Element.className = `bracket-team ${team2Winner ? 'bracket-winner' : ''}`;
-                        team2Element.innerHTML = `
-                            <span class="bracket-team-name">${match.team2?.name || 'TBD'}</span>
-                            <span class="bracket-score">${matchStatus === 'completed' && match.team2?.score != null ? match.team2.score : '-'}</span>
-                        `;
-                        matchElement.appendChild(team2Element);
-
-                        roundElement.appendChild(matchElement);
-                    });
-
-                    bracketDisplayContainer.appendChild(roundElement);
-                });
-            }, 10); // Small delay
-        }
-
-        // --- Initialize application ---
-        document.addEventListener('DOMContentLoaded', init);
-
-    </script>
-    
-    
 </body>
 </html>
