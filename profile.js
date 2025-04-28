@@ -10,7 +10,6 @@ const firebaseConfig = {
 };
 
 // --- Initialize Firebase ---
-// Moved this block to the TOP to ensure auth and db are defined before use
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -18,9 +17,8 @@ const auth = firebase.auth(); // Define auth right after init
 const db = firebase.firestore(); // Define db right after init
 
 // --- URL Parameter Parsing & Logged-in User Check ---
-// Now this code can safely use 'auth'
 const urlParams = new URLSearchParams(window.location.search);
-const profileUidFromUrl = urlParams.get('uid'); // Get UID from ?uid=... (Renamed for clarity)
+const profileUidFromUrl = urlParams.get('uid'); // Get UID from ?uid=...
 let loggedInUser = auth.currentUser; // Check initial auth state (might be null initially)
 
 // --- Admin Emails ---
@@ -30,26 +28,23 @@ const adminEmails = [
 ].map(email => email.toLowerCase()); // Normalize to lowercase
 
 // --- Badge Configuration ---
-// Add emails (lowercase) of users who should get each badge
 const badgeConfig = {
     verified: {
-        emails: ['jackdmbell@outlook.com', 'anotheremail'].map(e => e.toLowerCase()), // Replace with actual emails
+        emails: ['jackdmbell@outlook.com', 'anotheremail'].map(e => e.toLowerCase()),
         className: 'badge-verified',
         title: 'Verified'
     },
     creator: {
-        emails: ['jackdmbell@outlook.com'].map(e => e.toLowerCase()), // Replace with actual emails
+        emails: ['jackdmbell@outlook.com'].map(e => e.toLowerCase()),
         className: 'badge-creator',
         title: 'Content Creator'
     },
     moderator: {
-        emails: ['jackdmbell@outlook.com', 'mod_team@sample.org'].map(e => e.toLowerCase()), // Replace with actual emails
+        emails: ['jackdmbell@outlook.com', 'mod_team@sample.org'].map(e => e.toLowerCase()),
         className: 'badge-moderator',
         title: 'Moderator'
     }
-    // Add more badge types if needed
 };
-
 
 // --- DOM Elements ---
 const profileContent = document.getElementById('profile-content');
@@ -63,19 +58,17 @@ const profileLogoutBtn = document.getElementById('profile-logout-btn');
 const adminTag = document.getElementById('admin-tag');
 const rankDisplay = document.getElementById('profile-rank');
 const titleDisplay = document.getElementById('profile-title');
-const profileIdentifiersDiv = document.querySelector('.profile-identifiers'); // Parent for title selector
+const profileIdentifiersDiv = document.querySelector('.profile-identifiers');
 const profileBadgesContainer = document.getElementById('profile-badges-container');
 
 // --- Global/Scoped Variables ---
-let allAchievements = null; // Cache for achievement definitions
+let allAchievements = null;
 let viewingUserProfileData = {}; // Data for the profile *being viewed*
 let isTitleSelectorOpen = false;
-let titleSelectorElement = null; // Reference to the created selector dropdown div
-
+let titleSelectorElement = null;
 
 // --- Function to fetch all achievement definitions ---
 async function fetchAllAchievements() {
-    // Use cache if available
     if (allAchievements) return allAchievements;
     try {
         const snapshot = await db.collection('achievements').get();
@@ -94,11 +87,10 @@ async function fetchAllAchievements() {
 // --- Helper: Display Badges based on the viewed profile's data ---
 function displayUserBadges(profileData) {
     profileBadgesContainer.innerHTML = ''; // Clear existing badges
-    const userEmail = profileData?.email; // Get email from the profile data being viewed
+    const userEmail = profileData?.email;
     if (!userEmail) return;
 
     const emailLower = userEmail.toLowerCase();
-
     // Check Admin Tag based on VIEWED profile's email
     adminTag.style.display = adminEmails.includes(emailLower) ? 'inline-block' : 'none';
 
@@ -107,7 +99,10 @@ function displayUserBadges(profileData) {
         const config = badgeConfig[badgeType];
         if (config.emails.includes(emailLower)) {
             const badgeSpan = document.createElement('span');
-            badgeSpan.classList.add('profile-badge', config.className);
+             // Using background SVG now, apply color class
+             badgeSpan.classList.add('profile-badge', config.className); // e.g., profile-badge badge-verified
+            //badgeSpan.classList.add('profile-badge'); // Base class with shape/tick
+            //badgeSpan.classList.add(config.className); // Specific color class like badge-verified
             badgeSpan.setAttribute('title', config.title);
             profileBadgesContainer.appendChild(badgeSpan);
         }
@@ -121,21 +116,27 @@ auth.onAuthStateChanged(user => {
     console.log(`Auth state changed. Logged in: ${!!user}, Target UID: ${targetUid}`);
 
     if (targetUid) {
-        loadingIndicator.style.display = 'none';
-        notLoggedInMsg.style.display = 'none';
-        profileContent.style.display = 'block';
+        // Have a profile to load (either specific URL or logged-in user)
+        loadingIndicator.style.display = 'none'; // Hide loading message
+        profileContent.style.display = 'block';  // Show profile section
+        notLoggedInMsg.style.display = 'none';   // Hide 'not logged in' message
+
         fetchAllAchievements();
-        loadCombinedUserData(targetUid); // Load the specific profile
+        loadCombinedUserData(targetUid);
+
+        // Conditionally display logout button
         profileLogoutBtn.style.display = (loggedInUser && loggedInUser.uid === targetUid) ? 'inline-block' : 'none';
+
     } else {
+        // No target UID - means not logged in AND no UID in URL
         console.log('No user logged in and no profile UID in URL.');
         loadingIndicator.style.display = 'none';
         profileContent.style.display = 'none';
-        notLoggedInMsg.style.display = 'flex';
+        notLoggedInMsg.style.display = 'flex'; // Show 'not logged in / unavailable' message
         adminTag.style.display = 'none';
         profileBadgesContainer.innerHTML = '';
         profileLogoutBtn.style.display = 'none';
-        updateProfileTitlesAndRank(null, false);
+        updateProfileTitlesAndRank(null, false); // Clear display, disable interaction
         statsDisplay.innerHTML = '';
         viewingUserProfileData = {};
         closeTitleSelector();
@@ -162,7 +163,7 @@ async function createUserProfileDocument(userId, authUser) {
         return { id: userId, ...defaultProfileData };
     } catch (error) {
         console.error(`Error creating user profile document client-side for UID ${userId}:`, error);
-        alert("Error setting up your profile details. Please check your connection or contact support if the issue persists.");
+        alert("Error setting up your profile details. Please check connection/support.");
         return null;
     }
 }
@@ -220,23 +221,14 @@ async function loadCombinedUserData(targetUserId) {
         let profileSnap = await userProfileRef.get();
         let profileData = null;
 
-        console.log('DEBUG: Result of userProfileRef.get():', profileSnap);
-        console.log('DEBUG: Type of profileSnap:', typeof profileSnap);
-         if (profileSnap) {
-             console.log('DEBUG: profileSnap constructor name:', profileSnap.constructor?.name);
-             console.log('DEBUG: Does profileSnap have .exists property?', 'exists' in profileSnap); // Check property
-             console.log('DEBUG: Does profileSnap have .data method?', 'data' in profileSnap && typeof profileSnap.data === 'function'); // Check method
-        }
+        console.log('DEBUG: Profile Snapshot:', profileSnap);
 
-        // <<< --- CORRECTED CHECK --- >>>
-        // Check existence using the 'exists' PROPERTY
-        if (!profileSnap || !profileSnap.exists) { // Access the 'exists' property
-            console.warn(`User profile document does NOT exist (or fetch result invalid) for UID: ${targetUserId}`);
+        // Use Compat '.exists' property
+        if (!profileSnap || !profileSnap.exists) { // Correct check
+            console.warn(`User profile document does NOT exist for UID: ${targetUserId}`);
             if (loggedInUser && loggedInUser.uid === targetUserId) {
                  profileData = await createUserProfileDocument(targetUserId, loggedInUser);
-                 if (!profileData) {
-                     throw new Error(`Profile creation failed for own UID ${targetUserId}.`);
-                 }
+                 if (!profileData) { throw new Error(`Profile creation failed.`); }
             } else {
                  console.error(`Cannot find profile for user UID: ${targetUserId}`);
                  displayProfileData(null, null);
@@ -244,24 +236,18 @@ async function loadCombinedUserData(targetUserId) {
                  return;
             }
         } else {
-            // Profile existed, use its data (data() IS a function in Compat)
+            // Use Compat '.data()' method
             profileData = { id: profileSnap.id, ...profileSnap.data() };
         }
 
-        // <<< --- CORRECTED CHECK --- >>>
         const statsSnap = await leaderboardStatsRef.get();
-        // Correct check for statsSnap too using 'exists' PROPERTY
-        const statsData = statsSnap.exists ? { id: statsSnap.id, ...statsSnap.data() } : null; // Use statsSnap.exists property
+        // Use Compat '.exists' property
+        const statsData = statsSnap.exists ? { id: statsSnap.id, ...statsSnap.data() } : null; // Correct check
 
-        // --- Combine and Update State ---
-        viewingUserProfileData = {
-            profile: profileData,
-            stats: statsData
-        };
+        viewingUserProfileData = { profile: profileData, stats: statsData };
         console.log("Final Profile Data being viewed:", viewingUserProfileData.profile);
         console.log("Final Stats Data being viewed:", viewingUserProfileData.stats);
 
-        // --- Display, Cache, Check Achievements ---
         displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats);
         saveCombinedDataToCache(targetUserId, viewingUserProfileData);
 
@@ -280,19 +266,11 @@ async function loadCombinedUserData(targetUserId) {
                     console.log("UI/Cache updated post-achievement grant.");
                 }
             }
-        } else {
-             if (!loggedInUser || loggedInUser.uid !== targetUserId) {
-                 console.log("Skipping achievement check: Viewing another user's profile.");
-             } else if (!viewingUserProfileData.stats) {
-                 console.log("Skipping achievement check: No leaderboard stats found for own profile.");
-             }
-        }
+        } else { /* Log reasons for skipping */ }
 
     } catch (error) {
         console.error(`Error in loadCombinedUserData for TARGET UID ${targetUserId}:`, error);
-        if (error.stack) {
-            console.error("DEBUG: Full error stack:", error.stack);
-        }
+        if (error.stack) { console.error("DEBUG: Full error stack:", error.stack); }
         if (!cacheLoaded) {
             statsDisplay.innerHTML = '<p>Error loading data.</p>';
             updateProfileTitlesAndRank(null, false);
@@ -304,29 +282,56 @@ async function loadCombinedUserData(targetUserId) {
 }
 
 
-// --- NEW: Central Function to Display Profile Data ---
+// --- Central Function to Display Profile Data ---
 function displayProfileData(profileData, statsData) {
     if (!profileData) {
+        // Handle profile not found or major load error
         usernameDisplay.textContent = "User Not Found";
         emailDisplay.textContent = "";
+        emailDisplay.style.display = 'none'; // Hide email field
         profilePicDiv.textContent = "?";
         adminTag.style.display = 'none';
         profileBadgesContainer.innerHTML = '';
         updateProfileTitlesAndRank(null, false);
         displayStats(null);
+        profileContent.style.display = 'block'; // Show content area even for error msg
+        loadingIndicator.style.display = 'none';
+        notLoggedInMsg.style.display = 'none';
         return;
     }
-    const displayName = profileData.displayName || 'User';
-    const email = profileData.email || 'No email provided';
-    usernameDisplay.textContent = displayName;
-    emailDisplay.textContent = email;
-    profilePicDiv.textContent = displayName.charAt(0).toUpperCase();
-    displayUserBadges(profileData);
-    displayStats(statsData);
-    const isOwnProfile = loggedInUser && loggedInUser.uid === profileData.id;
-    updateProfileTitlesAndRank(profileData, isOwnProfile);
-}
 
+    // Update Basic Info
+    const displayName = profileData.displayName || 'User';
+    const email = profileData.email || 'No email provided'; // Keep email available
+    usernameDisplay.textContent = displayName;
+    profilePicDiv.textContent = displayName.charAt(0).toUpperCase();
+
+    // Determine if viewing own profile
+    const isOwnProfile = loggedInUser && loggedInUser.uid === profileData.id;
+
+    // Conditionally Display Email
+    if (isOwnProfile) {
+        emailDisplay.textContent = email;
+        emailDisplay.style.display = 'block'; // Or 'inline' as appropriate
+    } else {
+        emailDisplay.textContent = ''; // Clear text
+        emailDisplay.style.display = 'none'; // Hide the element
+    }
+
+    // Display Badges & Admin Tag
+    displayUserBadges(profileData);
+
+    // Display Stats
+    displayStats(statsData);
+
+    // Update Rank/Title & Interactivity
+    updateProfileTitlesAndRank(profileData, isOwnProfile);
+
+    // Ensure main content area is visible and loading is hidden
+     profileContent.style.display = 'block';
+     loadingIndicator.style.display = 'none';
+     notLoggedInMsg.style.display = 'none';
+}
 
 // --- Check and Grant Achievements ---
 async function checkAndGrantAchievements(userId, currentUserProfile, currentUserStats) {
@@ -335,11 +340,11 @@ async function checkAndGrantAchievements(userId, currentUserProfile, currentUser
     try {
         const userAchievementsRef = db.collection('userAchievements').doc(userId);
         const userAchievementsDoc = await userAchievementsRef.get();
-        // <<< --- CORRECTED CHECK --- >>>
-        const unlockedIds = userAchievementsDoc.exists ? (userAchievementsDoc.data()?.unlocked || []) : []; // Use .exists property
+        // Use Compat '.exists' property
+        const unlockedIds = userAchievementsDoc.exists ? (userAchievementsDoc.data()?.unlocked || []) : []; // Correct Check
 
         let newAchievementsUnlocked = [], rewardsToApply = { titles: [], rank: null, rankPoints: 0 }, needsDbUpdate = false;
-
+        // ... (rest of achievement checking logic is okay) ...
         for (const achievementId in allAchievements) {
              if (unlockedIds.includes(achievementId)) continue;
              const achievement = allAchievements[achievementId]; let criteriaMet = false;
@@ -379,6 +384,7 @@ async function checkAndGrantAchievements(userId, currentUserProfile, currentUser
         } else { console.log(`No new achievements unlocked for UID ${userId}.`); return null; }
     } catch (error) { console.error(`Error check/grant achievements for UID ${userId}:`, error); return null; }
 }
+
 
 // --- Display Stats Grid ---
 function displayStats(statsData) {
@@ -535,10 +541,12 @@ profileLogoutBtn.addEventListener('click', () => {
         console.log('User signed out.');
         if (userId) localStorage.removeItem(`poxelProfileCombinedData_${userId}`);
         viewingUserProfileData = {};
-        // Auth listener will handle UI changes or redirection
+        // Auth listener will handle UI changes or potential redirection
+        // Redirecting here explicitly can cause race conditions with the auth listener
+        // window.location.href = 'index.html';
     }).catch((error) => { console.error('Sign out error:', error); alert('Error signing out.'); });
 });
 
 // --- Initial log ---
-console.log("Profile script initialized (Supports viewing others, conditional interaction).");
+console.log("Profile script initialized (Supports viewing others, conditional interaction, Compat fixes).");
 // Initial load is triggered by the onAuthStateChanged listener
