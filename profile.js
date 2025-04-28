@@ -1,7 +1,7 @@
 // --- Firebase Configuration ---
 // IMPORTANT: Replace with your actual Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Replace with your real key
+    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
     authDomain: "poxelcomp.firebaseapp.com",
     projectId: "poxelcomp",
     storageBucket: "poxelcomp.firebasestorage.app",
@@ -92,7 +92,6 @@ async function fetchAllAchievements() {
 }
 
 // --- Helper: Display Badges based on the viewed profile's data ---
-// *** MODIFIED: Needs profile data, not just email ***
 function displayUserBadges(profileData) {
     profileBadgesContainer.innerHTML = ''; // Clear existing badges
     const userEmail = profileData?.email; // Get email from the profile data being viewed
@@ -116,47 +115,27 @@ function displayUserBadges(profileData) {
 }
 
 // --- Auth State Listener ---
-// Determines logged-in status and triggers profile load
 auth.onAuthStateChanged(user => {
     loggedInUser = user; // Update the global variable
-
-    // Determine which profile to load: from URL param OR logged-in user's
     const targetUid = profileUidFromUrl || loggedInUser?.uid;
-
     console.log(`Auth state changed. Logged in: ${!!user}, Target UID: ${targetUid}`);
 
     if (targetUid) {
-        // If we have a target UID (either from URL or logged-in user), load that profile
         loadingIndicator.style.display = 'none';
         notLoggedInMsg.style.display = 'none';
-        profileContent.style.display = 'block'; // Show content area
-
-        // Fetch achievements early (can happen regardless of profile load)
+        profileContent.style.display = 'block';
         fetchAllAchievements();
-
-        // Load the specific user's data
-        loadCombinedUserData(targetUid);
-
-        // ** NEW: Conditionally show logout button **
-        // Show logout button ONLY if the logged-in user is viewing their OWN profile
-        if (loggedInUser && loggedInUser.uid === targetUid) {
-             profileLogoutBtn.style.display = 'inline-block';
-        } else {
-             profileLogoutBtn.style.display = 'none';
-        }
-
+        loadCombinedUserData(targetUid); // Call the function with debugging logs
+        profileLogoutBtn.style.display = (loggedInUser && loggedInUser.uid === targetUid) ? 'inline-block' : 'none';
     } else {
-        // No target UID - means not logged in AND no UID in URL
         console.log('No user logged in and no profile UID in URL.');
         loadingIndicator.style.display = 'none';
         profileContent.style.display = 'none';
-        notLoggedInMsg.style.display = 'flex'; // Show "not logged in" message
+        notLoggedInMsg.style.display = 'flex';
         adminTag.style.display = 'none';
         profileBadgesContainer.innerHTML = '';
         profileLogoutBtn.style.display = 'none';
-
-        // Clear display & state
-        updateProfileTitlesAndRank(null, false); // Clear rank/title, disable clicks
+        updateProfileTitlesAndRank(null, false);
         statsDisplay.innerHTML = '';
         viewingUserProfileData = {};
         closeTitleSelector();
@@ -164,26 +143,21 @@ auth.onAuthStateChanged(user => {
 });
 
 // --- Helper Function: Client-Side User Profile Document Creation ---
-// (No changes needed in this function itself, but it's called by loadCombinedUserData)
 async function createUserProfileDocument(userId, authUser) {
     console.warn(`Attempting client-side creation of user profile doc for UID: ${userId}`);
     const userDocRef = db.collection("users").doc(userId);
-
-    // Make sure authUser has potentially updated displayName if possible
-    const displayName = authUser.displayName || `User_${userId.substring(0, 5)}`; // Default fallback
-
+    const displayName = authUser.displayName || `User_${userId.substring(0, 5)}`;
     const defaultProfileData = {
         email: authUser.email || null,
         displayName: displayName,
         currentRank: "Unranked",
         equippedTitle: "",
         availableTitles: [],
-        friends: [], // Initialize friends list
+        friends: [],
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-
     try {
-        await userDocRef.set(defaultProfileData, { merge: true }); // Use merge just in case
+        await userDocRef.set(defaultProfileData, { merge: true });
         console.log(`Successfully created/merged user profile document for UID: ${userId} via client`);
         return { id: userId, ...defaultProfileData };
     } catch (error) {
@@ -193,34 +167,30 @@ async function createUserProfileDocument(userId, authUser) {
     }
 }
 
-
 // --- Load Combined Data from Cache ---
-// *** MODIFIED: Cache should ideally be per-viewed user ***
 function loadCombinedDataFromCache(viewedUserId) {
-    const cacheKey = `poxelProfileCombinedData_${viewedUserId}`; // Cache based on viewed ID
+    const cacheKey = `poxelProfileCombinedData_${viewedUserId}`;
     const cachedDataString = localStorage.getItem(cacheKey);
-
     if (cachedDataString) {
         try {
-            viewingUserProfileData = JSON.parse(cachedDataString); // Load into state
+            viewingUserProfileData = JSON.parse(cachedDataString);
             console.log("Loaded combined data from cache for VIEWED UID:", viewedUserId);
             displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats);
-            return true; // Cache loaded successfully
+            return true;
         } catch (error) {
             console.error("Error parsing combined cached data:", error);
             localStorage.removeItem(cacheKey);
-            viewingUserProfileData = {}; // Clear state
+            viewingUserProfileData = {};
             return false;
         }
     } else {
         console.log("No combined data found in cache for VIEWED UID:", viewedUserId);
-        viewingUserProfileData = {}; // Clear state
+        viewingUserProfileData = {};
         return false;
     }
 }
 
 // --- Save Combined Data to Cache ---
-// *** MODIFIED: Cache should be per-viewed user ***
 function saveCombinedDataToCache(viewedUserId, combinedData) {
      if (!viewedUserId || !combinedData) return;
      const cacheKey = `poxelProfileCombinedData_${viewedUserId}`;
@@ -233,7 +203,7 @@ function saveCombinedDataToCache(viewedUserId, combinedData) {
 }
 
 // --- Load Combined User Data (Handles Client-Side Profile Creation) ---
-// *** MODIFIED: Loads data for the passed targetUserId ***
+// *** MODIFIED WITH DEBUGGING LOGS ***
 async function loadCombinedUserData(targetUserId) {
     console.log(`Loading combined user data for TARGET UID: ${targetUserId}`);
 
@@ -250,30 +220,38 @@ async function loadCombinedUserData(targetUserId) {
 
     try {
         // --- Get Profile Data & Handle Missing ---
+        console.log(`DEBUG: Attempting to get profile for ${targetUserId}`); // <<< DEBUG LOG ADDED
         let profileSnap = await userProfileRef.get();
         let profileData = null;
 
-        if (!profileSnap.exists()) {
-            console.warn(`User profile document does NOT exist for UID: ${targetUserId}`);
-            // If the target is the *logged-in* user, attempt creation
+        // ***** DEBUG LOGS ADDED HERE *****
+        console.log('DEBUG: Result of userProfileRef.get():', profileSnap);
+        console.log('DEBUG: Type of profileSnap:', typeof profileSnap);
+        if (profileSnap) {
+             console.log('DEBUG: profileSnap constructor name:', profileSnap.constructor?.name);
+             console.log('DEBUG: Does profileSnap have .exists?', 'exists' in profileSnap);
+             console.log('DEBUG: Does profileSnap have .data?', 'data' in profileSnap);
+        }
+        // **********************************
+
+        // Now check existence (the line that previously failed)
+        if (!profileSnap || !profileSnap.exists()) { // Added check for profileSnap itself first
+            console.warn(`User profile document does NOT exist (or fetch result invalid) for UID: ${targetUserId}`);
             if (loggedInUser && loggedInUser.uid === targetUserId) {
                  profileData = await createUserProfileDocument(targetUserId, loggedInUser);
                  if (!profileData) {
-                     // Creation failed - critical error, cannot proceed for own profile
                      throw new Error(`Profile creation failed for own UID ${targetUserId}.`);
                  }
             } else {
-                 // If viewing someone else and profile doesn't exist, show error/placeholder
                  console.error(`Cannot find profile for user UID: ${targetUserId}`);
-                 displayProfileData(null, null); // Display placeholder/error state
+                 displayProfileData(null, null);
                  statsDisplay.innerHTML = '<p>Profile not found.</p>';
-                 return; // Stop here
+                 return;
             }
         } else {
             // Profile existed, use its data
             profileData = { id: profileSnap.id, ...profileSnap.data() };
         }
-        // By this point, 'profileData' holds either existing or newly created profile info.
 
         // --- Get Leaderboard Stats ---
         const statsSnap = await leaderboardStatsRef.get();
@@ -289,21 +267,21 @@ async function loadCombinedUserData(targetUserId) {
 
         // --- Display, Cache, Check Achievements ---
         displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats);
-        saveCombinedDataToCache(targetUserId, viewingUserProfileData); // Save combined data for this specific user
+        saveCombinedDataToCache(targetUserId, viewingUserProfileData);
 
         // Check achievements only if viewing your OWN profile and stats exist
         if (loggedInUser && loggedInUser.uid === targetUserId && viewingUserProfileData.stats) {
-            if (!allAchievements) await fetchAllAchievements(); // Ensure definitions are loaded
+            if (!allAchievements) await fetchAllAchievements();
             if (allAchievements) {
                 const potentiallyUpdatedProfile = await checkAndGrantAchievements(
                     targetUserId,
-                    viewingUserProfileData.profile, // Pass current profile
-                    viewingUserProfileData.stats // Pass current stats for criteria
+                    viewingUserProfileData.profile,
+                    viewingUserProfileData.stats
                 );
-                if (potentiallyUpdatedProfile) { // If profile was updated by achievement rewards
-                    viewingUserProfileData.profile = potentiallyUpdatedProfile; // Update state
-                    displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats); // Re-render UI
-                    saveCombinedDataToCache(targetUserId, viewingUserProfileData); // Update cache
+                if (potentiallyUpdatedProfile) {
+                    viewingUserProfileData.profile = potentiallyUpdatedProfile;
+                    displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats);
+                    saveCombinedDataToCache(targetUserId, viewingUserProfileData);
                     console.log("UI/Cache updated post-achievement grant.");
                 }
             }
@@ -316,12 +294,18 @@ async function loadCombinedUserData(targetUserId) {
         }
 
     } catch (error) {
+        // ***** DEBUG LOGS ADDED HERE *****
         console.error(`Error in loadCombinedUserData for TARGET UID ${targetUserId}:`, error);
-        if (!cacheLoaded) { // Show error UI only if nothing useful loaded from cache
+        // Log the full stack trace if available
+        if (error.stack) {
+            console.error("DEBUG: Full error stack:", error.stack);
+        }
+        // ********************************
+
+        if (!cacheLoaded) {
             statsDisplay.innerHTML = '<p>Error loading data.</p>';
             updateProfileTitlesAndRank(null, false);
         } else {
-             // Re-apply cache view on error fetching fresh data
             console.warn("Error fetching fresh data, restoring cached view.");
             loadCombinedDataFromCache(targetUserId); // Re-apply cached view
         }
@@ -332,43 +316,31 @@ async function loadCombinedUserData(targetUserId) {
 // --- NEW: Central Function to Display Profile Data ---
 function displayProfileData(profileData, statsData) {
     if (!profileData) {
-        // Handle case where profile couldn't be loaded at all
         usernameDisplay.textContent = "User Not Found";
         emailDisplay.textContent = "";
         profilePicDiv.textContent = "?";
         adminTag.style.display = 'none';
         profileBadgesContainer.innerHTML = '';
-        updateProfileTitlesAndRank(null, false); // Clear rank/title, disable clicks
-        displayStats(null); // Show stats unavailable
+        updateProfileTitlesAndRank(null, false);
+        displayStats(null);
         return;
     }
-
-    // --- Update Basic Info ---
     const displayName = profileData.displayName || 'User';
     const email = profileData.email || 'No email provided';
     usernameDisplay.textContent = displayName;
     emailDisplay.textContent = email;
     profilePicDiv.textContent = displayName.charAt(0).toUpperCase();
-
-    // --- Display Badges & Admin Tag (based on viewed profile) ---
-    displayUserBadges(profileData); // Pass the whole profileData object
-
-    // --- Display Stats ---
-    displayStats(statsData); // Handles null statsData correctly
-
-    // --- Update Rank/Title & Interactivity ---
+    displayUserBadges(profileData);
+    displayStats(statsData);
     const isOwnProfile = loggedInUser && loggedInUser.uid === profileData.id;
-    updateProfileTitlesAndRank(profileData, isOwnProfile); // Pass flag to enable/disable clicks
-
+    updateProfileTitlesAndRank(profileData, isOwnProfile);
 }
 
 
-// --- Check and Grant Achievements (Updates 'users' collection) ---
-// (No changes needed in the logic, but called conditionally now)
+// --- Check and Grant Achievements ---
 async function checkAndGrantAchievements(userId, currentUserProfile, currentUserStats) {
     if (!allAchievements || !userId || !currentUserProfile || !currentUserStats) return null;
     console.log(`Checking achievements for UID ${userId}`);
-
     try {
         const userAchievementsRef = db.collection('userAchievements').doc(userId);
         const userAchievementsDoc = await userAchievementsRef.get();
@@ -393,13 +365,11 @@ async function checkAndGrantAchievements(userId, currentUserProfile, currentUser
                  if (achievement.rewards?.rankPoints) rewardsToApply.rankPoints += achievement.rewards.rankPoints;
              }
         }
-
         if (needsDbUpdate && newAchievementsUnlocked.length > 0) {
             const batch = db.batch();
             const userProfileRef = db.collection('users').doc(userId);
-            let updatedLocalProfile = { ...currentUserProfile }; // Copy to modify locally
+            let updatedLocalProfile = { ...currentUserProfile };
             batch.set(userAchievementsRef, { unlocked: firebase.firestore.FieldValue.arrayUnion(...newAchievementsUnlocked) }, { merge: true });
-
             const profileUpdateData = {}; let titleToEquip = null;
             if (rewardsToApply.titles.length > 0) {
                 profileUpdateData.availableTitles = firebase.firestore.FieldValue.arrayUnion(...rewardsToApply.titles);
@@ -409,23 +379,17 @@ async function checkAndGrantAchievements(userId, currentUserProfile, currentUser
             if (rewardsToApply.rank) { profileUpdateData.currentRank = rewardsToApply.rank; updatedLocalProfile.currentRank = rewardsToApply.rank; }
             if (!updatedLocalProfile.currentRank) { profileUpdateData.currentRank = 'Unranked'; updatedLocalProfile.currentRank = 'Unranked'; }
             if (!updatedLocalProfile.equippedTitle && !titleToEquip) { profileUpdateData.equippedTitle = ''; updatedLocalProfile.equippedTitle = ''; }
-
             let committedProfileUpdate = false;
              if (Object.keys(profileUpdateData).length > 0) { batch.update(userProfileRef, profileUpdateData); committedProfileUpdate = true; }
-
             await batch.commit(); console.log(`Firestore updated for UID ${userId}. Profile updated: ${committedProfileUpdate}`);
-            return committedProfileUpdate ? updatedLocalProfile : null; // Return updated profile only if it changed
-
+            return committedProfileUpdate ? updatedLocalProfile : null;
         } else { console.log(`No new achievements unlocked for UID ${userId}.`); return null; }
-
     } catch (error) { console.error(`Error check/grant achievements for UID ${userId}:`, error); return null; }
 }
 
-
-// --- Display Stats Grid (Uses stats data) ---
-// (No changes needed)
+// --- Display Stats Grid ---
 function displayStats(statsData) {
-    statsDisplay.innerHTML = ''; // Clear
+    statsDisplay.innerHTML = '';
     if (!statsData || typeof statsData !== 'object') { statsDisplay.innerHTML = '<p>Leaderboard stats unavailable.</p>'; return; }
     if (statsData.wins !== undefined) statsDisplay.appendChild(createStatItem('Wins', statsData.wins));
     if (statsData.points !== undefined) statsDisplay.appendChild(createStatItem('Points', statsData.points));
@@ -433,13 +397,10 @@ function displayStats(statsData) {
     const matchesPlayed = statsData.matchesPlayed !== undefined ? statsData.matchesPlayed : statsData.matches;
     if (matchesPlayed !== undefined) statsDisplay.appendChild(createStatItem('Matches Played', matchesPlayed));
     if (statsData.losses !== undefined) statsDisplay.appendChild(createStatItem('Losses', statsData.losses));
-
     if (statsDisplay.innerHTML === '') { statsDisplay.innerHTML = '<p>No specific leaderboard stats found.</p>'; }
 }
 
-
 // --- Helper: Create a Single Stat Item Element ---
-// (No changes needed)
 function createStatItem(title, value) {
     const itemDiv = document.createElement('div'); itemDiv.classList.add('stat-item');
     const titleH4 = document.createElement('h4'); titleH4.textContent = title;
@@ -448,27 +409,20 @@ function createStatItem(title, value) {
     itemDiv.appendChild(titleH4); itemDiv.appendChild(valueP); return itemDiv;
 }
 
-
 // --- Helper: Update Profile Rank/Title Display ---
-// *** MODIFIED: Added allowInteraction parameter ***
 function updateProfileTitlesAndRank(profileData, allowInteraction) {
     if (!rankDisplay || !titleDisplay) return;
-
-    // Always clear listeners and styling first
     titleDisplay.classList.remove('selectable-title');
     titleDisplay.removeEventListener('click', handleTitleClick);
-
     if (profileData && typeof profileData === 'object') {
         const rank = profileData.currentRank || 'Unranked';
         const title = profileData.equippedTitle || '';
         const available = profileData.availableTitles || [];
         rankDisplay.textContent = rank;
         rankDisplay.className = `profile-rank-display rank-${rank.toLowerCase().replace(/\s+/g, '-')}`;
-
         if (title) {
             titleDisplay.textContent = title;
             titleDisplay.style.display = 'inline-block';
-            // ONLY make title selectable if interaction is allowed (own profile) and titles are available
             if (allowInteraction && available.length > 0) {
                 titleDisplay.classList.add('selectable-title');
                 titleDisplay.addEventListener('click', handleTitleClick);
@@ -477,7 +431,7 @@ function updateProfileTitlesAndRank(profileData, allowInteraction) {
             titleDisplay.textContent = '';
             titleDisplay.style.display = 'none';
         }
-    } else { /* Clear display if no profile data */
+    } else {
         rankDisplay.textContent = '...';
         rankDisplay.className = 'profile-rank-display rank-unranked';
         titleDisplay.textContent = '';
@@ -486,33 +440,25 @@ function updateProfileTitlesAndRank(profileData, allowInteraction) {
 }
 
 // --- Handle Clicks on the Equipped Title ---
-// (No change needed - only gets called if listener was added in updateProfileTitlesAndRank)
 function handleTitleClick(event) {
     event.stopPropagation();
-    // Use viewingUserProfileData as it holds the data for the profile currently displayed
     if (isTitleSelectorOpen) { closeTitleSelector(); }
     else if (viewingUserProfileData.profile?.availableTitles?.length > 0) { openTitleSelector(); }
     else { console.log("No available titles in profile data."); }
 }
 
 // --- Open Title Selector Dropdown ---
-// (No change needed - uses viewingUserProfileData)
 function openTitleSelector() {
-    // Check we are viewing our own profile before opening selector
     if (!loggedInUser || loggedInUser.uid !== viewingUserProfileData.profile?.id) return;
-
     if (isTitleSelectorOpen || !profileIdentifiersDiv || !viewingUserProfileData.profile?.availableTitles?.length > 0) return;
-
     const availableTitles = viewingUserProfileData.profile.availableTitles;
     const currentEquippedTitle = viewingUserProfileData.profile.equippedTitle || '';
-
     if (!titleSelectorElement) {
         titleSelectorElement = document.createElement('div');
         titleSelectorElement.className = 'title-selector';
         profileIdentifiersDiv.appendChild(titleSelectorElement);
     }
-    titleSelectorElement.innerHTML = ''; // Clear options
-
+    titleSelectorElement.innerHTML = '';
     availableTitles.forEach(titleOptionText => {
         const optionElement = document.createElement('button');
         optionElement.className = 'title-option';
@@ -530,12 +476,10 @@ function openTitleSelector() {
     });
     titleSelectorElement.style.display = 'block';
     isTitleSelectorOpen = true;
-    // Add listener to close dropdown when clicking outside
     setTimeout(() => { document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true }); }, 0);
 }
 
 // --- Close Title Selector Dropdown ---
-// (No changes needed)
 function closeTitleSelector() {
     if (!isTitleSelectorOpen || !titleSelectorElement) return;
     titleSelectorElement.style.display = 'none';
@@ -544,81 +488,61 @@ function closeTitleSelector() {
 }
 
 // --- Handle Clicks Outside Selector ---
-// (No changes needed)
 function handleClickOutsideTitleSelector(event) {
     if (!isTitleSelectorOpen) return;
-    // If the click is inside the selector OR on the title display itself, wait for the next click
     if ((titleSelectorElement && titleSelectorElement.contains(event.target)) || (titleDisplay && titleDisplay.contains(event.target))) {
-        // Re-add the listener for the *next* click outside
         document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true });
         return;
     }
-    // Otherwise, close the selector
     closeTitleSelector();
 }
 
-// --- Handle Clicks on a Title Option (Updates 'users' collection) ---
-// (No changes needed - logic correctly targets the loggedInUser's UID)
+// --- Handle Clicks on a Title Option ---
 async function handleTitleOptionClick(event) {
     event.stopPropagation();
     const selectedTitle = event.currentTarget.dataset.title;
-    const currentUserId = loggedInUser?.uid; // Use logged-in user's ID for the update target
-    const currentlyViewedProfile = viewingUserProfileData.profile; // Profile being displayed
-
-    // Should only be possible if viewing own profile, but double-check
+    const currentUserId = loggedInUser?.uid;
+    const currentlyViewedProfile = viewingUserProfileData.profile;
     if (!currentUserId || !currentlyViewedProfile || currentUserId !== currentlyViewedProfile.id) {
         console.error("Attempted to change title for wrong user.");
         closeTitleSelector();
         return;
     }
-
     const currentEquipped = currentlyViewedProfile.equippedTitle || '';
-
     if (!selectedTitle || selectedTitle === currentEquipped) {
         closeTitleSelector();
         return;
     }
-
     closeTitleSelector();
     titleDisplay.textContent = "Updating...";
-    titleDisplay.classList.remove('selectable-title'); // Temporarily disable clicks during update
-
+    titleDisplay.classList.remove('selectable-title');
     try {
-        const userProfileRef = db.collection('users').doc(currentUserId); // Target logged-in user's doc
+        const userProfileRef = db.collection('users').doc(currentUserId);
         await userProfileRef.update({ equippedTitle: selectedTitle });
         console.log(`Firestore 'users' doc updated title for UID ${currentUserId}`);
-
-        // Update local state for the viewed profile
         viewingUserProfileData.profile.equippedTitle = selectedTitle;
-
-        saveCombinedDataToCache(currentUserId, viewingUserProfileData); // Update cache for this user
-        updateProfileTitlesAndRank(viewingUserProfileData.profile, true); // Update UI, allow interaction
-
+        saveCombinedDataToCache(currentUserId, viewingUserProfileData);
+        updateProfileTitlesAndRank(viewingUserProfileData.profile, true);
     } catch (error) {
         console.error("Error updating equipped title in Firestore 'users':", error);
         alert("Failed to update title.");
-        // Revert local state and UI on error
         if (viewingUserProfileData.profile) {
             viewingUserProfileData.profile.equippedTitle = currentEquipped;
         }
-        updateProfileTitlesAndRank(viewingUserProfileData.profile, true); // Revert UI, allow interaction
+        updateProfileTitlesAndRank(viewingUserProfileData.profile, true);
     }
 }
 
 // --- Logout Button ---
-// (No changes needed, button display handled by auth listener)
 profileLogoutBtn.addEventListener('click', () => {
     const userId = loggedInUser?.uid;
     if (titleDisplay) titleDisplay.removeEventListener('click', handleTitleClick);
     closeTitleSelector();
     auth.signOut().then(() => {
         console.log('User signed out.');
-        // Cache for the signed-out user might be cleared automatically by auth listener redirect,
-        // but explicit clear is okay too.
         if (userId) localStorage.removeItem(`poxelProfileCombinedData_${userId}`);
-        viewingUserProfileData = {}; // Clear state
-        // Auth listener will handle redirect if necessary
-        // window.location.href = 'index.html';
+        viewingUserProfileData = {};
+        // Auth listener will handle UI changes or redirection
     }).catch((error) => { console.error('Sign out error:', error); alert('Error signing out.'); });
 });
 
