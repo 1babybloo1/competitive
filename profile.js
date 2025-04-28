@@ -1,12 +1,12 @@
 // --- Firebase Configuration ---
 const firebaseConfig = {
     // IMPORTANT: Replace with your REAL Firebase configuration values
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID",
+    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
+    authDomain: "poxelcomp.firebaseapp.com",
+    projectId: "poxelcomp",
+    storageBucket: "poxelcomp.firebasestorage.app",
+    messagingSenderId: "620490990104",
+    appId: "1:620490990104:web:709023eb464c7d886b996d",
 };
 
 // --- Initialize Firebase (Compat Version) ---
@@ -75,12 +75,14 @@ let profileDataListenerUnsubscribe = null; // Function to detach Firestore liste
 function escapeHtml(unsafe) {
     if (!unsafe) return '';
     try {
+        // ******** CORRECTED THIS BLOCK ********
         return unsafe
              .replace(/&/g, "&")
              .replace(/</g, "<")
              .replace(/>/g, ">")
              .replace(/"/g, """)
              .replace(/'/g, "'");
+        // ************************************
     } catch(e) {
         console.warn("HTML escape failed for:", unsafe, e);
         return "Error"; // Return a placeholder on failure
@@ -846,7 +848,7 @@ if (profileLogoutBtn) {
             // Clear local profile data immediately
             viewingUserProfileData = { profile: null, stats: null, isBanned: false, banReason: null };
             // Optional: Redirect immediately after sign out
-            // window.location.href = 'index.html';
+             window.location.href = 'index.html'; // Redirect to home page on logout
         }).catch((error) => {
             console.error('Sign out error:', error);
             alert('Error signing out. Please try again.');
