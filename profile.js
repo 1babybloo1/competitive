@@ -78,11 +78,11 @@ function escapeHtml(unsafe) {
         try { unsafe = String(unsafe); } catch (e) { return ''; }
    }
    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/&/g, "&")
+        .replace(/</g, "<")
+        .replace(/>/g, ">")
+        .replace(/"/g, """)
+        .replace(/'/g, "'");
 }
 
 
@@ -311,8 +311,12 @@ function saveCombinedDataToCache(viewedUserId, combinedData) {
      }
 }
 
+
+// =============================================================
+// START REPLACEMENT: loadCombinedUserData (Sequential Fetch Debugging)
+// =============================================================
 // --- Load Combined User Data (Profile, Stats, Ban Status) ---
-// Fetches data from Firestore, handles profile creation for self, checks ban status.
+// Fetches data from Firestore sequentially for debugging permission errors.
 async function loadCombinedUserData(targetUserId, signal) {
     console.log(`Loading combined user data for TARGET UID: ${targetUserId}`);
 
@@ -322,12 +326,11 @@ async function loadCombinedUserData(targetUserId, signal) {
     if (banOverlay) banOverlay.style.display = 'none';
     if (banReasonDisplay) banReasonDisplay.style.display = 'none';
 
-    // --- Attempt to load from cache first for faster initial display ---
+    // --- Attempt to load from cache ---
     const cacheLoaded = loadCombinedDataFromCache(targetUserId);
     if (!cacheLoaded) {
-        // If cache didn't load, show placeholder text while fetching fresh data
         if (statsDisplay) statsDisplay.innerHTML = '<p>Loading stats...</p>';
-        updateProfileTitlesAndRank(null, false); // Reset rank/title display
+        updateProfileTitlesAndRank(null, false);
     }
 
     // --- Define Firestore references ---
@@ -335,142 +338,109 @@ async function loadCombinedUserData(targetUserId, signal) {
     const leaderboardStatsRef = db.collection('leaderboard').doc(targetUserId);
     const banDocRef = db.collection('banned_users').doc(targetUserId);
 
+    // !! DEBUGGING: Fetch sequentially !!
+    let profileSnap, statsSnap, banSnap;
+    let profileData = null, statsData = null, isBanned = false, banReason = null;
+
     try {
-        // --- Fetch data concurrently ---
-        // Note: We don't use the signal directly with compat SDK's get()
-        // AbortController primarily helps avoid *processing* the result if aborted.
-        const [profileSnap, statsSnap, banSnap] = await Promise.all([
-            userProfileRef.get(),
-            leaderboardStatsRef.get(),
-            banDocRef.get()
-        ]);
-
-        // Check if the load operation was aborted after fetches started
+        // --- 1. Fetch User Profile ---
+        console.log(`[DEBUG] STEP 1: Attempting userProfileRef.get() for ${targetUserId}`);
+        profileSnap = await userProfileRef.get();
         if (signal?.aborted) { throw new Error('AbortError'); }
+        console.log(`[DEBUG] STEP 1: userProfileRef.get() ${profileSnap.exists ? 'succeeded (doc found)' : 'succeeded (doc NOT found)'}`);
 
-        // --- Process Profile Data ---
-        let profileData = null;
+        // Process Profile Data Immediately After Fetch
         if (profileSnap.exists) {
             profileData = { id: profileSnap.id, ...profileSnap.data() };
         } else {
-            // Profile doesn't exist in Firestore 'users' collection
             console.warn(`User profile document does NOT exist for UID: ${targetUserId}`);
-            // If the logged-in user is viewing their *own* non-existent profile, attempt to create it
             if (loggedInUser && loggedInUser.uid === targetUserId) {
                  console.log(`Attempting profile creation for self (UID: ${targetUserId})`);
                  profileData = await createUserProfileDocument(targetUserId, loggedInUser);
-                 if (!profileData) {
-                     // Handle case where profile creation failed
-                     throw new Error(`Profile creation failed for own UID ${targetUserId}. Cannot proceed.`);
-                 }
-            } else {
-                 // Viewing someone else's profile that doesn't exist
-                 console.error(`Cannot find profile for user UID: ${targetUserId}. Displaying 'Not Found'.`);
-                 // Display "User Not Found" state (handled later by passing null profileData)
+                 if (!profileData) throw new Error(`Profile creation failed for own UID ${targetUserId}.`);
+                 // If created successfully, profileData is now populated
             }
+            // else profileData remains null if viewing someone else's non-existent profile
         }
 
-        // --- Process Stats Data ---
-        // Use statsSnap.exists property (Compat SDK)
-        const statsData = statsSnap.exists ? { id: statsSnap.id, ...statsSnap.data() } : null;
+        // --- 2. Fetch Leaderboard Stats ---
+        console.log(`[DEBUG] STEP 2: Attempting leaderboardStatsRef.get() for ${targetUserId}`);
+        statsSnap = await leaderboardStatsRef.get();
+        if (signal?.aborted) { throw new Error('AbortError'); }
+        console.log(`[DEBUG] STEP 2: leaderboardStatsRef.get() ${statsSnap.exists ? 'succeeded (doc found)' : 'succeeded (doc NOT found)'}`);
+        statsData = statsSnap.exists ? { id: statsSnap.id, ...statsSnap.data() } : null;
 
-        // --- Process Ban Data ---
-        // Use banSnap.exists property (Compat SDK)
-        const isBanned = banSnap.exists;
-        const banReason = isBanned ? (banSnap.data()?.reason || "No reason specified") : null;
+        // --- 3. Fetch Ban Status ---
+        console.log(`[DEBUG] STEP 3: Attempting banDocRef.get() for ${targetUserId}`);
+        banSnap = await banDocRef.get();
+        if (signal?.aborted) { throw new Error('AbortError'); }
+        console.log(`[DEBUG] STEP 3: banDocRef.get() ${banSnap.exists ? 'succeeded (doc found - user banned)' : 'succeeded (doc NOT found - user not banned)'}`);
+        isBanned = banSnap.exists;
+        banReason = isBanned ? (banSnap.data()?.reason || "No reason specified") : null;
 
-        // --- Combine and Update State ---
-        // Store all relevant data together for the viewed profile
-        viewingUserProfileData = {
-            profile: profileData,
-            stats: statsData,
-            isBanned: isBanned,
-            banReason: banReason
-        };
-        console.log("Fetched Data - Profile:", profileData);
-        console.log("Fetched Data - Stats:", statsData);
-        console.log(`Fetched Data - Banned: ${isBanned}`);
+
+        // --- Combine and Update State (Now done after all fetches) ---
+        viewingUserProfileData = { profile: profileData, stats: statsData, isBanned: isBanned, banReason: banReason };
+        console.log("Final Fetched State - Profile:", profileData);
+        console.log("Final Fetched State - Stats:", statsData);
+        console.log(`Final Fetched State - Banned: ${isBanned}`);
 
         // --- Display, Cache, Check Achievements ---
-        displayProfileData(
-            viewingUserProfileData.profile,
-            viewingUserProfileData.stats,
-            viewingUserProfileData.isBanned,
-            viewingUserProfileData.banReason
-        );
-
-        // Save the fetched (or created) data (including ban status) to cache
+        displayProfileData( profileData, statsData, isBanned, banReason );
         saveCombinedDataToCache(targetUserId, viewingUserProfileData);
 
         // --- Achievement Check Logic (Only if profile exists and is not banned) ---
+        // No changes needed here for this debug step
         if (profileData && !isBanned) {
-            // Check achievements only if viewing own profile and stats are available
-             if (loggedInUser && loggedInUser.uid === targetUserId && viewingUserProfileData.stats) {
-                 // Ensure achievement definitions are loaded
+             if (loggedInUser && loggedInUser.uid === targetUserId && statsData) {
                  if (!allAchievements) await fetchAllAchievements();
-
                  if (allAchievements) {
-                     const potentiallyUpdatedProfile = await checkAndGrantAchievements(
-                         targetUserId,
-                         viewingUserProfileData.profile, // Pass current profile state
-                         viewingUserProfileData.stats   // Pass current stats
-                     );
-                     // If achievements were granted and profile data changed:
+                     const potentiallyUpdatedProfile = await checkAndGrantAchievements(targetUserId, profileData, statsData);
                      if (potentiallyUpdatedProfile) {
-                         console.log("Achievements granted, profile updated locally. Refreshing UI.");
-                         viewingUserProfileData.profile = potentiallyUpdatedProfile; // Update state
-                         // Re-display with updated profile data (still not banned)
-                         displayProfileData(
-                            viewingUserProfileData.profile,
-                            viewingUserProfileData.stats,
-                            viewingUserProfileData.isBanned, // isBanned remains false here
-                            viewingUserProfileData.banReason
-                         );
-                         // Re-cache the updated data
+                         console.log("Achievements granted, refreshing UI.");
+                         viewingUserProfileData.profile = potentiallyUpdatedProfile;
+                         displayProfileData( viewingUserProfileData.profile, statsData, isBanned, banReason );
                          saveCombinedDataToCache(targetUserId, viewingUserProfileData);
                      }
-                 } else { console.warn("Could not check achievements: Definitions unavailable."); }
-             } else {
-                  if (!loggedInUser || loggedInUser.uid !== targetUserId) {
-                      // console.log("Skipping achievement check: Viewing another user's profile.");
-                  } else if (!viewingUserProfileData.stats) {
-                      // console.log("Skipping achievement check: No leaderboard stats found for own profile.");
-                  }
+                 }
              }
-        } else if (isBanned) {
-             console.log("Skipping achievement check: User is banned.");
-        } else if (!profileData) {
-             console.log("Skipping achievement check: Profile data not found.");
+        }
+    // --- Error Handling ---
+    } catch (error) {
+        if (error.message === 'AbortError') {
+            console.log("Profile load fetch aborted.");
+            // Propagate the error so the caller knows loading was aborted
+            throw error;
         }
 
-    } catch (error) {
-        // Catch errors from Promise.all or subsequent processing
-        if (error.message === 'AbortError') {
-             throw error; // Re-throw AbortError to be handled by the caller (onAuthStateChanged)
-        }
-        console.error(`Error in loadCombinedUserData processing for TARGET UID ${targetUserId}:`, error);
+        // Log more specific context about where the error occurred
+        console.error(`!!! Firestore read error occurred during sequential fetch for TARGET UID ${targetUserId}:`, error.message);
+        // Identify which step might have failed based on the last successful debug log
+        console.error("Check the [DEBUG] STEP logs above to see which fetch might have failed.");
+        console.error("Full error object:", error); // Log the full error details
         if (error.stack) console.error("DEBUG: Full error stack:", error.stack);
 
-        // If cache wasn't loaded successfully before the error, show an error message
+        // Fallback to cache if it was loaded, otherwise show main error state
         if (!cacheLoaded) {
              if (statsDisplay) statsDisplay.innerHTML = '<p>Error loading data.</p>';
-             updateProfileTitlesAndRank(null, false); // Reset titles/rank display
-             // Optionally display a more prominent error in the main content area
+             updateProfileTitlesAndRank(null, false);
              loadingIndicator.style.display = 'none';
              profileContent.style.display = 'none';
              notLoggedInMsg.innerHTML = '<p>Error loading profile data. Please try again later.</p>';
              notLoggedInMsg.style.display = 'flex';
-             resetProfileUI(); // Ensure UI is fully reset
+             resetProfileUI();
         } else {
-             // If cache *was* loaded, we might already be showing cached data.
-             // Log the error but don't necessarily clear the cached view immediately.
-             console.warn("Error fetching fresh data, continuing with cached view (if available).");
-             // Optionally show a subtle indicator that data might be stale?
+             console.warn("Error fetching fresh data, continuing with cached view (if available). Error occurred at some point during fresh fetch.");
         }
-        // Rethrow the error if needed for higher-level handling
+        // Important: Do not re-throw the error here if cache is being displayed,
+        // otherwise the `onAuthStateChanged` catch block might clear the UI.
+        // If no cache was loaded, re-throwing might be okay. For now, we just log.
         // throw error;
     }
 }
+// ===========================================================
+// END REPLACEMENT: loadCombinedUserData
+// ===========================================================
 
 
 // --- Central Function to Display Profile Data (Handles Banned State) ---
