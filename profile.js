@@ -1004,4 +1004,3 @@ if (profileLogoutBtn) {
 // --- Initial log ---
 console.log("Profile script initialized.");
 // Initial profile load is triggered by the onAuthStateChanged listener upon script execution.
-```
