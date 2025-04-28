@@ -26,7 +26,8 @@ let loggedInUser = auth.currentUser; // Check initial auth state (might be null 
 // --- Admin Emails ---
 const adminEmails = [
     'trixdesignsofficial@gmail.com', // Replace/add your admin emails
-    'jackdmbell@outlook.com'
+    'jackdmbell@outlook.com',
+    'myrrr@myrrr.myrrr',
 ].map(email => email.toLowerCase()); // Normalize to lowercase
 
 // --- Badge Configuration ---
