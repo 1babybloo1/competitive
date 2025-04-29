@@ -1,543 +1,1221 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Profile - Poxel Competitive</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico"> <!-- Favicon -->
+// --- Firebase Configuration ---
+const firebaseConfig = {
+    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Replace with your actual API key if this is public placeholder
+    authDomain: "poxelcomp.firebaseapp.com",
+    projectId: "poxelcomp",
+    storageBucket: "poxelcomp.firebasestorage.app",
+    messagingSenderId: "620490990104",
+    appId: "1:620490990104:web:709023eb464c7d886b996d",
+};
 
-    <!-- Cropper.js CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+// --- Initialize Firebase ---
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-    <!-- Font Awesome for Icons (Optional, if using fa-pencil-alt) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+// --- Cloudinary Configuration ---
+const CLOUDINARY_CLOUD_NAME = "djttn4xvk"; // <-- REPLACE with your Cloudinary Cloud Name
+const CLOUDINARY_UPLOAD_PRESET = "compmanage"; // <-- REPLACE with your unsigned Upload Preset name
 
-    <!-- Your Custom Profile Styles -->
-    <link rel="stylesheet" href="profile-styles.css">
+// --- URL Parameter Parsing & Logged-in User Check ---
+const urlParams = new URLSearchParams(window.location.search);
+const profileUidFromUrl = urlParams.get('uid');
+let loggedInUser = auth.currentUser;
 
-    <style>
-        /* ======================================== */
-        /* Base Styles & Variables                */
-        /* ======================================== */
-        :root {
-            --bg-dark: #121212;
-            --bg-secondary: #1e1e1e;
-            --text-light: #e0e0e0;
-            --text-dark: #121212; /* Text on orange elements */
-            --primary-orange: #ff6600;
-            --primary-orange-darker: #e65c00;
-            --border-light: #444;
-            --rank-bronze-bg: #cd7f32;
-            --rank-silver-bg: #c0c0c0;
-            --rank-gold-bg: #ffd700;
-            --rank-default-bg: #555; /* For unranked/other */
-            --text-secondary: #aaa;
-            /* Badge Colors */
-            --badge-verified-bg: #00acee; /* Blue */
-            --badge-creator-bg: #a970ff;  /* Purple */
-            --badge-moderator-bg: #ff6600; /* Orange (matches primary) */
-            --badge-tick-color: #ffffff;
-            /* Profile Background Variable (set by JS) */
-            --profile-bg-image: none;
+// --- Admin Emails ---
+const adminEmails = [
+    'trixdesignsofficial@gmail.com',
+    'jackdmbell@outlook.com',
+    'myrrr@myrrr.myrrr'
+].map(email => email.toLowerCase());
+
+// --- Badge Configuration ---
+const badgeConfig = {
+    verified: { emails: ['jackdmbell@outlook.com', 'myrrr@myrrr.myrrr'].map(e => e.toLowerCase()), className: 'badge-verified', title: 'Verified' },
+    creator: { emails: ['jackdmbell@outlook.com'].map(e => e.toLowerCase()), className: 'badge-creator', title: 'Content Creator' },
+    moderator: { emails: ['jackdmbell@outlook.com', 'mod_team@sample.org'].map(e => e.toLowerCase()), className: 'badge-moderator', title: 'Moderator' }
+};
+
+// --- DOM Elements ---
+const profileContent = document.getElementById('profile-content');
+const loadingIndicator = document.getElementById('loading-profile');
+const notLoggedInMsg = document.getElementById('not-logged-in');
+// Profile Pic Elements
+const profilePicDiv = document.getElementById('profile-pic');
+const profileImage = document.getElementById('profile-image');
+const profileInitials = document.getElementById('profile-initials'); // Span for initials/fallback
+const editProfilePicIcon = document.getElementById('edit-profile-pic-icon');
+const profilePicInput = document.getElementById('profile-pic-input');
+// Other Profile Elements
+const usernameDisplay = document.getElementById('profile-username');
+const emailDisplay = document.getElementById('profile-email');
+const competitiveStatsDisplay = document.getElementById('stats-display');
+const profileLogoutBtn = document.getElementById('profile-logout-btn');
+const adminTag = document.getElementById('admin-tag');
+const rankDisplay = document.getElementById('profile-rank');
+const titleDisplay = document.getElementById('profile-title');
+const profileIdentifiersDiv = document.querySelector('.profile-identifiers');
+const profileBadgesContainer = document.getElementById('profile-badges-container');
+const poxelStatsSection = document.getElementById('poxel-stats-section');
+const poxelStatsDisplay = document.getElementById('poxel-stats-display');
+// Modal Elements
+const editModal = document.getElementById('edit-modal');
+const modalImage = document.getElementById('image-to-crop');
+const modalCloseBtn = document.getElementById('modal-close-btn');
+const modalCancelBtn = document.getElementById('modal-cancel-btn');
+const modalApplyBtn = document.getElementById('modal-apply-btn');
+const modalSpinner = document.getElementById('modal-spinner');
+
+// --- Global/Scoped Variables ---
+let allAchievements = null;
+let viewingUserProfileData = {};
+let isTitleSelectorOpen = false;
+let titleSelectorElement = null;
+let cropper = null; // To hold the Cropper.js instance
+let isOwnProfile = false; // Flag to check if viewing own profile
+
+// =============================================================================
+// --- CORE FUNCTIONS ---
+// =============================================================================
+
+// --- Fetch Poxel.io Stats from API ---
+async function fetchPoxelStats(username) {
+    // Validate username
+    if (!username || typeof username !== 'string' || username.trim() === '') {
+        console.warn("fetchPoxelStats: Invalid username provided.");
+        return null;
+    }
+    console.log(`Fetching Poxel.io stats for: ${username}`);
+    try {
+        const apiUrl = `https://dev-usa-1.poxel.io/api/profile/stats/${encodeURIComponent(username)}`;
+        const res = await fetch(apiUrl, {
+            headers: { "Content-Type": "application/json" }
+        });
+
+        if (!res.ok) {
+            let errorMsg = `HTTP error ${res.status}`;
+            try {
+                const errorData = await res.json();
+                errorMsg = errorData.message || errorData.error || errorMsg;
+            } catch (parseError) { /* Ignore */ }
+            throw new Error(errorMsg);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        const data = await res.json();
+        console.log("Poxel.io API Stats Received:", data);
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        if (typeof data !== 'object' || data === null) {
+            throw new Error("Invalid data format received from Poxel.io API.");
+        }
+        if (data.error || data.status === 'error') {
+            throw new Error(data.message || 'API returned an error status.');
+        }
+        return data;
+    } catch (e) {
+        console.error("Error fetching Poxel.io stats:", e.message || e);
+        return null;
+    }
+}
+
+// --- Fetch all achievement definitions ---
+async function fetchAllAchievements() {
+    if (allAchievements) return allAchievements;
+    try {
+        const snapshot = await db.collection('achievements').get();
+        allAchievements = {};
+        snapshot.forEach(doc => {
+            allAchievements[doc.id] = { id: doc.id, ...doc.data() };
+        });
+        console.log("Fetched achievement definitions:", allAchievements);
+        return allAchievements;
+    } catch (error) {
+        console.error("Error fetching achievement definitions:", error);
+        return null;
+    }
+}
+
+// --- Helper: Compare Leaderboard Stats ---
+function areStatsDifferent(newStats, existingProfileStats) {
+    const normNew = newStats || {};
+    const normExisting = existingProfileStats || {};
+    const statKeys = ['wins', 'points', 'kdRatio', 'matchesPlayed', 'matches', 'losses'];
+    let different = false;
+    for (const key of statKeys) {
+        const newValue = normNew[key] ?? null;
+        const existingValue = normExisting[key] ?? null;
+        if (key === 'kdRatio' && typeof newValue === 'number' && typeof existingValue === 'number') {
+            if (Math.abs(newValue - existingValue) > 0.001) { different = true; break; }
+        } else if (newValue !== existingValue) {
+            different = true; break;
+        }
+    }
+    if (!different) {
+        const newRelevantKeys = Object.keys(normNew).filter(k => statKeys.includes(k));
+        const existingRelevantKeys = Object.keys(normExisting).filter(k => statKeys.includes(k));
+        if (newRelevantKeys.length !== existingRelevantKeys.length) {
+            different = true;
+        } else {
+            const newSet = new Set(newRelevantKeys);
+            if (!existingRelevantKeys.every(key => newSet.has(key))) { different = true; }
+        }
+    }
+    return different;
+}
+
+// --- Helper Function: Client-Side User Profile Document Creation ---
+async function createUserProfileDocument(userId, authUser) {
+    console.warn(`Client-side: Creating missing user profile doc for UID: ${userId}`);
+    const userDocRef = db.collection("users").doc(userId);
+    const displayName = authUser.displayName || `User_${userId.substring(0, 5)}`;
+    const defaultProfileData = {
+        email: authUser.email || null,
+        displayName: displayName,
+        currentRank: "Unranked",
+        equippedTitle: "",
+        availableTitles: [],
+        friends: [],
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        leaderboardStats: {},
+        profilePictureUrl: authUser.photoURL || null // Include initial photoURL if available from auth provider
+    };
+    try {
+        await userDocRef.set(defaultProfileData, { merge: true });
+        console.log(`Successfully created/merged user profile document for UID: ${userId} via client`);
+        return { id: userId, ...defaultProfileData };
+    } catch (error) {
+        console.error(`Error creating user profile document client-side for UID ${userId}:`, error);
+        alert("Error setting up your profile details. Please check your connection or contact support.");
+        return null;
+    }
+}
+
+// --- Load Combined User Data (Profile + Stats + Poxel) ---
+async function loadCombinedUserData(targetUserId) {
+    console.log(`Loading combined user data for TARGET UID: ${targetUserId}`);
+    isOwnProfile = loggedInUser && loggedInUser.uid === targetUserId; // Check if it's the logged-in user's profile
+    console.log("Is viewing own profile:", isOwnProfile);
+
+    // Clear previous stats and show loading indicators
+    displayPoxelStats(null, true);
+    competitiveStatsDisplay.innerHTML = '<p>Loading competitive stats...</p>';
+    updateProfileTitlesAndRank(null, false);
+
+    const cacheLoaded = loadCombinedDataFromCache(targetUserId); // Tries to display cached data first
+
+    const userProfileRef = db.collection('users').doc(targetUserId);
+    const leaderboardStatsRef = db.collection('leaderboard').doc(targetUserId);
+
+    try {
+        // 1. Fetch User Profile Data
+        let profileSnap = await userProfileRef.get();
+        let profileData = null;
+
+        if (!profileSnap || !profileSnap.exists) {
+            console.warn(`User profile document does NOT exist for UID: ${targetUserId}`);
+            if (isOwnProfile) { // Only create if it's the logged-in user's own profile
+                profileData = await createUserProfileDocument(targetUserId, loggedInUser);
+                if (!profileData) throw new Error(`Profile creation failed for own UID ${targetUserId}.`);
+            } else {
+                console.error(`Cannot find profile for user UID: ${targetUserId}`);
+                displayProfileData(null, null, false); // Display not found state
+                competitiveStatsDisplay.innerHTML = '<p>Profile not found.</p>';
+                displayPoxelStats(null);
+                return;
+            }
+        } else {
+            profileData = { id: profileSnap.id, ...profileSnap.data() };
+            if (profileData.leaderboardStats === undefined) profileData.leaderboardStats = {};
+            if (profileData.profilePictureUrl === undefined) profileData.profilePictureUrl = null; // Ensure field exists
         }
 
-        main { flex-grow: 1; padding: 0; } /* Remove default padding if any */
+        // 2. Fetch Leaderboard Stats Data (Competitive)
+        const statsSnap = await leaderboardStatsRef.get();
+        const competitiveStatsData = statsSnap.exists ? { id: statsSnap.id, ...statsSnap.data() } : null;
 
-        /* ======================================== */
-        /* Header & Navigation (Shared)           */
-        /* ======================================== */
-        header { background-color: var(--bg-secondary); padding: 1rem 0; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); width: 100%; }
-        .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 1.8rem; font-weight: 700; color: var(--text-light); text-decoration: none; }
-        .auth-buttons button, .auth-buttons a.btn { margin-left: 0.8rem; }
-
-        /* ======================================== */
-        /* Buttons (Shared)                       */
-        /* ======================================== */
-        .btn { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease; text-decoration: none; display: inline-block; text-align: center; line-height: 1.2; /* Ensure consistent height */ }
-        .btn:disabled { cursor: not-allowed; opacity: 0.6; }
-        .btn:active:not(:disabled) { transform: scale(0.97); }
-        .btn-primary { background-color: var(--primary-orange); color: var(--text-dark); border: 2px solid var(--primary-orange); }
-        .btn-primary:hover:not(:disabled) { background-color: var(--primary-orange-darker); border-color: var(--primary-orange-darker); box-shadow: 0 0 10px rgba(255, 102, 0, 0.5); color: var(--text-dark); }
-        .btn-secondary { background-color: transparent; color: var(--text-light); border: 2px solid var(--border-light); }
-        .btn-secondary:hover:not(:disabled) { background-color: rgba(224, 224, 224, 0.1); border-color: var(--text-light); color: var(--text-light); }
-
-        /* ======================================== */
-        /* Profile Page Specific Styles           */
-        /* ======================================== */
-        .profile-container {
-            max-width: 800px;
-            margin: 3rem auto;
-            padding: 2.5rem 3rem;
-            background-color: var(--bg-secondary); /* Fallback background */
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            position: relative; /* Needed for pseudo-element */
-            z-index: 1; /* Ensure content is above pseudo-element */
-            overflow: hidden; /* Contain pseudo-element within border-radius */
+        // 3. Sync Competitive Stats to Profile Document if needed
+        if (profileData && competitiveStatsData) {
+            if (areStatsDifferent(competitiveStatsData, profileData.leaderboardStats)) {
+                console.log(`Competitive stats for UID ${targetUserId} differ. Updating 'users' doc.`);
+                try {
+                    const statsToSave = { ...competitiveStatsData };
+                    delete statsToSave.id;
+                    await userProfileRef.update({ leaderboardStats: statsToSave });
+                    profileData.leaderboardStats = statsToSave; // Update local copy
+                } catch (updateError) {
+                    console.error(`Error updating competitive stats in 'users' doc for UID ${targetUserId}:`, updateError);
+                }
+            }
         }
 
-        /* Profile Background Styling */
-        .profile-container::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: var(--profile-bg-image); /* Use CSS variable */
-            background-size: cover;
-            background-position: center center;
-            background-repeat: no-repeat;
-            opacity: 0; /* Hidden by default */
-            z-index: -1; /* Behind the content */
-            border-radius: inherit; /* Match container's border radius */
-            transition: opacity 0.5s ease-in-out;
+        // 4. Update Global State
+        viewingUserProfileData = {
+            profile: profileData,
+            stats: competitiveStatsData
+        };
+        console.log("Final Profile Data being viewed:", viewingUserProfileData.profile);
+
+        // 5. Display Core Profile & Competitive Stats, Cache
+        displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats, isOwnProfile);
+        saveCombinedDataToCache(targetUserId, viewingUserProfileData);
+
+        // 6. Fetch and Display Poxel.io Stats (asynchronously)
+        if (profileData && profileData.displayName) {
+            fetchPoxelStats(profileData.displayName)
+                .then(poxelStatsData => displayPoxelStats(poxelStatsData))
+                .catch(poxelError => {
+                    console.error("Caught error during Poxel.io fetch chain:", poxelError);
+                    displayPoxelStats(null); // Display error state
+                });
+        } else {
+             console.warn("No displayName found, cannot fetch Poxel.io stats.");
+             displayPoxelStats(null); // Display unavailable state
         }
 
-        .profile-container.has-background::before {
-            opacity: 0.5; /* Show with opacity when class is added */
+        // 7. Check Achievements (if viewing own profile with stats)
+        if (isOwnProfile && viewingUserProfileData.stats) {
+            if (!allAchievements) await fetchAllAchievements();
+            if (allAchievements) {
+                const potentiallyUpdatedProfile = await checkAndGrantAchievements(
+                    targetUserId,
+                    viewingUserProfileData.profile,
+                    viewingUserProfileData.stats
+                );
+                if (potentiallyUpdatedProfile) {
+                    viewingUserProfileData.profile = potentiallyUpdatedProfile; // Update global state
+                    displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats, isOwnProfile); // Re-render profile
+                    saveCombinedDataToCache(targetUserId, viewingUserProfileData); // Update cache
+                    console.log("UI/Cache updated post-achievement grant.");
+                }
+            }
         }
 
-        /* Profile Header Area */
-        .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 3rem; gap: 1rem; }
+    } catch (error) {
+        console.error(`Error in loadCombinedUserData for TARGET UID ${targetUserId}:`, error);
+        if (error.stack) console.error("DEBUG: Full error stack:", error.stack);
+        if (!cacheLoaded) { // Only show full error if nothing loaded from cache
+            profileContent.style.display = 'none';
+            notLoggedInMsg.textContent = 'Error loading profile data. Please try again later.';
+            notLoggedInMsg.style.display = 'flex';
+            loadingIndicator.style.display = 'none';
+            competitiveStatsDisplay.innerHTML = '<p>Error loading data.</p>';
+            updateProfileTitlesAndRank(null, false);
+            displayPoxelStats(null);
+            updateProfileBackground(null); // Ensure background is cleared
+        } else {
+            console.warn("Error fetching fresh data, displaying potentially stale cached view.");
+            // Optionally try fetching Poxel stats even if main load failed, using cached name
+            if (viewingUserProfileData.profile?.displayName) {
+                 fetchPoxelStats(viewingUserProfileData.profile.displayName)
+                    .then(poxelStatsData => displayPoxelStats(poxelStatsData))
+                    .catch(e => displayPoxelStats(null));
+            } else {
+                 displayPoxelStats(null);
+            }
+        }
+    }
+}
 
-        /* Profile Picture Area */
-        #profile-pic {
-            position: relative; /* Needed for icon positioning */
-            width: 120px;
-            height: 120px;
-            background-color: var(--bg-secondary); /* Fallback color if no image */
-            color: var(--text-light); /* Fallback text color */
-            border-radius: 50%;
-            display: flex; /* For centering initials */
-            justify-content: center;
-            align-items: center;
-            border: 4px solid var(--primary-orange);
-            box-shadow: 0 0 15px rgba(255, 102, 0, 0.4);
-            overflow: hidden; /* Crucial: hide image parts outside circle */
-            cursor: default; /* Default cursor */
+// --- Display Core Profile Data ---
+function displayProfileData(profileData, competitiveStatsData, isOwner) {
+    if (!profileData) {
+        // Reset state for "User Not Found" or error
+        profileImage.style.display = 'none';
+        profileImage.src = '';
+        profileInitials.style.display = 'flex';
+        profileInitials.textContent = "?";
+        editProfilePicIcon.style.display = 'none';
+        updateProfileBackground(null);
+
+        usernameDisplay.textContent = "User Not Found";
+        emailDisplay.textContent = "";
+        adminTag.style.display = 'none';
+        profileBadgesContainer.innerHTML = '';
+        updateProfileTitlesAndRank(null, false);
+        displayCompetitiveStats(null);
+        return;
+    }
+
+    const displayName = profileData.displayName || 'Anonymous User';
+    const email = profileData.email || 'No email provided';
+    usernameDisplay.textContent = displayName;
+    emailDisplay.textContent = email;
+
+    // --- Profile Picture Logic ---
+    if (profileData.profilePictureUrl) {
+        profileImage.src = profileData.profilePictureUrl;
+        profileImage.style.display = 'block';
+        profileInitials.style.display = 'none';
+        profileImage.onerror = () => { // Fallback if image load fails
+            console.error("Failed to load profile image:", profileData.profilePictureUrl);
+            profileImage.style.display = 'none';
+            profileInitials.textContent = displayName.charAt(0).toUpperCase() || '?';
+            profileInitials.style.display = 'flex';
+            updateProfileBackground(null); // Clear background on error
+        };
+        updateProfileBackground(profileData.profilePictureUrl); // Set background
+    } else {
+        profileImage.style.display = 'none';
+        profileImage.src = '';
+        profileInitials.textContent = displayName.charAt(0).toUpperCase() || '?';
+        profileInitials.style.display = 'flex';
+        updateProfileBackground(null); // No background
+    }
+
+    // Show edit icon only if it's the owner's profile
+    editProfilePicIcon.style.display = isOwner ? 'flex' : 'none';
+
+    // Display other elements
+    displayUserBadges(profileData);
+    updateProfileTitlesAndRank(profileData, isOwner); // Pass owner status for interaction
+    displayCompetitiveStats(competitiveStatsData); // Pass competitive stats
+}
+
+// --- Update Profile Background ---
+function updateProfileBackground(imageUrl) {
+    // Use the main profile container 'profile-content'
+    const container = profileContent; // Use the existing reference
+    if (!container) return;
+
+    if (imageUrl) {
+        container.style.setProperty('--profile-bg-image', `url('${imageUrl}')`);
+        container.classList.add('has-background');
+    } else {
+        container.style.removeProperty('--profile-bg-image');
+        container.classList.remove('has-background');
+    }
+}
+
+
+// --- Display COMPETITIVE Stats Grid ---
+function displayCompetitiveStats(statsData) {
+    competitiveStatsDisplay.innerHTML = ''; // Clear previous
+
+    if (!statsData || typeof statsData !== 'object' || Object.keys(statsData).length === 0) {
+        competitiveStatsDisplay.innerHTML = '<p>Competitive stats unavailable for this user.</p>';
+        return;
+    }
+
+    const statsMap = { wins: 'Wins', points: 'Points', kdRatio: 'K/D Ratio', matchesPlayed: 'Matches Played', matches: 'Matches Played', losses: 'Losses' };
+    let statsAdded = 0;
+    const addedKeys = new Set();
+    for (const key in statsMap) {
+        let value;
+        let actualKeyUsed = key;
+        if (key === 'matchesPlayed') { // Handle alias
+            if (statsData.hasOwnProperty('matchesPlayed')) { value = statsData.matchesPlayed; }
+            else if (statsData.hasOwnProperty('matches')) { value = statsData.matches; actualKeyUsed = 'matches'; }
+        } else { value = statsData[key]; }
+
+        if (value === undefined || value === null || addedKeys.has(actualKeyUsed)) { continue; }
+
+        let displayValue = value;
+        if (key === 'kdRatio' && typeof value === 'number') { displayValue = value.toFixed(2); }
+
+        competitiveStatsDisplay.appendChild(createStatItem(statsMap[key], displayValue));
+        addedKeys.add(actualKeyUsed);
+        statsAdded++;
+    }
+
+    if (statsAdded === 0) {
+        competitiveStatsDisplay.innerHTML = '<p>No specific competitive stats found.</p>';
+    }
+}
+
+
+// --- Display Poxel.io Stats Grid ---
+function displayPoxelStats(poxelData, loading = false) {
+    if (!poxelStatsDisplay || !poxelStatsSection) return;
+
+    poxelStatsDisplay.innerHTML = ''; // Clear previous content
+    poxelStatsSection.style.display = 'block'; // Always show the section container
+
+    if (loading) {
+        poxelStatsDisplay.innerHTML = '<p>Loading Poxel.io stats...</p>';
+        return;
+    }
+
+    if (!poxelData) {
+         poxelStatsDisplay.innerHTML = '<p>Could not load Poxel.io stats for this user.</p>';
+         return;
+    }
+
+    // Adjust keys based on actual API response from fetchPoxelStats console log
+    const statsMap = {
+         kills: 'Kills', deaths: 'Deaths', wins: 'Wins', losses: 'Losses',
+         level: 'Level', playtimeHours: 'Playtime (Hours)', gamesPlayed: 'Games Played'
+         // Add/remove fields as necessary based on API response
+    };
+    let statsAdded = 0;
+
+    // Display mapped stats
+    for (const key in statsMap) {
+         if (poxelData.hasOwnProperty(key) && poxelData[key] !== null && poxelData[key] !== undefined) {
+             poxelStatsDisplay.appendChild(createStatItem(statsMap[key], poxelData[key]));
+             statsAdded++;
+         }
+    }
+
+    // Calculate and add K/D specifically
+    if (poxelData.hasOwnProperty('kills') && poxelData.hasOwnProperty('deaths')) {
+         const kills = Number(poxelData.kills) || 0;
+         const deaths = Number(poxelData.deaths) || 0;
+         const kd = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
+         poxelStatsDisplay.appendChild(createStatItem('K/D Ratio', kd));
+         statsAdded++;
+    }
+
+    // Add any other direct fields from poxelData you want to display
+    // Example: if API returns 'elo_rating' directly
+    // if (poxelData.hasOwnProperty('elo_rating')) {
+    //     poxelStatsDisplay.appendChild(createStatItem('ELO Rating', poxelData.elo_rating));
+    //     statsAdded++;
+    // }
+
+    if (statsAdded === 0) {
+        poxelStatsDisplay.innerHTML = '<p>No relevant Poxel.io stats found or available.</p>';
+    }
+}
+
+
+// --- Helper: Create a Single Stat Item Element ---
+function createStatItem(title, value) {
+    const itemDiv = document.createElement('div');
+    itemDiv.classList.add('stat-item');
+    const titleH4 = document.createElement('h4');
+    titleH4.textContent = title;
+    const valueP = document.createElement('p');
+    valueP.textContent = (value !== null && value !== undefined) ? value : '-';
+    itemDiv.appendChild(titleH4);
+    itemDiv.appendChild(valueP);
+    return itemDiv;
+}
+
+// --- Check and Grant Achievements ---
+async function checkAndGrantAchievements(userId, currentUserProfile, competitiveStats) {
+    if (!allAchievements || !userId || !currentUserProfile || !competitiveStats) {
+        console.log("Skipping achievement check due to missing data.");
+        return null;
+    }
+    console.log(`Checking achievements for UID ${userId} using stats:`, competitiveStats);
+    try {
+        const userAchievementsRef = db.collection('userAchievements').doc(userId);
+        const userAchievementsDoc = await userAchievementsRef.get();
+        const unlockedIds = userAchievementsDoc.exists ? (userAchievementsDoc.data()?.unlocked || []) : [];
+
+        let newAchievementsUnlocked = [];
+        let rewardsToApply = { titles: [], rank: null }; // Simplified rewards structure for example
+        let needsDbUpdate = false;
+
+        for (const achievementId in allAchievements) {
+            if (unlockedIds.includes(achievementId)) continue; // Skip already unlocked
+
+            const achievement = allAchievements[achievementId];
+            let criteriaMet = false;
+
+            // Example Criteria Check (adapt based on your achievement structure)
+            if (achievement.criteria?.stat && competitiveStats[achievement.criteria.stat] !== undefined) {
+                const statValue = competitiveStats[achievement.criteria.stat];
+                const targetValue = achievement.criteria.value;
+                switch (achievement.criteria.operator) {
+                    case '>=': criteriaMet = statValue >= targetValue; break;
+                    case '==': criteriaMet = statValue == targetValue; break;
+                    // Add more operators as needed
+                    default: console.warn(`Unsupported operator: ${achievement.criteria.operator}`);
+                }
+            } // Add more criteria types (e.g., multiple stats, specific actions) if needed
+
+            if (criteriaMet) {
+                console.log(`Criteria MET for achievement: ${achievement.name || achievementId}`);
+                newAchievementsUnlocked.push(achievementId);
+                needsDbUpdate = true;
+                if (achievement.rewards?.title) rewardsToApply.titles.push(achievement.rewards.title);
+                if (achievement.rewards?.rank) rewardsToApply.rank = achievement.rewards.rank; // Assume only one rank reward for simplicity
+            }
         }
 
-        #profile-pic #profile-initials {
-            font-size: 4.5rem;
-            font-weight: 700;
-            line-height: 1;
-            text-transform: uppercase;
-            user-select: none; /* Prevent text selection */
-            display: flex; /* Ensure it's a flex item for centering */
-            align-items: center;
-            justify-content: center;
+        if (needsDbUpdate && newAchievementsUnlocked.length > 0) {
+            console.log(`Unlocking ${newAchievementsUnlocked.length} new achievement(s):`, newAchievementsUnlocked);
+            console.log("Applying rewards:", rewardsToApply);
+
+            const batch = db.batch();
+            const userProfileRef = db.collection('users').doc(userId);
+
+            // Update unlocked achievements list
+            batch.set(userAchievementsRef, { unlocked: firebase.firestore.FieldValue.arrayUnion(...newAchievementsUnlocked) }, { merge: true });
+
+            // Prepare profile updates based on rewards
+            const profileUpdateData = {};
+            let updatedLocalProfile = { ...currentUserProfile }; // Create a mutable copy
+
+            if (rewardsToApply.titles.length > 0) {
+                profileUpdateData.availableTitles = firebase.firestore.FieldValue.arrayUnion(...rewardsToApply.titles);
+                // Update local copy immediately
+                updatedLocalProfile.availableTitles = [...new Set([...(updatedLocalProfile.availableTitles || []), ...rewardsToApply.titles])];
+                // Auto-equip first new title if none is equipped
+                if (!updatedLocalProfile.equippedTitle && rewardsToApply.titles[0]) {
+                    profileUpdateData.equippedTitle = rewardsToApply.titles[0];
+                    updatedLocalProfile.equippedTitle = rewardsToApply.titles[0];
+                }
+            }
+            if (rewardsToApply.rank) { // Apply highest rank achieved if multiple apply (or based on specific logic)
+                 profileUpdateData.currentRank = rewardsToApply.rank;
+                 updatedLocalProfile.currentRank = rewardsToApply.rank;
+            }
+
+            // Ensure default values if they were missing before update
+            if (updatedLocalProfile.currentRank === undefined) updatedLocalProfile.currentRank = 'Unranked';
+            if (updatedLocalProfile.equippedTitle === undefined) updatedLocalProfile.equippedTitle = '';
+
+            if (Object.keys(profileUpdateData).length > 0) {
+                batch.update(userProfileRef, profileUpdateData);
+            }
+
+            await batch.commit();
+            console.log(`Firestore batch committed successfully for UID ${userId}.`);
+            return updatedLocalProfile; // Return the locally updated profile object
+        } else {
+            console.log(`No new achievements unlocked for UID ${userId}.`);
+            return null; // No changes made
+        }
+    } catch (error) {
+        console.error(`Error checking/granting achievements for UID ${userId}:`, error);
+        return null;
+    }
+}
+
+
+// =============================================================================
+// --- UI Display Helpers (Badges, Rank/Title Selector) ---
+// =============================================================================
+function displayUserBadges(profileData) {
+    profileBadgesContainer.innerHTML = ''; // Clear previous badges
+    const userEmail = profileData?.email;
+    if (!userEmail) {
+        adminTag.style.display = 'none';
+        return;
+    }
+    const emailLower = userEmail.toLowerCase();
+
+    // Display Admin Tag
+    adminTag.style.display = adminEmails.includes(emailLower) ? 'inline-block' : 'none';
+
+    // Display Configured Badges
+    for (const badgeType in badgeConfig) {
+        const config = badgeConfig[badgeType];
+        if (config.emails.includes(emailLower)) {
+            const badgeSpan = document.createElement('span');
+            badgeSpan.classList.add('profile-badge', config.className);
+            badgeSpan.setAttribute('title', config.title);
+            profileBadgesContainer.appendChild(badgeSpan);
+        }
+    }
+}
+
+function updateProfileTitlesAndRank(profileData, allowInteraction) {
+    if (!rankDisplay || !titleDisplay) return;
+
+    // Reset state
+    titleDisplay.classList.remove('selectable-title', 'no-title-placeholder');
+    titleDisplay.removeEventListener('click', handleTitleClick);
+    closeTitleSelector(); // Ensure selector is closed
+
+    if (profileData && typeof profileData === 'object') {
+        const rank = profileData.currentRank || 'Unranked';
+        const title = profileData.equippedTitle || '';
+        const available = profileData.availableTitles || [];
+
+        // Update Rank Display
+        rankDisplay.textContent = rank;
+        rankDisplay.className = `profile-rank-display rank-${rank.toLowerCase().replace(/\s+/g, '-')}`;
+
+        // Update Title Display and Interaction
+        if (title) { // Has an equipped title
+            titleDisplay.textContent = title;
+            titleDisplay.style.display = 'inline-block';
+            if (allowInteraction && available.length > 0) {
+                titleDisplay.classList.add('selectable-title');
+                titleDisplay.addEventListener('click', handleTitleClick);
+            }
+        } else { // No equipped title
+            if (allowInteraction && available.length > 0) { // Has available titles to choose from
+                titleDisplay.textContent = '[Choose Title]';
+                titleDisplay.style.display = 'inline-block';
+                titleDisplay.classList.add('selectable-title', 'no-title-placeholder');
+                titleDisplay.addEventListener('click', handleTitleClick);
+            } else { // No titles available or no interaction allowed
+                titleDisplay.textContent = '';
+                titleDisplay.style.display = 'none';
+            }
+        }
+    } else {
+        // Default/Loading State
+        rankDisplay.textContent = '...';
+        rankDisplay.className = 'profile-rank-display rank-unranked';
+        titleDisplay.textContent = '';
+        titleDisplay.style.display = 'none';
+    }
+}
+
+function handleTitleClick(event) {
+    event.stopPropagation(); // Prevent triggering outside click listener immediately
+    if (!isOwnProfile || !viewingUserProfileData.profile) return; // Only allow on own profile
+
+    if (isTitleSelectorOpen) {
+        closeTitleSelector();
+    } else if (viewingUserProfileData.profile?.availableTitles?.length > 0) {
+        openTitleSelector();
+    } else {
+        console.log("No available titles to select.");
+    }
+}
+
+function openTitleSelector() {
+    if (isTitleSelectorOpen || !profileIdentifiersDiv || !viewingUserProfileData.profile?.availableTitles?.length > 0) return;
+
+    const availableTitles = viewingUserProfileData.profile.availableTitles;
+    const currentEquippedTitle = viewingUserProfileData.profile.equippedTitle || '';
+
+    if (!titleSelectorElement) { // Create selector div if it doesn't exist
+        titleSelectorElement = document.createElement('div');
+        titleSelectorElement.className = 'title-selector';
+        profileIdentifiersDiv.appendChild(titleSelectorElement);
+    }
+    titleSelectorElement.innerHTML = ''; // Clear previous options
+
+    // Add "Remove Title" option if a title is currently equipped
+    if (currentEquippedTitle) {
+        const unequipOption = document.createElement('button');
+        unequipOption.className = 'title-option title-option-unequip';
+        unequipOption.dataset.title = ""; // Use empty string for unequip
+        unequipOption.type = 'button';
+        unequipOption.textContent = '[Remove Title]';
+        unequipOption.addEventListener('click', handleTitleOptionClick);
+        titleSelectorElement.appendChild(unequipOption);
+    }
+
+    // Add available titles as options
+    availableTitles.forEach(titleOptionText => {
+        const optionElement = document.createElement('button');
+        optionElement.className = 'title-option';
+        optionElement.dataset.title = titleOptionText;
+        optionElement.type = 'button';
+        optionElement.textContent = titleOptionText;
+
+        if (titleOptionText === currentEquippedTitle) {
+            optionElement.classList.add('currently-equipped');
+            optionElement.setAttribute('aria-pressed', 'true');
+        } else {
+            optionElement.setAttribute('aria-pressed', 'false');
+        }
+        optionElement.addEventListener('click', handleTitleOptionClick);
+        titleSelectorElement.appendChild(optionElement);
+    });
+
+    titleSelectorElement.style.display = 'block';
+    isTitleSelectorOpen = true;
+
+    // Add listener to close when clicking outside
+    setTimeout(() => { // Use timeout to prevent immediate closing due to event propagation
+        document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true });
+    }, 0);
+}
+
+function closeTitleSelector() {
+    if (!isTitleSelectorOpen || !titleSelectorElement) return;
+    titleSelectorElement.style.display = 'none';
+    isTitleSelectorOpen = false;
+    // Clean up the outside click listener if it hasn't fired yet
+    document.removeEventListener('click', handleClickOutsideTitleSelector, { capture: true });
+}
+
+function handleClickOutsideTitleSelector(event) {
+    // This listener is added with { once: true }, so it auto-removes after firing.
+    if (!isTitleSelectorOpen) return; // Should not happen with 'once', but good practice
+
+    // Check if the click was inside the selector or on the title display itself
+    const clickedInsideSelector = titleSelectorElement && titleSelectorElement.contains(event.target);
+    const clickedOnTitleDisplay = titleDisplay && titleDisplay.contains(event.target);
+
+    // If clicked outside both, close the selector
+    if (!clickedInsideSelector && !clickedOnTitleDisplay) {
+        closeTitleSelector();
+    } else {
+        // If click was inside, re-attach the listener for the *next* outside click
+        // This handles cases where user clicks within the dropdown (e.g., scrollbar)
+         document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true });
+    }
+}
+
+async function handleTitleOptionClick(event) {
+    event.stopPropagation(); // Prevent outside click listener
+    const selectedTitle = event.currentTarget.dataset.title; // Can be "" for unequip
+    const currentUserId = loggedInUser?.uid;
+    const currentlyViewedProfile = viewingUserProfileData.profile;
+
+    if (!currentUserId || !currentlyViewedProfile || currentUserId !== currentlyViewedProfile.id) {
+        console.error("Attempted to change title for wrong user or not logged in.");
+        closeTitleSelector();
+        return;
+    }
+
+    const currentEquipped = currentlyViewedProfile.equippedTitle || '';
+
+    // Don't do anything if clicking the already equipped title
+    if (selectedTitle === currentEquipped) {
+        closeTitleSelector();
+        return;
+    }
+
+    closeTitleSelector(); // Close immediately
+
+    // Optimistic UI update (or show "Updating...")
+    titleDisplay.textContent = "Updating...";
+    titleDisplay.classList.remove('selectable-title', 'no-title-placeholder');
+
+    try {
+        const userProfileRef = db.collection('users').doc(currentUserId);
+        await userProfileRef.update({ equippedTitle: selectedTitle }); // Update Firestore
+
+        console.log(`Firestore 'users' doc updated title to "${selectedTitle || 'None'}" for UID ${currentUserId}`);
+
+        // Update local state and cache
+        viewingUserProfileData.profile.equippedTitle = selectedTitle;
+        saveCombinedDataToCache(currentUserId, viewingUserProfileData);
+
+        // Re-render the title/rank section with interaction enabled
+        updateProfileTitlesAndRank(viewingUserProfileData.profile, true);
+
+    } catch (error) {
+        console.error("Error updating equipped title in Firestore 'users':", error);
+        alert("Failed to update title. Please try again.");
+        // Revert optimistic UI update on error
+        if (viewingUserProfileData.profile) {
+            // Restore previous state before re-rendering
+             viewingUserProfileData.profile.equippedTitle = currentEquipped;
+        }
+        updateProfileTitlesAndRank(viewingUserProfileData.profile, true);
+    }
+}
+
+
+// =============================================================================
+// --- Profile Picture Editing Functions ---
+// =============================================================================
+
+// --- Initialize Edit Listeners (Call this when owner status is confirmed) ---
+function setupProfilePicEditing() {
+    // Ensure we are targeting the correct, potentially cloned, elements
+    const currentEditIcon = document.getElementById('edit-profile-pic-icon');
+    const currentFileInput = document.getElementById('profile-pic-input');
+
+    if (!isOwnProfile || !currentEditIcon || !currentFileInput) return; // Guard clause
+
+    console.log("Setting up profile pic editing listeners.");
+    currentEditIcon.style.display = 'flex'; // Ensure it's visible
+
+    // Use event delegation or ensure listeners are attached to current elements
+    currentEditIcon.onclick = () => {
+        currentFileInput.click();
+    };
+
+    currentFileInput.onchange = (event) => {
+        handleFileSelect(event);
+    };
+}
+
+// --- Handle File Selection ---
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file || !file.type.startsWith('image/')) {
+        alert('Please select a valid image file (PNG, JPG, GIF).');
+        event.target.value = null; // Reset input
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        modalImage.src = e.target.result;
+        openEditModal(); // Open modal AFTER image source is set
+    };
+    reader.onerror = (err) => {
+        console.error("FileReader error:", err);
+        alert("Error reading the selected file.");
+    };
+    reader.readAsDataURL(file);
+    event.target.value = null; // Reset input to allow selecting the same file again
+}
+
+// --- Open Image Editing Modal ---
+function openEditModal() {
+    if (!editModal || !modalImage) return;
+    editModal.style.display = 'flex';
+    modalImage.style.opacity = 0; // Hide image initially
+
+    // Use setTimeout to allow the browser to render the modal & image dimensions
+    setTimeout(() => {
+        if (cropper) { // Destroy previous instance if exists
+            cropper.destroy();
+            cropper = null;
+        }
+        try {
+             cropper = new Cropper(modalImage, {
+                aspectRatio: 1 / 1,       // Force square aspect ratio
+                viewMode: 1,              // Restrict crop box to canvas bounds
+                dragMode: 'move',         // Default drag mode
+                background: false,        // Transparent background for cropper container
+                autoCropArea: 0.85,       // Initial crop area size relative to image
+                responsive: true,         // Recalculate on window resize
+                modal: true,              // Dark overlay behind image
+                guides: true,             // Crop area guides
+                center: true,             // Center indicator
+                highlight: false,         // Don't highlight crop area
+                cropBoxMovable: false,    // Keep crop box fixed relative to image movement
+                cropBoxResizable: false,   // Keep crop box size fixed
+                toggleDragModeOnDblclick: false, // Disable this behavior
+                ready: () => {
+                     modalImage.style.opacity = 1; // Show image once Cropper is ready
+                     console.log("Cropper is ready.");
+                }
+            });
+        } catch (cropperError) {
+            console.error("Error initializing Cropper:", cropperError);
+            alert("Could not initialize image editor. Please try reloading.");
+            closeEditModal(); // Close if initialization failed
+        }
+    }, 150); // Adjust delay if needed
+
+    // Attach listeners to the *current* modal buttons
+    modalCloseBtn.onclick = closeEditModal;
+    modalCancelBtn.onclick = closeEditModal;
+    modalApplyBtn.onclick = handleApplyCrop; // Assign the handler directly
+
+    // Close modal if clicking outside the content area
+    editModal.onclick = (event) => {
+        if (event.target === editModal) { // Check if click was on the overlay itself
+            closeEditModal();
+        }
+    };
+}
+
+
+// --- Close Image Editing Modal ---
+function closeEditModal() {
+    if (!editModal) return;
+    if (cropper) {
+        try {
+            cropper.destroy();
+        } catch (e) { console.warn("Error destroying cropper:", e); }
+        cropper = null;
+    }
+    editModal.style.display = 'none';
+    modalImage.src = ''; // Clear image source to free memory
+
+    // Reset button state
+    modalApplyBtn.disabled = false;
+    modalSpinner.style.display = 'none';
+    // Find the text node and restore it if needed (safer than innerHTML)
+    const textNode = Array.from(modalApplyBtn.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+    if (textNode) textNode.textContent = 'Apply '; // Restore original text
+
+
+    // Remove specific listeners to prevent memory leaks
+    modalCloseBtn.onclick = null;
+    modalCancelBtn.onclick = null;
+    modalApplyBtn.onclick = null;
+    editModal.onclick = null;
+}
+
+// --- Handle Apply Crop and Upload ---
+async function handleApplyCrop() {
+    if (!cropper || !loggedInUser) {
+        console.error("Cropper not initialized or user not logged in.");
+        alert("Cannot apply crop. Please try again or re-login.");
+        return;
+    }
+
+    // Show loading state
+    modalApplyBtn.disabled = true;
+    modalSpinner.style.display = 'inline-block';
+    // Modify text content carefully
+     const textNode = Array.from(modalApplyBtn.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+     if (textNode) textNode.textContent = 'Applying ';
+
+
+    try {
+        // Get cropped canvas data as a Blob for efficient upload
+        const canvas = cropper.getCroppedCanvas({
+            width: 512, // Standardized output width
+            height: 512, // Standardized output height
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                throw new Error("Failed to create blob from canvas. Image might be too complex or browser issue.");
+            }
+
+            console.log("Blob created, size:", (blob.size / 1024).toFixed(2), "KB");
+
+            try {
+                // Upload to Cloudinary
+                const imageUrl = await uploadToCloudinary(blob);
+                console.log("Uploaded to Cloudinary:", imageUrl);
+
+                // Save URL to Firestore
+                await saveProfilePictureUrl(loggedInUser.uid, imageUrl);
+                console.log("Saved URL to Firestore.");
+
+                // Update UI immediately
+                profileImage.src = imageUrl; // Update displayed image
+                profileImage.style.display = 'block';
+                profileInitials.style.display = 'none';
+                updateProfileBackground(imageUrl); // Update background
+
+                // Update local cache
+                if (viewingUserProfileData && viewingUserProfileData.profile) {
+                    viewingUserProfileData.profile.profilePictureUrl = imageUrl;
+                    saveCombinedDataToCache(loggedInUser.uid, viewingUserProfileData);
+                }
+
+                closeEditModal(); // Close modal on complete success
+
+            } catch (uploadOrSaveError) {
+                console.error("Upload or Save Error:", uploadOrSaveError);
+                alert(`Failed to update profile picture: ${uploadOrSaveError.message || 'Unknown error during upload/save.'}`);
+                // Reset button state on error within blob callback
+                modalApplyBtn.disabled = false;
+                modalSpinner.style.display = 'none';
+                if (textNode) textNode.textContent = 'Apply ';
+            }
+
+        }, 'image/jpeg', 0.9); // Specify format (jpeg is good for photos) and quality (0.9 is high)
+
+    } catch (cropError) {
+        console.error("Cropping error:", cropError);
+        alert("Failed to crop the image. Please try again or use a different image.");
+        // Reset button state on cropping error
+        modalApplyBtn.disabled = false;
+        modalSpinner.style.display = 'none';
+         if (textNode) textNode.textContent = 'Apply ';
+    }
+}
+
+// --- Upload Blob to Cloudinary (using Fetch API for unsigned uploads) ---
+async function uploadToCloudinary(blob) {
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+         throw new Error("Cloudinary configuration missing (cloud name or upload preset). Cannot upload.");
+    }
+    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+    const formData = new FormData();
+    formData.append('file', blob, `profile_${loggedInUser.uid}_${Date.now()}.jpg`); // Provide a filename
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    // Optional: Add context, tags, folder etc. based on preset config or here
+    // formData.append('folder', 'user_profiles');
+    // formData.append('tags', 'profile_picture, poxelcomp');
+
+    console.log(`Uploading to Cloudinary preset: ${CLOUDINARY_UPLOAD_PRESET}`);
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+            console.error("Cloudinary Upload Error Response:", data);
+            throw new Error(data.error?.message || `Cloudinary upload failed with status ${response.status}.`);
         }
 
-        #profile-pic img {
-            display: none; /* Hidden initially, shown by JS if URL exists */
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Scale image nicely within the circle */
-            border-radius: 50%; /* Ensure image itself is clipped if somehow larger */
+        console.log("Cloudinary Upload Success Response:", data);
+        if (!data.secure_url) {
+            throw new Error("Cloudinary response missing 'secure_url'.");
         }
+        return data.secure_url; // Return the secure URL
 
-        #edit-profile-pic-icon {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: none; /* Hidden by default, shown via JS for own profile */
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-size: 0.9rem; /* Size of the icon */
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: background-color 0.2s ease;
-            z-index: 5; /* Above profile image */
+    } catch (networkError) {
+        console.error("Network error during Cloudinary upload:", networkError);
+        throw new Error(`Network error during upload: ${networkError.message}`);
+    }
+}
+
+// --- Save Profile Picture URL to Firestore ---
+async function saveProfilePictureUrl(userId, imageUrl) {
+    if (!userId || typeof imageUrl !== 'string' || !imageUrl.startsWith('https://')) {
+        throw new Error("Invalid userId or imageUrl provided for saving.");
+    }
+    const userDocRef = db.collection("users").doc(userId);
+    try {
+        await userDocRef.update({
+            profilePictureUrl: imageUrl
+        });
+        console.log(`Successfully updated profilePictureUrl for user ${userId}`);
+    } catch (error) {
+        console.error(`Error updating Firestore profile picture URL for ${userId}:`, error);
+        throw new Error("Database error: Failed to save profile picture link.");
+    }
+}
+
+
+// =============================================================================
+// --- Authentication and Initialization ---
+// =============================================================================
+auth.onAuthStateChanged(user => {
+    loggedInUser = user; // Update global loggedInUser state
+    const targetUid = profileUidFromUrl || loggedInUser?.uid; // Determine whose profile to load
+    console.log(`Auth state changed. User: ${user ? user.uid : 'null'}, Target UID: ${targetUid}`);
+
+    // Determine if viewing own profile AFTER auth state is confirmed
+    isOwnProfile = loggedInUser && targetUid === loggedInUser.uid;
+
+    if (targetUid) {
+        // User is logged in or a UID is provided in URL
+        loadingIndicator.style.display = 'none';
+        notLoggedInMsg.style.display = 'none';
+        profileContent.style.display = 'block'; // Show main profile container
+
+        // Fetch necessary global data if not already fetched
+        if (!allAchievements) fetchAllAchievements();
+
+        // Load the combined user data
+        loadCombinedUserData(targetUid).then(() => {
+             // AFTER data is loaded and displayed, setup interaction listeners
+             console.log("loadCombinedUserData finished. Setting up interactions.");
+             if (isOwnProfile) {
+                 // Clone nodes and re-attach listeners to prevent duplicates/stale refs
+                 const currentEditIcon = document.getElementById('edit-profile-pic-icon');
+                 const currentFileInput = document.getElementById('profile-pic-input');
+                 if (currentEditIcon) currentEditIcon.replaceWith(currentEditIcon.cloneNode(true));
+                 if (currentFileInput) currentFileInput.replaceWith(currentFileInput.cloneNode(true));
+
+                 setupProfilePicEditing(); // Setup pic edit listeners for the owner
+             } else {
+                // Ensure edit icon is hidden if not the owner
+                const currentEditIcon = document.getElementById('edit-profile-pic-icon');
+                if(currentEditIcon) currentEditIcon.style.display = 'none';
+             }
+             // Title selector setup is handled within updateProfileTitlesAndRank called by displayProfileData
+        }).catch(err => {
+            console.error("Error during post-load setup:", err);
+            // Handle cases where loadCombinedUserData itself fails critically (already handled inside it)
+        });
+
+        // Show/Hide Logout Button
+        profileLogoutBtn.style.display = isOwnProfile ? 'inline-block' : 'none';
+
+    } else {
+        // No user logged in AND no UID in URL -> Show "Not Logged In" message
+        console.log('No user logged in and no profile UID in URL.');
+        loadingIndicator.style.display = 'none';
+        profileContent.style.display = 'none'; // Hide profile content
+        notLoggedInMsg.style.display = 'flex'; // Show message container
+        notLoggedInMsg.textContent = 'Please log in to view your profile, or provide a user ID in the URL (e.g., ?uid=USER_ID).';
+
+        // Reset UI elements
+        adminTag.style.display = 'none';
+        profileBadgesContainer.innerHTML = '';
+        profileLogoutBtn.style.display = 'none';
+        editProfilePicIcon.style.display = 'none'; // Hide edit icon
+        updateProfileTitlesAndRank(null, false); // Reset rank/title
+        competitiveStatsDisplay.innerHTML = ''; // Clear stats
+        displayPoxelStats(null); // Clear poxel stats
+        updateProfileBackground(null); // Clear background
+        viewingUserProfileData = {}; // Clear global data
+        closeTitleSelector(); // Ensure title selector is closed
+        closeEditModal(); // Ensure edit modal is closed
+    }
+});
+
+// --- Logout Button Event Listener ---
+profileLogoutBtn.addEventListener('click', () => {
+    const userId = loggedInUser?.uid;
+    console.log('Logout button clicked.');
+
+    // Clean up UI elements that might have listeners
+    if (titleDisplay) titleDisplay.removeEventListener('click', handleTitleClick);
+    closeTitleSelector();
+    closeEditModal();
+
+    // Sign out
+    auth.signOut().then(() => {
+        console.log('User signed out successfully.');
+        if (userId) {
+            // Clear cache for the logged-out user
+            localStorage.removeItem(`poxelProfileCombinedData_${userId}`);
+            console.log(`Cleared cache for UID: ${userId}`);
         }
+        viewingUserProfileData = {}; // Clear global data
+        window.location.href = 'index.html'; // Redirect to home or login page
+    }).catch((error) => {
+        console.error('Sign out error:', error);
+        alert('Error signing out. Please try again.');
+    });
+});
 
-        #edit-profile-pic-icon:hover {
-            background-color: rgba(0, 0, 0, 0.8);
+
+// =============================================================================
+// --- Local Storage Caching ---
+// =============================================================================
+function loadCombinedDataFromCache(viewedUserId) {
+    if (!viewedUserId) return false;
+    const cacheKey = `poxelProfileCombinedData_${viewedUserId}`;
+    const cachedDataString = localStorage.getItem(cacheKey);
+    if (!cachedDataString) {
+        console.log(`No cache found for UID: ${viewedUserId}`);
+        return false;
+    }
+    try {
+        const cachedData = JSON.parse(cachedDataString);
+        if (cachedData && cachedData.profile) {
+            viewingUserProfileData = cachedData; // Load data into global state
+            console.log("Loaded combined data from cache for VIEWED UID:", viewedUserId);
+
+            // Determine if the cached view is for the currently logged-in user
+            // Note: loggedInUser might be null here if auth hasn't finished,
+            // but isOwnProfile flag should be correctly set later by onAuthStateChanged
+            const viewingOwnCachedProfile = auth.currentUser && auth.currentUser.uid === viewedUserId;
+
+            // Display data from cache, including profile pic/bg and interaction state
+            displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats, viewingOwnCachedProfile);
+
+            // You could potentially cache and display Poxel stats too, if added to saveCombinedDataToCache
+            // displayPoxelStats(viewingUserProfileData.poxelStats || null);
+
+            return true; // Indicate cache was successfully loaded and displayed
+        } else {
+            console.warn(`Invalid cache structure for UID: ${viewedUserId}. Removing.`);
+            localStorage.removeItem(cacheKey);
+            return false;
         }
+    } catch (error) {
+        console.error("Error parsing cached data:", error);
+        localStorage.removeItem(cacheKey); // Remove corrupted cache
+        return false;
+    }
+}
 
-        /* Container for Username, Badges, Admin Tag */
-        .profile-name-container { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.2rem; }
-        #profile-username { font-size: 2.2rem; font-weight: 700; color: var(--text-light); margin: 0; word-break: break-all; /* Prevent long names breaking layout */ }
-        #profile-badges-container { display: inline-flex; align-items: center; gap: 0.4rem; line-height: 1; vertical-align: middle; flex-shrink: 0; /* Prevent shrinking */ }
-        .profile-badge { display: inline-flex; align-items: center; justify-content: center; width: 1.8em; height: 1.8em; border-radius: 50%; font-size: 0.8em; /* Relative to username font size */ font-weight: bold; color: var(--badge-tick-color); line-height: 1; vertical-align: middle; position: relative; }
-        .profile-badge::before { content: '✔'; display: block; }
-        .badge-verified { background-color: var(--badge-verified-bg); }
-        .badge-creator { background-color: var(--badge-creator-bg); }
-        .badge-moderator { background-color: var(--badge-moderator-bg); }
-        .admin-tag { display: none; background-color: var(--primary-orange); color: var(--text-dark); padding: 0.6em 0.6em; border-radius: 4px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; vertical-align: middle; line-height: 1; flex-shrink: 0; }
-        #profile-email { font-size: 1rem; color: var(--text-secondary); font-weight: 400; margin-top: 0; word-break: break-all; }
-
-        /* Rank and Title Styles */
-        .profile-identifiers { margin-top: 0.5rem; margin-bottom: 0.3rem; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.8rem; position: relative; /* For title selector positioning */ }
-        .profile-rank-display { background-color: var(--rank-default-bg); color: var(--text-light); padding: 0.2em 0.7em; border-radius: 15px; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; display: inline-block; transition: background-color 0.3s ease, color 0.3s ease; }
-        .rank-unranked { background-color: var(--rank-default-bg); color: #ccc; }
-        .rank-bronze { background-color: var(--rank-bronze-bg); color: var(--text-dark); }
-        .rank-silver { background-color: var(--rank-silver-bg); color: var(--text-dark); }
-        .rank-gold { background-color: var(--rank-gold-bg); color: var(--text-dark); }
-        .rank-veteran { background-color: var(--primary-orange-darker); color: var(--text-dark); }
-        .rank-legend { background: linear-gradient(to right, var(--primary-orange), #ffae00); color: var(--text-dark); }
-        .profile-title-display { color: var(--primary-orange); font-size: 1rem; font-weight: 600; font-style: italic; display: inline-block; transition: color 0.2s ease; }
-        #profile-title.selectable-title { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--primary-orange); }
-        #profile-title.selectable-title:hover { color: var(--primary-orange-darker); text-decoration-color: var(--primary-orange-darker); }
-        #profile-title.no-title-placeholder { color: var(--text-secondary); font-style: normal; }
-
-        /* Title Selector Dropdown Styles */
-        .title-selector { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 0.5rem; min-width: 180px; max-width: 90%; background-color: var(--bg-dark); border: 1px solid var(--border-light); border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); padding: 0.5rem 0; z-index: 10; max-height: 200px; overflow-y: auto; }
-        .title-option { display: block; background: none; border: none; color: var(--text-light); padding: 0.6rem 1rem; text-align: left; width: 100%; cursor: pointer; font-size: 0.95rem; transition: background-color 0.2s ease; white-space: nowrap; position: relative; }
-        .title-option:hover { background-color: var(--bg-secondary); }
-        .title-option.currently-equipped { font-weight: bold; color: var(--primary-orange); padding-left: 2.2rem; /* Space for tick */ }
-        .title-option.currently-equipped::before { content: '✔'; position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--primary-orange); font-size: 1em; line-height: 1; }
-        .title-option-unequip { color: var(--text-secondary); font-style: italic; }
-
-        /* Stats Sections Common Styles */
-        .profile-stats { margin-top: 2.5rem; border-top: 1px solid var(--border-light); padding-top: 2.5rem; }
-        .profile-stats h3 { margin-bottom: 2rem; color: var(--primary-orange); font-size: 1.7rem; font-weight: 600; text-align: center; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.8rem; text-align: left; }
-        .stats-grid > p { /* Style for loading/error messages */ color: var(--text-secondary); font-style: italic; grid-column: 1 / -1; text-align: center; padding: 1rem 0; }
-        .stat-item { background-color: var(--bg-dark); padding: 1.3rem 1.6rem; border-radius: 8px; border-left: 5px solid var(--primary-orange); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; }
-        .stat-item:hover { transform: translateY(-4px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4); }
-        .stat-item h4 { margin-bottom: 0.6rem; color: #ccc; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-item p { font-size: 1.7rem; font-weight: 700; color: var(--primary-orange); line-height: 1.2; margin: 0; word-break: break-word; }
-
-        /* Loading / Not Logged In State */
-        #loading-profile, #not-logged-in { max-width: 800px; margin: 3rem auto; padding: 4rem 2rem; background-color: var(--bg-secondary); border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); text-align: center; font-size: 1.2rem; color: var(--text-secondary); min-height: 300px; display: flex; justify-content: center; align-items: center; }
-
-        /* ======================================== */
-        /* Image Editing Modal Styles             */
-        /* ======================================== */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.85); /* Darker overlay */
-            display: none; /* Hidden by default */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px; /* Padding around modal */
+function saveCombinedDataToCache(viewedUserId, combinedData) {
+    if (!viewedUserId || !combinedData || !combinedData.profile) {
+        console.warn("Attempted to save invalid data to cache. Aborting.");
+        return;
+    }
+    const cacheKey = `poxelProfileCombinedData_${viewedUserId}`;
+    try {
+        // Consider stringifying only necessary parts if data becomes very large
+        localStorage.setItem(cacheKey, JSON.stringify(combinedData));
+        // console.log(`Saved combined data to cache for UID: ${viewedUserId}`);
+    } catch(error) {
+        console.error("Error saving data to cache:", error);
+        if (error.name === 'QuotaExceededError') {
+            console.warn('Browser storage quota exceeded. Cannot cache profile data. Consider clearing old data or reducing cache size.');
+            // Implement more sophisticated cache cleanup if needed
         }
+    }
+}
 
-        .modal-content {
-            background-color: var(--bg-secondary);
-            padding: 25px 30px;
-            border-radius: 10px;
-            max-width: 600px; /* Max width of modal */
-            width: 95%; /* Responsive width */
-            max-height: 90vh; /* Max height relative to viewport */
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            overflow: hidden; /* Prevent content spilling */
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-light);
-            padding-bottom: 15px;
-            flex-shrink: 0; /* Prevent header shrinking */
-        }
-
-        .modal-header h3 {
-            color: var(--primary-orange);
-            margin: 0;
-            font-size: 1.6rem;
-        }
-
-        .modal-close-btn {
-            background: none; border: none;
-            color: var(--text-secondary);
-            font-size: 1.8rem;
-            cursor: pointer;
-            line-height: 1; padding: 5px;
-            transition: color 0.2s ease;
-        }
-        .modal-close-btn:hover { color: var(--text-light); }
-
-        .modal-body {
-            flex-grow: 1; /* Allow body to take available space */
-            margin-bottom: 20px;
-            overflow: hidden; /* Important for Cropper containment */
-            display: flex; /* Ensure container takes space */
-            justify-content: center;
-            align-items: center;
-            background-color: var(--bg-dark); /* Dark background for image area */
-            border-radius: 5px; /* Slight rounding */
-        }
-
-        #cropper-image-container {
-            width: 100%;
-            height: 100%; /* Container needs height for Cropper */
-            min-height: 300px; /* Ensure minimum space for Cropper */
-            max-height: calc(90vh - 200px); /* Rough estimate based on header/footer/padding */
-            position: relative; /* For potential absolute positioning inside */
-        }
-
-        /* The actual image Cropper will use */
-        #image-to-crop {
-            display: block; /* Cropper requirement */
-            max-width: 100%; /* Cropper requirement */
-            max-height: 100%; /* Ensure it fits within container */
-            opacity: 0; /* Hide until Cropper is ready and image loaded */
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        /* Cropper.js specific overrides */
-        .cropper-view-box,
-        .cropper-face {
-            border-radius: 50%; /* Make the crop selection area visually circular */
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Dim area outside circle */
-        }
-        .cropper-modal {
-            background: none; /* Remove default cropper modal background if using viewbox shadow */
-        }
-        /* Hide default dashed lines if using circular viewbox */
-        .cropper-dashed { display: none; }
-
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border-light);
-            flex-shrink: 0; /* Prevent footer shrinking */
-        }
-
-        /* Loading Spinner for Apply Button */
-        .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3); /* Lighter border */
-            border-radius: 50%;
-            border-top-color: var(--text-dark); /* Spinner color (for on-button use) */
-            width: 16px; height: 16px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-left: 8px;
-            vertical-align: middle; /* Align with button text */
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Add spinner styles directly to button if preferred */
-        .btn .spinner { border-top-color: currentColor; } /* Inherit color */
-
-
-        /* ======================================== */
-        /* Footer (Shared)                        */
-        /* ======================================== */
-        footer { text-align: center; padding: 1.5rem 1rem; margin-top: auto; background-color: var(--bg-secondary); color: var(--text-secondary); font-size: 0.9rem; border-top: 1px solid var(--border-light); }
-
-        /* ======================================== */
-        /* Responsive Adjustments                 */
-        /* ======================================== */
-        @media (max-width: 768px) {
-            .nav-container { flex-direction: column; align-items: center; gap: 0.8rem; }
-            .auth-buttons { margin-top: 0.8rem; }
-            .profile-container { margin: 2rem auto; padding: 2rem 1.5rem; }
-            #profile-pic { width: 100px; height: 100px; border-width: 3px;}
-            #profile-pic #profile-initials { font-size: 3.5rem; }
-            #edit-profile-pic-icon { width: 25px; height: 25px; font-size: 0.8rem; bottom: 3px; right: 3px; }
-            #profile-username { font-size: 1.9rem; }
-            .profile-stats h3 { font-size: 1.5rem; }
-            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.2rem; }
-            .stat-item p { font-size: 1.5rem; }
-            #loading-profile, #not-logged-in { min-height: 250px; padding: 3rem 1.5rem; }
-            .profile-badge { font-size: 0.75em; }
-            .modal-content { padding: 20px; }
-            .modal-header h3 { font-size: 1.4rem; }
-            #cropper-image-container { min-height: 250px; }
-        }
-
-        @media (max-width: 480px) {
-            .logo { font-size: 1.5rem; }
-            .btn { padding: 0.6rem 1.2rem; font-size: 0.9rem; }
-            .auth-buttons button, .auth-buttons a.btn { margin-left: 0.5rem; }
-            .profile-container { margin: 1.5rem auto; padding: 1.5rem 1.2rem; border-radius: 8px; }
-            .profile-header { margin-bottom: 2rem; gap: 0.8rem; }
-            #profile-pic { width: 85px; height: 85px; border-width: 3px;}
-            #profile-pic #profile-initials { font-size: 3rem; }
-            #edit-profile-pic-icon { width: 22px; height: 22px; font-size: 0.7rem; bottom: 2px; right: 2px; }
-            #profile-username { font-size: 1.6rem; }
-            #profile-email { font-size: 0.9rem; }
-            .profile-stats { padding-top: 1.8rem; margin-top: 1.8rem; }
-            .profile-stats h3 { font-size: 1.4rem; margin-bottom: 1.5rem; }
-            .stats-grid { grid-template-columns: 1fr; /* Stack stats */ gap: 1rem; }
-            .stat-item { padding: 1rem 1.2rem; }
-            .stat-item h4 { font-size: 0.85rem; }
-            .stat-item p { font-size: 1.4rem; }
-            #loading-profile, #not-logged-in { min-height: 200px; padding: 2rem 1rem; font-size: 1.1rem; }
-            .profile-name-container { gap: 0.3rem; }
-            .profile-badge { font-size: 0.7em; }
-            .profile-identifiers { gap: 0.5rem; margin-top: 0.3rem; }
-            .profile-rank-display { font-size: 0.8rem; padding: 0.2em 0.6em; }
-            .profile-title-display { font-size: 0.9rem; }
-            .title-selector { min-width: 150px; }
-            .title-option { font-size: 0.9rem; padding: 0.5rem 0.8rem; }
-            .title-option.currently-equipped { padding-left: 2rem; }
-            .title-option.currently-equipped::before { left: 0.6rem; }
-            .modal-content { padding: 15px; }
-            .modal-header { margin-bottom: 15px; padding-bottom: 10px; }
-            .modal-header h3 { font-size: 1.3rem; }
-            .modal-body { margin-bottom: 15px; }
-            #cropper-image-container { min-height: 200px; max-height: calc(90vh - 160px); }
-            .modal-footer { gap: 8px; padding-top: 10px; }
-            .modal-footer .btn { padding: 0.6rem 1rem; font-size: 0.9rem; } /* Adjust modal button padding */
-        }
-
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header>
-        <div class="nav-container">
-            <a href="index.html" class="logo">Poxel Competitive</a>
-            <div class="auth-buttons">
-                <!-- Navigation buttons (adjust links as needed) -->
-                <a href="main.html" class="btn btn-secondary">Matches</a>
-                <!-- Logout button is shown/hidden by JS -->
-                <button class="btn btn-primary" id="profile-logout-btn" style="display: none;">Logout</button>
-                 <!-- Add login/signup buttons if needed, potentially handled by another script or shown when logged out -->
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main>
-        <!-- Profile Content Area (Initially Hidden by JS, shown after load) -->
-        <div class="profile-container" id="profile-content" style="display: none;">
-            <!-- Profile Header: Pic, Name, Badges, Rank, Title, Email -->
-            <div class="profile-header">
-                <!-- Profile Picture Area -->
-                <div id="profile-pic">
-                    <!-- Fallback Initials (shown if no image) -->
-                    <span id="profile-initials">?</span>
-                    <!-- Profile Image (src set by JS) -->
-                    <img id="profile-image" src="" alt="Profile Picture" style="display: none;">
-                    <!-- Edit Icon (shown by JS only for profile owner) -->
-                    <span id="edit-profile-pic-icon" title="Edit Profile Picture">
-                        <i class="fas fa-pencil-alt"></i> <!-- Font Awesome Icon -->
-                        <!-- Alternative: use text: <span style="font-size: 1.2rem;">✏️</span> -->
-                    </span>
-                </div>
-                 <!-- Hidden File Input (triggered by clicking the edit icon) -->
-                <input type="file" id="profile-pic-input" accept="image/png, image/jpeg, image/gif" style="display: none;">
-
-                <!-- User Details Section -->
-                <div>
-                    <div class="profile-name-container">
-                        <h2 id="profile-username">Username</h2>
-                        <span id="profile-badges-container"><!-- Badges added by JS --></span>
-                        <span id="admin-tag" class="admin-tag">Admin</span>
-                    </div>
-                    <div class="profile-identifiers">
-                        <span id="profile-rank" class="profile-rank-display">...</span>
-                        <span id="profile-title" class="profile-title-display" style="display: none;"><!-- Title added/updated by JS --></span>
-                         <!-- Title selector dropdown div will be appended here by JS -->
-                    </div>
-                    <p id="profile-email">user@example.com</p>
-                </div>
-            </div>
-
-            <!-- Competitive Stats Section -->
-            <div class="profile-stats" id="competitive-stats-section">
-                <h3>Competitive Stats</h3>
-                <div class="stats-grid" id="stats-display">
-                    <!-- Stats items or loading/error message added by JS -->
-                    <p>Loading competitive stats...</p>
-                </div>
-            </div>
-
-            <!-- Poxel.io Stats Section -->
-            <div class="profile-stats" id="poxel-stats-section" style="display: none;"> <!-- Hidden initially, shown by JS if data exists -->
-                <h3>Poxel.io Stats</h3>
-                <div class="stats-grid" id="poxel-stats-display">
-                    <!-- Poxel stats or loading/error message added by JS -->
-                    <p>Loading Poxel.io stats...</p>
-                </div>
-            </div>
-
-        </div> <!-- End #profile-content -->
-
-        <!-- Loading Profile Message (Shown initially) -->
-        <div class="profile-container" id="loading-profile">
-            <p>Loading profile...</p>
-        </div>
-
-        <!-- Not Logged In / Error Message (Shown by JS if needed) -->
-        <div class="profile-container" id="not-logged-in" style="display: none;">
-            <!-- Message content set by JS -->
-            <p>You need to be logged in to view this page.</p>
-        </div>
-
-    </main> <!-- End main -->
-
-    <!-- Footer -->
-    <footer>
-        <p>© 2024 Poxel Competitive. All rights reserved.</p>
-    </footer>
-
-    <!-- Image Editing Modal -->
-    <div class="modal-overlay" id="edit-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit Profile Picture</h3>
-                <button class="modal-close-btn" id="modal-close-btn" title="Close">×</button>
-            </div>
-            <div class="modal-body">
-                <div id="cropper-image-container">
-                    <!-- Image source is set by JS when a file is selected -->
-                    <img id="image-to-crop" src="" alt="Image preview for cropping">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
-                <button class="btn btn-primary" id="modal-apply-btn">
-                    Apply
-                    <!-- Spinner shown during upload -->
-                    <span class="spinner" id="modal-spinner" style="display: none;"></span>
-                 </button>
-            </div>
-        </div>
-    </div> <!-- End #edit-modal -->
-
-
-    <!-- === External Scripts === -->
-
-    <!-- Firebase SDK Scripts (Compat Version) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-
-    <!-- Cropper.js Script -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
-    <!-- Cloudinary Script (Using Upload Widget for simplicity - can be removed if using fetch API only) -->
-    <!-- <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script> -->
-    <!-- Note: The JS provided uses the fetch API for uploads, so the widget script isn't strictly necessary unless you plan to use its UI features elsewhere. -->
-
-    <!-- Your Profile Logic Script -->
-    <script src="profile.js"></script>
-
-</body>
-</html>
+// --- Initial Log ---
+console.log("Profile script initialized. Waiting for Auth state...");
