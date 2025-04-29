@@ -446,17 +446,20 @@
     addPlayerButton.addEventListener('click', () => { /* ... existing ... */ if (addPlayerForm) addPlayerForm.classList.toggle('hidden'); });
 
     // --- >>> REPLACED saveNewPlayerButton Listener (with UID lookup & logging) <<< ---
+// <<< --- REPLACED saveNewPlayerButton Listener (with EXTRA logging) --- >>>
     saveNewPlayerButton.addEventListener('click', async () => {
-        console.log("Attempting to save new player to leaderboard...");
+        console.log("--- SAVE NEW PLAYER BUTTON CLICKED ---"); // Confirm this listener starts
         showSaveStatus('Processing new player...', false);
         saveNewPlayerButton.disabled = true;
 
         const nameInput = document.getElementById('new-player-name');
+        // ... (get other inputs: avatar, matches, wins, losses, points) ...
         const avatarInput = document.getElementById('new-player-avatar');
         const matchesInput = document.getElementById('new-player-matches');
         const winsInput = document.getElementById('new-player-wins');
         const lossesInput = document.getElementById('new-player-losses');
         const pointsInput = document.getElementById('new-player-points');
+
 
         if (!nameInput || !avatarInput || !matchesInput || !winsInput || !lossesInput || !pointsInput) {
             console.error("Save New Player Error: Input element(s) missing.");
@@ -471,34 +474,77 @@
         const losses = parseInt(lossesInput.value) || 0;
         const points = parseInt(pointsInput.value) || 0;
 
+        // --- Validation ---
         if (!name) { showSaveStatus('Error: Player Name is required.', true); nameInput.focus(); saveNewPlayerButton.disabled = false; return; }
         if (isNaN(matches) || isNaN(wins) || isNaN(losses) || isNaN(points)) { showSaveStatus('Error: Stats must be numbers.', true); saveNewPlayerButton.disabled = false; return; }
 
         const newPlayerData = { name: name, avatar: avatar, matches: Math.max(0, matches), wins: Math.max(0, wins), losses: Math.max(0, losses), points: points };
-        console.log("New player data validated:", newPlayerData);
+        console.log(">>> STEP 1: Player data validated:", JSON.stringify(newPlayerData));
 
         // --- Find User UID by Display Name ---
         let targetUID = null;
         try {
             showSaveStatus(`Searching for user '${name}'...`, false);
+            console.log(`>>> STEP 2: Querying 'users' for displayName == "${name}" (Case-Sensitive)`);
+
             const userQuery = db.collection('users').where('displayName', '==', name).limit(2);
             const querySnapshot = await userQuery.get();
 
+            console.log(`>>> STEP 3: User query completed. Found ${querySnapshot.size} document(s).`);
+
             if (querySnapshot.empty) {
+                console.error(`>>> ERROR: No user found with exact displayName "${name}".`);
                 showSaveStatus(`Error: No registered user found with the name "${name}". Player must sign up first.`, true);
                 saveNewPlayerButton.disabled = false; return;
             } else if (querySnapshot.size > 1) {
+                console.error(`>>> ERROR: Multiple users found with exact displayName "${name}".`);
                 showSaveStatus(`Error: Multiple users found with the name "${name}". Ensure unique usernames.`, true);
                 saveNewPlayerButton.disabled = false; return;
             } else {
                 targetUID = querySnapshot.docs[0].id;
-                console.log(`Found user UID: ${targetUID}`); // Log UID confirmation
+                console.log(`>>> STEP 4: User found! targetUID set to: ${targetUID}`);
             }
+
         } catch (error) {
-            console.error("Error querying user collection:", error);
+            console.error(">>> ERROR during user query:", error);
             showSaveStatus(`Error searching for user: ${error.message}`, true);
             saveNewPlayerButton.disabled = false; return;
         }
+
+        // --- Save to Leaderboard using the found UID ---
+        // This block ONLY runs if targetUID was successfully found above
+        if (targetUID) {
+            console.log(`>>> STEP 5: Proceeding to save leaderboard data for UID: ${targetUID}`);
+            try {
+                showSaveStatus(`Saving leaderboard data for UID ${targetUID}...`, false);
+                console.log(`>>> STEP 6: Executing: db.collection('leaderboard').doc('${targetUID}').set(...)`);
+                console.log(`>>> STEP 6: Data:`, JSON.stringify(newPlayerData));
+
+                await db.collection('leaderboard').doc(targetUID).set(newPlayerData); // <<< THE INTENDED WRITE OPERATION
+
+                console.log(`>>> SUCCESS: Leaderboard document set successfully for UID: ${targetUID}`);
+                showSaveStatus('New player added to leaderboard successfully!', false);
+
+                // Reset form, reload list etc.
+                addPlayerForm.classList.add('hidden');
+                nameInput.value = ''; avatarInput.value = ''; matchesInput.value = '0'; winsInput.value = '0'; lossesInput.value = '0'; pointsInput.value = '0';
+                loadLeaderboardAdmin();
+
+            } catch (error) {
+                console.error(`>>> ERROR setting leaderboard document for UID ${targetUID}:`, error);
+                showSaveStatus(`Error saving player to leaderboard: ${error.message}`, true);
+            } finally {
+                 saveNewPlayerButton.disabled = false;
+                 console.log("--- SAVE NEW PLAYER Listener FINISHED (targetUID was found) ---");
+            }
+        } else {
+            // This path should ideally not be reached if the checks above work, but log it just in case.
+            console.error(">>> CRITICAL ERROR: targetUID is null/undefined AFTER successful query check. This shouldn't happen. Aborting save.");
+            showSaveStatus('Internal Error: Could not determine user ID. Save aborted.', true);
+            saveNewPlayerButton.disabled = false;
+            console.log("--- SAVE NEW PLAYER Listener FINISHED (targetUID was NOT found/set) ---");
+        }
+    });
 
         // --- Save to Leaderboard using the found UID ---
         if (targetUID) {
