@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- The nested <!DOCTYPE> and <html> was an error in your input, removed it -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Profile - Poxel Competitive</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -183,7 +182,15 @@
         .badge-creator { background-color: var(--badge-creator-bg); }
         .badge-moderator { background-color: var(--badge-moderator-bg); }
         .admin-tag { display: none; background-color: var(--primary-orange); color: var(--text-dark); padding: 0.6em 0.6em; border-radius: 4px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; vertical-align: middle; line-height: 1; flex-shrink: 0; }
-        #profile-email { font-size: 1rem; color: var(--text-secondary); font-weight: 400; margin-top: 0; word-break: break-all; }
+
+        #profile-email {
+            display: none; /* <<< Hides the email display element */
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-top: 0;
+            word-break: break-all;
+        }
 
 
         /* Stats Sections Common Styles */
@@ -338,7 +345,7 @@
             #profile-pic #profile-initials { font-size: 3rem; }
             #edit-profile-pic-icon { width: 22px; height: 22px; font-size: 0.7rem; bottom: 2px; right: 2px; }
             #profile-username { font-size: 1.6rem; }
-            #profile-email { font-size: 0.9rem; }
+            #profile-email { font-size: 0.9rem; /* Style kept even though hidden */ }
             .profile-stats { padding-top: 1.8rem; margin-top: 1.8rem; }
             .profile-stats h3 { font-size: 1.4rem; margin-bottom: 1.5rem; }
             .stats-grid { grid-template-columns: 1fr; gap: 1rem; }
@@ -412,7 +419,9 @@
                         <span id="profile-title" class="profile-title-display" style="display: none;"><!-- Title added/updated by JS --></span>
                          <!-- Title selector dropdown div will be appended here by JS -->
                     </div>
-                    <p id="profile-email"></p>
+                    <!-- The email paragraph is still here in the HTML structure, -->
+                    <!-- but it will be hidden by the CSS rule added above -->
+                    <p id="profile-email">useremail@example.com</p>
                 </div>
             </div>
 
