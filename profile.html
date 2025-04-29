@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Profile - Poxel Competitive</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico"> <!-- Added Favicon Back -->
+    <link rel="stylesheet" href="profile-styles.css"> <!-- Link to your CSS file -->
     <style>
         /* ======================================== */
         /* Base Styles & Variables                */
@@ -70,65 +71,18 @@
         #profile-pic { width: 120px; height: 120px; background-color: var(--primary-orange); color: var(--text-dark); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 4.5rem; font-weight: 700; line-height: 1; border: 4px solid var(--primary-orange-darker); box-shadow: 0 0 20px rgba(255, 102, 0, 0.55); text-transform: uppercase; }
 
         /* Container for Username, Badges, Admin Tag */
-        .profile-name-container {
-            display: flex; /* Use flex to align items horizontally */
-            align-items: center; /* Vertically center items */
-            justify-content: center; /* Center the group */
-            gap: 0.5rem; /* Space between items */
-            flex-wrap: wrap; /* Allow wrapping if needed */
-            margin-bottom: 0.2rem; /* Consistent margin */
-        }
-
-        #profile-username { font-size: 2.2rem; font-weight: 700; color: var(--text-light); margin: 0; /* Remove default margin */ }
-
-        /* Container for dynamically added badges */
-        #profile-badges-container {
-             display: inline-flex; /* Use inline-flex to contain badges */
-             align-items: center;
-             gap: 0.4rem; /* Space between multiple badges */
-             line-height: 1; /* Ensure badges align well with text */
-             vertical-align: middle; /* Align container vertically */
-        }
-
-        /* --- Badge Styles --- */
-        .profile-badge {
-            display: inline-flex; /* Use flex for centering content */
-            align-items: center;
-            justify-content: center;
-            width: 1.8em; /* Relative to font size of username */
-            height: 1.8em;
-            border-radius: 50%; /* Circular badge */
-            font-size: 0.8em; /* Slightly smaller than username text */
-            font-weight: bold;
-            color: var(--badge-tick-color); /* Color for the tick mark */
-            line-height: 1; /* Prevent extra space */
-            vertical-align: middle; /* Align with text */
-            position: relative; /* For potential tooltip */
-        }
-
-        .profile-badge::before {
-            content: '✔'; /* The tick symbol */
-            display: block;
-        }
-
-        /* Specific Badge Colors */
+        .profile-name-container { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.2rem; }
+        #profile-username { font-size: 2.2rem; font-weight: 700; color: var(--text-light); margin: 0; }
+        #profile-badges-container { display: inline-flex; align-items: center; gap: 0.4rem; line-height: 1; vertical-align: middle; }
+        .profile-badge { display: inline-flex; align-items: center; justify-content: center; width: 1.8em; height: 1.8em; border-radius: 50%; font-size: 0.8em; font-weight: bold; color: var(--badge-tick-color); line-height: 1; vertical-align: middle; position: relative; }
+        .profile-badge::before { content: '✔'; display: block; }
         .badge-verified { background-color: var(--badge-verified-bg); }
         .badge-creator { background-color: var(--badge-creator-bg); }
         .badge-moderator { background-color: var(--badge-moderator-bg); }
-        /* --- End Badge Styles --- */
-
-
-        /* --- Admin Tag Styling (Adjust margin if needed) --- */
-        .admin-tag {
-            display: none; /* Hidden by default */
-            background-color: var(--primary-orange); color: var(--text-dark);
-            padding: 0.6em 0.6em; /* No margin-left needed if using gap in container */
-            border-radius: 4px;
-            font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
-            vertical-align: middle; line-height: 1;
-        }
-
+        .admin-tag { display: none; background-color: var(--primary-orange); color: var(--text-dark); padding: 0.6em 0.6em; border-radius: 4px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; vertical-align: middle; line-height: 1; }
         #profile-email { font-size: 1rem; color: var(--text-secondary); font-weight: 400; margin-top: 0; }
+
+        /* Stats Sections Common Styles */
         .profile-stats { margin-top: 2.5rem; border-top: 1px solid var(--border-light); padding-top: 2.5rem; }
         .profile-stats h3 { margin-bottom: 2rem; color: var(--primary-orange); font-size: 1.7rem; font-weight: 600; text-align: center; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.8rem; text-align: left; }
@@ -137,109 +91,29 @@
         .stat-item:hover { transform: translateY(-4px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4); }
         .stat-item h4 { margin-bottom: 0.6rem; color: #ccc; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-item p { font-size: 1.7rem; font-weight: 700; color: var(--primary-orange); line-height: 1.2; margin: 0; }
+
+        /* Loading / Not Logged In State */
         #loading-profile, #not-logged-in { max-width: 800px; margin: 3rem auto; padding: 4rem 2rem; background-color: var(--bg-secondary); border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); text-align: center; font-size: 1.2rem; color: var(--text-secondary); min-height: 300px; display: flex; justify-content: center; align-items: center; }
 
-        /* --- Rank and Title Styles --- */
-        .profile-identifiers {
-            margin-top: 0.5rem; margin-bottom: 0.3rem;
-            display: flex; flex-wrap: wrap; justify-content: center;
-            align-items: center; gap: 0.8rem;
-            position: relative; /* Needed for positioning the title selector */
-        }
-
-        .profile-rank-display {
-            background-color: var(--rank-default-bg); color: var(--text-light);
-            padding: 0.2em 0.7em; border-radius: 15px; font-size: 0.9rem;
-            font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-            line-height: 1.2; display: inline-block;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        /* Define Rank Colors (Add more ranks as needed) */
+        /* Rank and Title Styles */
+        .profile-identifiers { margin-top: 0.5rem; margin-bottom: 0.3rem; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.8rem; position: relative; }
+        .profile-rank-display { background-color: var(--rank-default-bg); color: var(--text-light); padding: 0.2em 0.7em; border-radius: 15px; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; display: inline-block; transition: background-color 0.3s ease, color 0.3s ease; }
         .rank-unranked { background-color: var(--rank-default-bg); color: #ccc; }
         .rank-bronze { background-color: var(--rank-bronze-bg); color: var(--text-dark); }
         .rank-silver { background-color: var(--rank-silver-bg); color: var(--text-dark); }
         .rank-gold { background-color: var(--rank-gold-bg); color: var(--text-dark); }
-        .rank-veteran { background-color: var(--primary-orange-darker); color: var(--text-dark); } /* Example */
-        .rank-legend { background: linear-gradient(to right, var(--primary-orange), #ffae00); color: var(--text-dark); } /* Example */
-        /* --- --- --- */
+        .rank-veteran { background-color: var(--primary-orange-darker); color: var(--text-dark); }
+        .rank-legend { background: linear-gradient(to right, var(--primary-orange), #ffae00); color: var(--text-dark); }
+        .profile-title-display { color: var(--primary-orange); font-size: 1rem; font-weight: 600; font-style: italic; display: inline-block; transition: color 0.2s ease; }
+        #profile-title.selectable-title { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--primary-orange); }
+        #profile-title.selectable-title:hover { color: var(--primary-orange-darker); text-decoration-color: var(--primary-orange-darker); }
 
-        .profile-title-display {
-            color: var(--primary-orange); font-size: 1rem;
-            font-weight: 600; font-style: italic; display: inline-block;
-            transition: color 0.2s ease;
-             /* Initially hidden via inline style in HTML, shown by JS */
-        }
-         /* Add class via JS to make title clickable */
-         #profile-title.selectable-title {
-            cursor: pointer;
-            text-decoration: underline;
-            text-decoration-style: dotted;
-            text-decoration-color: var(--primary-orange);
-        }
-        #profile-title.selectable-title:hover {
-             color: var(--primary-orange-darker);
-             text-decoration-color: var(--primary-orange-darker);
-        }
-         /* --- End Rank/Title Display Styles --- */
-
-         /* --- Title Selector Dropdown Styles --- */
-        .title-selector {
-            display: none; /* Hidden by default */
-            position: absolute;
-            top: 100%; /* Position below the title identifiers */
-            left: 50%;
-            transform: translateX(-50%);
-            margin-top: 0.5rem; /* Space below title/rank */
-            min-width: 180px;
-            max-width: 90%;
-            background-color: var(--bg-dark);
-            border: 1px solid var(--border-light);
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            padding: 0.5rem 0;
-            z-index: 10; /* Ensure it's above other page content */
-            max-height: 200px; /* Limit height */
-            overflow-y: auto; /* Scroll if too many titles */
-        }
-
-        .title-option {
-            display: block;
-            background: none;
-            border: none;
-            color: var(--text-light);
-            padding: 0.6rem 1rem;
-            text-align: left;
-            width: 100%;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: background-color 0.2s ease;
-            white-space: nowrap; /* Prevent options wrapping */
-             position: relative; /* For indicator */
-        }
-
-        .title-option:hover {
-            background-color: var(--bg-secondary);
-        }
-
-         /* Highlight currently equipped title in the selector */
-        .title-option.currently-equipped {
-            font-weight: bold;
-            color: var(--primary-orange);
-            padding-left: 2.2rem; /* Make space for indicator */
-        }
-         /* Checkmark indicator for equipped title */
-         .title-option.currently-equipped::before {
-            content: '✔';
-            position: absolute;
-            left: 0.8rem; /* Position indicator */
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--primary-orange);
-            font-size: 1em;
-            line-height: 1;
-        }
-
+        /* Title Selector Dropdown Styles */
+        .title-selector { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 0.5rem; min-width: 180px; max-width: 90%; background-color: var(--bg-dark); border: 1px solid var(--border-light); border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); padding: 0.5rem 0; z-index: 10; max-height: 200px; overflow-y: auto; }
+        .title-option { display: block; background: none; border: none; color: var(--text-light); padding: 0.6rem 1rem; text-align: left; width: 100%; cursor: pointer; font-size: 0.95rem; transition: background-color 0.2s ease; white-space: nowrap; position: relative; }
+        .title-option:hover { background-color: var(--bg-secondary); }
+        .title-option.currently-equipped { font-weight: bold; color: var(--primary-orange); padding-left: 2.2rem; }
+        .title-option.currently-equipped::before { content: '✔'; position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--primary-orange); font-size: 1em; line-height: 1; }
 
         /* ======================================== */
         /* Footer (Shared)                        */
@@ -259,7 +133,7 @@
             .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.2rem; }
             .stat-item p { font-size: 1.5rem; }
             #loading-profile, #not-logged-in { min-height: 250px; padding: 3rem 1.5rem; }
-            .profile-badge { font-size: 0.75em; } /* Adjust badge size */
+            .profile-badge { font-size: 0.75em; }
         }
         @media (max-width: 480px) {
             .logo { font-size: 1.5rem; }
@@ -272,34 +146,32 @@
             #profile-email { font-size: 0.9rem; }
             .profile-stats { padding-top: 1.8rem; }
             .profile-stats h3 { font-size: 1.4rem; margin-bottom: 1.5rem; }
-            .stats-grid { grid-template-columns: 1fr; gap: 1rem; } /* Single column stats */
+            .stats-grid { grid-template-columns: 1fr; gap: 1rem; }
             .stat-item { padding: 1rem 1.2rem; }
             .stat-item h4 { font-size: 0.85rem; }
             .stat-item p { font-size: 1.4rem; }
             #loading-profile, #not-logged-in { min-height: 200px; padding: 2rem 1rem; font-size: 1.1rem; }
             .profile-name-container { gap: 0.3rem; }
-            .profile-badge { font-size: 0.7em; } /* Adjust badge size */
-
-            /* Responsive adjustments for Rank/Title/Selector */
+            .profile-badge { font-size: 0.7em; }
             .profile-identifiers { gap: 0.5rem; }
             .profile-rank-display { font-size: 0.8rem; padding: 0.2em 0.6em; }
             .profile-title-display { font-size: 0.9rem; }
             .title-selector { min-width: 150px; }
             .title-option { font-size: 0.9rem; padding: 0.5rem 0.8rem; }
-             .title-option.currently-equipped { padding-left: 2rem; }
-             .title-option.currently-equipped::before { left: 0.6rem; }
+            .title-option.currently-equipped { padding-left: 2rem; }
+            .title-option.currently-equipped::before { left: 0.6rem; }
         }
     </style>
 </head>
-
 <body>
-     <!-- Header -->
+    <!-- Header -->
     <header>
         <div class="nav-container">
-             <a href="index.html" class="logo">Poxel Competitive</a>
-             <div class="auth-buttons">
-                 <a href="main.html" class="btn btn-secondary">Matches</a> <!-- Link to your main viewing page -->
-                <button class="btn btn-primary" id="profile-logout-btn">Logout</button>
+            <a href="index.html" class="logo">Poxel Competitive</a>
+            <div class="auth-buttons">
+                <a href="main.html" class="btn btn-secondary">Matches</a>
+                <button class="btn btn-primary" id="profile-logout-btn" style="display: none;">Logout</button>
+                 <!-- Add login/signup buttons if needed, handled by auth.js probably -->
             </div>
         </div>
     </header>
@@ -309,46 +181,49 @@
         <!-- Profile Content (Initially Hidden) -->
         <div class="profile-container" id="profile-content" style="display: none;">
             <div class="profile-header">
-                <div id="profile-pic">?</div> <!-- Letter dynamically added -->
+                <div id="profile-pic">?</div>
                 <div>
-                    <!-- Username, Badges, and Admin Tag Container -->
                     <div class="profile-name-container">
                         <h2 id="profile-username">Username</h2>
-                        <span id="profile-badges-container"></span> <!-- Badges will be added here -->
+                        <span id="profile-badges-container"></span>
                         <span id="admin-tag" class="admin-tag">Admin</span>
                     </div>
-
-                    <!-- Rank and Title Display -->
                     <div class="profile-identifiers">
-                        <span id="profile-rank" class="profile-rank-display">...</span> <!-- Placeholder text -->
-                         <!-- Title - shown/hidden and made clickable by JS -->
+                        <span id="profile-rank" class="profile-rank-display">...</span>
                         <span id="profile-title" class="profile-title-display" style="display: none;"></span>
-                         <!-- Title selector div will be dynamically appended here by JS -->
+                         <!-- Title selector div appended here by JS -->
                     </div>
-
-                    <!-- Email -->
                     <p id="profile-email">user@example.com</p>
                 </div>
             </div>
 
-            <div class="profile-stats">
-                <h3>Your Stats</h3>
+            <!-- Competitive Stats Section -->
+            <div class="profile-stats" id="competitive-stats-section"> <!-- Added ID for clarity -->
+                <h3>Competitive Stats</h3> <!-- Renamed Header -->
                 <div class="stats-grid" id="stats-display">
-                    <!-- Placeholder while loading -->
-                     <p>Loading stats...</p>
-                     <!-- Actual stats will be loaded here -->
+                    <p>Loading competitive stats...</p> <!-- Updated placeholder -->
                 </div>
             </div>
+
+            <!-- NEW: Poxel.io Stats Section -->
+            <div class="profile-stats" id="poxel-stats-section" style="display: none;"> <!-- Hidden initially -->
+                <h3>Poxel.io Stats</h3>
+                <div class="stats-grid" id="poxel-stats-display">
+                    <!-- Poxel stats or loading/error message here -->
+                    <p>Loading Poxel.io stats...</p>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Loading Message -->
+        <!-- Loading Profile Message -->
         <div class="profile-container" id="loading-profile">
             <p>Loading profile...</p>
         </div>
 
         <!-- Not Logged In Message (Initially Hidden) -->
-         <div class="profile-container" id="not-logged-in" style="display: none;">
-             <p>You need to be logged in to view this page. Redirecting...</p>
+        <div class="profile-container" id="not-logged-in" style="display: none;">
+            <p>You need to be logged in to view this page. Redirecting...</p>
         </div>
     </main>
 
