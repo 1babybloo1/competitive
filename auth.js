@@ -1,5 +1,5 @@
 // --- Firebase Configuration ---
-// IMPORTANT: Replace with your actual Firebase project config
+// IMPORTANT: Replace with your actual Firebase project config if the placeholders are not correct
 const firebaseConfig = {
   apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
   authDomain: "poxelcomp.firebaseapp.com",
@@ -52,7 +52,7 @@ closeSignupBtn.addEventListener('click', () => signupModal.classList.remove('act
 window.addEventListener('click', (event) => {
     if (event.target === loginModal) loginModal.classList.remove('active');
     if (event.target === signupModal) signupModal.classList.remove('active');
-    if (searchResultsContainer.style.display === 'block' &&
+    if (searchResultsContainer && searchResultsContainer.style.display === 'block' &&
         searchInput && !searchInput.contains(event.target) &&
         !searchResultsContainer.contains(event.target)) {
         hideSearchResults();
@@ -61,7 +61,7 @@ window.addEventListener('click', (event) => {
 
 // --- Authentication Logic ---
 
-// Signup (MODIFIED TO CREATE FULL PROFILE DOCUMENT)
+// Signup (WITH ADDED LOGGING)
 signupForm.addEventListener('submit', (e) => {
     e.preventDefault();
     signupError.textContent = '';
@@ -85,7 +85,7 @@ signupForm.addEventListener('submit', (e) => {
     auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
             signedInUser = userCredential.user; // Store the Auth user
-            console.log('Firebase Auth user created:', signedInUser.uid);
+            console.log('AUTH.JS: Firebase Auth user created:', signedInUser.uid);
 
             // 2. Update Firebase Auth Profile (separate from Firestore)
             return signedInUser.updateProfile({
@@ -93,44 +93,56 @@ signupForm.addEventListener('submit', (e) => {
             });
         })
         .then(() => {
-             console.log('Firebase Auth display name set:', username);
+             console.log('AUTH.JS: Firebase Auth display name set:', username);
+
+             // ** START OF DIAGNOSTIC LOGGING **
+             console.log('AUTH.JS: Checking Firestore instance `db`:', db); // Check if db is valid
+             // ** END OF DIAGNOSTIC LOGGING **
 
              // 3. **Create User Document in Firestore with FULL Profile Structure**
              const userDocRef = db.collection('users').doc(signedInUser.uid);
              const defaultProfileData = {
-                 // Match the structure from profile.js createUserProfileDocument
-                 email: signedInUser.email, // Use email from Auth user
-                 displayName: username,     // Use username from form input
+                 email: signedInUser.email,
+                 displayName: username,
                  currentRank: "Unranked",
                  equippedTitle: "",
                  availableTitles: [],
                  friends: [],
                  createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                 leaderboardStats: {} // IMPORTANT: Initialize stats field
+                 leaderboardStats: {} // Initialize stats field
              };
 
-             console.log(`Attempting to create Firestore document for UID: ${signedInUser.uid} with data:`, defaultProfileData);
-             // Use set() which creates the document or overwrites if it somehow exists
-             return userDocRef.set(defaultProfileData);
+             // ** ADDED LOGGING **
+             console.log(`AUTH.JS: Attempting to SET Firestore document for UID: ${signedInUser.uid} with data:`, JSON.parse(JSON.stringify(defaultProfileData))); // Log clean data
+             // ** Use JSON.parse(JSON.stringify()) to avoid logging complex Firebase objects like FieldValue
+
+             // The actual database write:
+             return userDocRef.set(defaultProfileData); // Use set() to create or overwrite
         })
         .then(() => {
-            // This .then() executes after the Firestore document is successfully created
-            console.log("Firestore user document created successfully for UID:", signedInUser.uid);
+            // This block ONLY runs if the userDocRef.set() above SUCCEEDS
+            // ** ADDED LOGGING **
+            console.log(`AUTH.JS: Successfully SET Firestore document for UID: ${signedInUser.uid}`);
+
             signupModal.classList.remove('active'); // Close modal on success
             // Optional: Redirect or update UI further
-            // window.location.href = 'profile.html'; // Redirect if desired
         })
         .catch((error) => {
-            console.error("Signup Error:", error);
-            console.error("Error Code:", error.code);
-            console.error("Error Message:", error.message);
-            signupError.textContent = getFirebaseErrorMessage(error);
+            // This block runs if ANY previous step fails
+            // ** ENHANCED LOGGING **
+            console.error(`AUTH.JS: Signup Error Encountered!`);
+            console.error(`AUTH.JS: Error Code: ${error.code}`);
+            console.error(`AUTH.JS: Error Message: ${error.message}`);
+            // Log the user state if available to see where it failed
+            if (signedInUser) {
+                 console.error(`AUTH.JS: Error occurred AFTER Auth user creation (UID: ${signedInUser.uid}). The Firestore document write likely failed.`);
+            } else {
+                 console.error(`AUTH.JS: Error occurred DURING Auth user creation or Auth profile update.`);
+            }
+            // Log the full error object for more details if needed
+            console.error("AUTH.JS: Full error object:", error);
 
-            // **Important Consideration:** If the error occurs *after* Auth user creation
-            // but *before* or *during* Firestore document creation (e.g., Firestore rules denial),
-            // you might end up with an Auth user but no Firestore profile document.
-            // More robust error handling could involve trying to delete the Auth user
-            // if the Firestore write fails, but that adds complexity.
+            signupError.textContent = getFirebaseErrorMessage(error);
         })
         .finally(() => {
             // Reset button state regardless of success or failure
@@ -139,14 +151,12 @@ signupForm.addEventListener('submit', (e) => {
         });
 });
 
-// Login (No changes needed here for this issue)
+// Login (No changes needed here)
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     loginError.textContent = '';
-
     const email = loginForm['login-email'].value;
     const password = loginForm['login-password'].value;
-
     const loginSubmitBtn = loginForm.querySelector('button');
     loginSubmitBtn.disabled = true;
     loginSubmitBtn.textContent = 'Logging in...';
@@ -197,14 +207,13 @@ auth.onAuthStateChanged(user => {
              searchInput.value = '';
              hideSearchResults();
         }
+         // Optional: Redirect logic when logged out on profile page
          if (window.location.pathname.includes('profile.html')) {
              const urlParams = new URLSearchParams(window.location.search);
              const profileUid = urlParams.get('uid');
              if (!profileUid) {
-                console.log("Logged out on own profile page, redirecting to index.");
+                console.log("Logged out on own profile page, redirecting to index might be desired.");
                 // window.location.href = 'index.html'; // Uncomment to enable redirect
-             } else {
-                 console.log("Logged out, but viewing another user's profile. Staying on page.");
              }
          }
     }
@@ -212,16 +221,16 @@ auth.onAuthStateChanged(user => {
 
 // --- Helper Function for Firebase Error Messages (No changes needed) ---
 function getFirebaseErrorMessage(error) {
-    // ... (keep existing error message logic) ...
     switch (error.code) {
         case 'auth/invalid-email': return 'Invalid email format.';
         case 'auth/user-disabled': return 'This user account has been disabled.';
         case 'auth/user-not-found': return 'No account found with this email.';
         case 'auth/wrong-password': return 'Incorrect password.';
         case 'auth/email-already-in-use': return 'This email is already registered.';
-        case 'auth/weak- PAssword': return 'Password is too weak (should be at least 6 characters).';
+        case 'auth/weak-password': return 'Password is too weak (should be at least 6 characters).'; // Corrected typo
         case 'auth/operation-not-allowed': return 'Email/password accounts are not enabled.';
-        // Add more specific cases as needed
+        // Add specific Firestore error codes if needed, e.g., 'permission-denied'
+        case 'permission-denied': return 'Database permission denied. Could not save profile.';
         default: return error.message || 'An unknown error occurred. Please try again.';
     }
 }
@@ -230,7 +239,6 @@ function getFirebaseErrorMessage(error) {
 let searchTimeout;
 
 async function searchUsers(searchTerm) {
-    // ... (keep existing search logic) ...
     if (!searchResultsContainer) return;
      if (searchTerm.length < 2) { hideSearchResults(); return; }
      searchResultsContainer.innerHTML = ''; searchResultsContainer.style.display = 'block';
@@ -245,7 +253,6 @@ async function searchUsers(searchTerm) {
 }
 
 function displayResults(users) {
-    // ... (keep existing display logic) ...
     if (!searchResultsContainer) return; searchResultsContainer.innerHTML = '';
      if (users.length === 0) { searchResultsContainer.innerHTML = '<div class="search-result-item no-results">No players found</div>'; }
      else { users.forEach(user => { const userElement = document.createElement('a'); userElement.classList.add('search-result-item'); userElement.textContent = user.displayName; userElement.href = `profile.html?uid=${user.id}`; userElement.addEventListener('click', (e) => { console.log(`Selected profile: ${user.displayName} (UID: ${user.id})`); setTimeout(hideSearchResults, 50); }); searchResultsContainer.appendChild(userElement); }); }
