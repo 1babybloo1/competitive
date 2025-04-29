@@ -10,17 +10,17 @@ const firebaseConfig = {
 };
 
 // --- Initialize Firebase ---
-// Moved this block to the TOP to ensure auth and db are defined before use
+// Use Compat version libraries as per the HTML script tags
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
-const auth = firebase.auth(); // Define auth right after init
-const db = firebase.firestore(); // Define db right after init
+const auth = firebase.auth(); // Compat Auth
+const db = firebase.firestore(); // Compat Firestore
 
 // --- URL Parameter Parsing & Logged-in User Check ---
 const urlParams = new URLSearchParams(window.location.search);
 const profileUidFromUrl = urlParams.get('uid');
-let loggedInUser = auth.currentUser;
+let loggedInUser = auth.currentUser; // Check initial state (might be null)
 
 // --- Admin Emails ---
 const adminEmails = [
@@ -34,18 +34,19 @@ const badgeConfig = {
     verified: {
         emails: ['jackdmbell@outlook.com', 'myrrr@myrrr.myrrr'].map(e => e.toLowerCase()),
         className: 'badge-verified',
-        title: 'Verified'
+        title: 'Verified' // Tooltip text
     },
     creator: {
         emails: ['jackdmbell@outlook.com'].map(e => e.toLowerCase()),
         className: 'badge-creator',
-        title: 'Content Creator'
+        title: 'Content Creator' // Tooltip text
     },
     moderator: {
         emails: ['jackdmbell@outlook.com', 'mod_team@sample.org'].map(e => e.toLowerCase()),
         className: 'badge-moderator',
-        title: 'Moderator'
+        title: 'Moderator' // Tooltip text
     }
+    // Add more badge types if needed
 };
 
 // --- DOM Elements ---
@@ -64,10 +65,10 @@ const profileIdentifiersDiv = document.querySelector('.profile-identifiers');
 const profileBadgesContainer = document.getElementById('profile-badges-container');
 
 // --- Global/Scoped Variables ---
-let allAchievements = null;
+let allAchievements = null; // Cache for achievement definitions
 let viewingUserProfileData = {}; // Holds { profile: {...}, stats: {...} } for the user being viewed
 let isTitleSelectorOpen = false;
-let titleSelectorElement = null;
+let titleSelectorElement = null; // Reference to the dynamically created selector
 
 // -----------------------------------------------------------------------------
 // --- CORE FUNCTIONS ---
@@ -96,18 +97,15 @@ function areStatsDifferent(newStats, existingProfileStats) {
     const normNew = newStats || {};
     const normExisting = existingProfileStats || {};
 
-    // Define the keys we care about comparing
     const statKeys = ['wins', 'points', 'kdRatio', 'matchesPlayed', 'matches', 'losses'];
     let different = false;
 
-    // Check if values for relevant keys are different
     for (const key of statKeys) {
-        const newValue = normNew[key] ?? null; // Use null if undefined
+        const newValue = normNew[key] ?? null;
         const existingValue = normExisting[key] ?? null;
 
-        // Special handling for floating point numbers (e.g., kdRatio)
         if (key === 'kdRatio' && typeof newValue === 'number' && typeof existingValue === 'number') {
-            if (Math.abs(newValue - existingValue) > 0.001) { // Tolerance check
+            if (Math.abs(newValue - existingValue) > 0.001) {
                 different = true;
                 break;
             }
@@ -117,31 +115,30 @@ function areStatsDifferent(newStats, existingProfileStats) {
         }
     }
 
-    // Optional: Check if the set of relevant keys themselves differ
-    // This catches cases where a stat might be added or removed entirely
     if (!different) {
         const newRelevantKeys = Object.keys(normNew).filter(k => statKeys.includes(k));
         const existingRelevantKeys = Object.keys(normExisting).filter(k => statKeys.includes(k));
         if (newRelevantKeys.length !== existingRelevantKeys.length) {
             different = true;
         } else {
-            // Check if keys sets are identical (more robust check if needed)
             const newSet = new Set(newRelevantKeys);
             if (!existingRelevantKeys.every(key => newSet.has(key))) {
                 different = true;
             }
         }
     }
-
     return different;
 }
 
 
 // --- Helper Function: Client-Side User Profile Document Creation ---
+// (Called if profile.js loads and finds no document for the logged-in user)
 async function createUserProfileDocument(userId, authUser) {
-    console.warn(`Attempting client-side creation of user profile doc for UID: ${userId}`);
+    console.warn(`Client-side: Creating missing user profile doc for UID: ${userId}`);
     const userDocRef = db.collection("users").doc(userId);
     const displayName = authUser.displayName || `User_${userId.substring(0, 5)}`;
+
+    // Ensure this structure MATCHES the one created in auth.js on signup
     const defaultProfileData = {
         email: authUser.email || null,
         displayName: displayName,
@@ -150,13 +147,14 @@ async function createUserProfileDocument(userId, authUser) {
         availableTitles: [],
         friends: [],
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        leaderboardStats: {} // <<< INITIALIZED: Add field for storing stats copy
+        leaderboardStats: {} // Initialize stats field
     };
+
     try {
-        // Use set with merge:true to avoid overwriting existing fields if somehow called again
+        // Use set with merge:true to avoid overwriting if called unexpectedly
         await userDocRef.set(defaultProfileData, { merge: true });
         console.log(`Successfully created/merged user profile document for UID: ${userId} via client`);
-        return { id: userId, ...defaultProfileData };
+        return { id: userId, ...defaultProfileData }; // Return the data structure
     } catch (error) {
         console.error(`Error creating user profile document client-side for UID ${userId}:`, error);
         alert("Error setting up your profile details. Please check your connection or contact support if the issue persists.");
@@ -165,14 +163,11 @@ async function createUserProfileDocument(userId, authUser) {
 }
 
 // --- Load Combined User Data (Profile + Leaderboard Stats) ---
-// <<< MODIFIED: Includes logic to sync leaderboard stats to the user profile >>>
 async function loadCombinedUserData(targetUserId) {
     console.log(`Loading combined user data for TARGET UID: ${targetUserId}`);
 
-    // Attempt to load from cache first for faster initial display
     const cacheLoaded = loadCombinedDataFromCache(targetUserId);
     if (!cacheLoaded) {
-        // Only show loading states if nothing came from cache
         statsDisplay.innerHTML = '<p>Loading stats...</p>';
         updateProfileTitlesAndRank(null, false);
     }
@@ -187,8 +182,8 @@ async function loadCombinedUserData(targetUserId) {
 
         if (!profileSnap || !profileSnap.exists) {
             console.warn(`User profile document does NOT exist for UID: ${targetUserId}`);
-            // If viewing own profile and it doesn't exist, try to create it
             if (loggedInUser && loggedInUser.uid === targetUserId) {
+                // If viewing own profile and it's missing, try creating it client-side
                 profileData = await createUserProfileDocument(targetUserId, loggedInUser);
                 if (!profileData) {
                     throw new Error(`Profile creation failed for own UID ${targetUserId}.`);
@@ -196,14 +191,14 @@ async function loadCombinedUserData(targetUserId) {
             } else {
                 // Viewing someone else's profile that doesn't exist
                 console.error(`Cannot find profile for user UID: ${targetUserId}`);
-                displayProfileData(null, null); // Show "User Not Found"
+                displayProfileData(null, null); // Show "User Not Found" UI state
                 statsDisplay.innerHTML = '<p>Profile not found.</p>';
-                return; // Stop execution for this profile load
+                return; // Stop processing for this user
             }
         } else {
-            // Profile exists, get its data
+            // Profile exists
             profileData = { id: profileSnap.id, ...profileSnap.data() };
-            // Ensure leaderboardStats field exists locally, even if missing in older Firestore docs
+            // Ensure leaderboardStats field exists locally for consistency, even if missing in Firestore
             if (profileData.leaderboardStats === undefined) {
                 profileData.leaderboardStats = {};
             }
@@ -211,54 +206,35 @@ async function loadCombinedUserData(targetUserId) {
 
         // 2. Fetch Leaderboard Stats Data
         const statsSnap = await leaderboardStatsRef.get();
-        // If stats exist, create an object, otherwise set to null
         const statsData = statsSnap.exists ? { id: statsSnap.id, ...statsSnap.data() } : null;
 
-        // 3. <<< SYNC STATS TO PROFILE >>>
-        // Check if we have both profile and fresh stats, and if the stats have changed
+        // 3. Sync Leaderboard Stats to User Profile Document if needed
         if (profileData && statsData) {
             if (areStatsDifferent(statsData, profileData.leaderboardStats)) {
                 console.log(`Leaderboard stats for UID ${targetUserId} differ from profile copy. Updating 'users' document.`);
                 try {
-                    // Create a clean copy of stats to save (avoid saving the 'id')
                     const statsToSave = { ...statsData };
-                    delete statsToSave.id;
-
-                    // Update the 'leaderboardStats' field within the user's document
-                    await userProfileRef.update({
-                        leaderboardStats: statsToSave
-                    });
+                    delete statsToSave.id; // Don't save the doc ID within the field
+                    await userProfileRef.update({ leaderboardStats: statsToSave });
                     console.log(`Successfully updated 'users' doc for UID ${targetUserId} with new stats.`);
-                    // --- IMPORTANT: Update the local profileData object immediately ---
-                    // This ensures subsequent operations in this load cycle (cache, achievements)
-                    // use the *just updated* profile data structure.
+                    // Update local profileData immediately to reflect the change
                     profileData.leaderboardStats = statsToSave;
-
                 } catch (updateError) {
                     console.error(`Error updating 'users' document with stats for UID ${targetUserId}:`, updateError);
-                    // Log error but continue - page will display fresh stats anyway
                 }
             } else {
                  console.log(`Leaderboard stats for UID ${targetUserId} match profile copy. No Firestore 'users' update needed.`);
             }
         } else if (profileData && !statsData && Object.keys(profileData.leaderboardStats || {}).length > 0) {
-             // Optional: Handle case where user *had* stats, but now doesn't appear on leaderboard
-             // You might want to clear the stats in the profile here, or leave them as the 'last known' stats.
+             // Optional: Handle case where user HAD stats but now doesn't
              console.log(`User ${targetUserId} has stats in profile but not found in current leaderboard. Keeping existing profile stats.`);
-             // Example: To clear them uncomment below
-             // try {
-             //     await userProfileRef.update({ leaderboardStats: {} });
-             //     profileData.leaderboardStats = {};
-             //     console.log(`Cleared leaderboardStats in profile for UID ${targetUserId}.`);
-             // } catch(clearError) {
-             //     console.error(`Error clearing leaderboardStats for UID ${targetUserId}:`, clearError);
-             // }
+             // Could add logic here to clear profileData.leaderboardStats and update Firestore if desired
         }
 
         // 4. Update Global State
         viewingUserProfileData = {
-            profile: profileData, // Contains potentially updated .leaderboardStats
-            stats: statsData      // Contains fresh stats direct from 'leaderboard' collection
+            profile: profileData, // Profile data (potentially updated with synced stats)
+            stats: statsData      // Fresh leaderboard stats (or null if none)
         };
         console.log("Final Profile Data being viewed:", viewingUserProfileData.profile);
         console.log("Final Stats Data being viewed:", viewingUserProfileData.stats);
@@ -268,18 +244,18 @@ async function loadCombinedUserData(targetUserId) {
         displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats);
         saveCombinedDataToCache(targetUserId, viewingUserProfileData); // Cache the combined data
 
-        // Achievement check uses the fresh statsData as the trigger criteria
+        // Check achievements if it's the user's own profile and they have stats
         if (loggedInUser && loggedInUser.uid === targetUserId && viewingUserProfileData.stats) {
-            if (!allAchievements) await fetchAllAchievements();
+            if (!allAchievements) await fetchAllAchievements(); // Ensure definitions are loaded
             if (allAchievements) {
-                // Pass the potentially updated profile (for checking existing titles/rank)
+                // Pass the potentially updated profile (for checking existing rewards)
                 // Pass the fresh stats (for checking achievement criteria)
                 const potentiallyUpdatedProfile = await checkAndGrantAchievements(
                     targetUserId,
                     viewingUserProfileData.profile,
                     viewingUserProfileData.stats
                 );
-                // If achievements granted NEW profile data (titles/rank), update UI/Cache again
+                // If achievements granted NEW titles/rank, update UI/Cache again
                 if (potentiallyUpdatedProfile) {
                     viewingUserProfileData.profile = potentiallyUpdatedProfile; // Update local state
                     displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats); // Refresh display
@@ -299,15 +275,16 @@ async function loadCombinedUserData(targetUserId) {
         console.error(`Error in loadCombinedUserData for TARGET UID ${targetUserId}:`, error);
         if (error.stack) console.error("DEBUG: Full error stack:", error.stack);
 
-        // If fetch failed and cache wasn't loaded, show error
         if (!cacheLoaded) {
+            // Show error state if initial load failed completely
             profileContent.style.display = 'none';
-            notLoggedInMsg.style.display = 'flex';
             notLoggedInMsg.textContent = 'Error loading profile data. Please try again later.';
+            notLoggedInMsg.style.display = 'flex'; // Use flex as defined in styles
+            loadingIndicator.style.display = 'none';
             statsDisplay.innerHTML = '<p>Error loading data.</p>';
             updateProfileTitlesAndRank(null, false);
         } else {
-            // If fetch failed but cache was loaded, log warning but keep cached view
+            // Keep cached view if fresh data fetch fails
             console.warn("Error fetching fresh data, displaying potentially stale cached view.");
         }
     }
@@ -315,13 +292,14 @@ async function loadCombinedUserData(targetUserId) {
 
 
 // --- Display Profile Data (Username, Email, Pic, Badges, Rank/Title, Stats) ---
+// <<< MODIFIED: Removed dynamic background color setting for profile pic >>>
 function displayProfileData(profileData, statsData) {
     if (!profileData) {
-        // Handle case where profile couldn't be loaded or created
+        // Handle profile not found/loaded state
         usernameDisplay.textContent = "User Not Found";
         emailDisplay.textContent = "";
         profilePicDiv.textContent = "?";
-        profilePicDiv.style.backgroundColor = '#555'; // Default background
+        // Let CSS handle the default background color
         adminTag.style.display = 'none';
         profileBadgesContainer.innerHTML = '';
         updateProfileTitlesAndRank(null, false);
@@ -335,8 +313,8 @@ function displayProfileData(profileData, statsData) {
     usernameDisplay.textContent = displayName;
     emailDisplay.textContent = email;
     profilePicDiv.textContent = displayName.charAt(0).toUpperCase();
-    // Optional: Set a color based on UID or name hash for variety
-    profilePicDiv.style.backgroundColor = getUserColor(profileData.id);
+    // --- REMOVED DYNAMIC BACKGROUND COLOR SETTING ---
+    // profilePicDiv.style.backgroundColor = getUserColor(profileData.id);
 
     // Badges and Admin Tag
     displayUserBadges(profileData);
@@ -349,7 +327,9 @@ function displayProfileData(profileData, statsData) {
     displayStats(statsData);
 }
 
-// --- Helper: Get a consistent color based on User ID ---
+/*
+// --- REMOVED FUNCTION - No longer needed ---
+// Helper: Get a consistent color based on User ID
 function getUserColor(uid) {
     if (!uid) return '#555'; // Default grey
     let hash = 0;
@@ -357,23 +337,24 @@ function getUserColor(uid) {
         hash = uid.charCodeAt(i) + ((hash << 5) - hash);
         hash = hash & hash; // Convert to 32bit integer
     }
-    // Simple hash to HSL conversion for pleasant colors
     const hue = hash % 360;
-    return `hsl(${hue}, 50%, 40%)`; // Adjust saturation/lightness as needed
+    return `hsl(${hue}, 50%, 40%)`;
 }
+*/
 
 
 // --- Display Stats Grid ---
 function displayStats(statsData) {
     statsDisplay.innerHTML = ''; // Clear previous stats
 
-    // Check if statsData is valid
     if (!statsData || typeof statsData !== 'object' || Object.keys(statsData).length === 0) {
-        statsDisplay.innerHTML = '<p>Leaderboard stats unavailable for this user.</p>';
+        // Display message directly in the grid container
+        const noStatsPara = document.createElement('p');
+        noStatsPara.textContent = 'Leaderboard stats unavailable for this user.';
+        statsDisplay.appendChild(noStatsPara);
         return;
     }
 
-    // Define stats to display and their labels
     const statsMap = {
         wins: 'Wins',
         points: 'Points',
@@ -384,34 +365,43 @@ function displayStats(statsData) {
     };
 
     let statsAdded = 0;
+    const addedKeys = new Set(); // Keep track of keys already added (for fallback logic)
 
-    // Iterate through the map to maintain order and handle formatting
     for (const key in statsMap) {
-        let value = statsData[key];
+        let value;
+        let actualKeyUsed = key;
 
-        // Handle fallback for matchesPlayed/matches
-        if (key === 'matchesPlayed' && value === undefined) {
-            value = statsData['matches']; // Check the fallback key
+        // Handle primary key and fallback (matchesPlayed vs matches)
+        if (key === 'matchesPlayed') {
+            if (statsData.hasOwnProperty('matchesPlayed')) {
+                value = statsData.matchesPlayed;
+            } else if (statsData.hasOwnProperty('matches')) {
+                value = statsData.matches;
+                actualKeyUsed = 'matches'; // Note that we used the fallback
+            }
+        } else {
+             value = statsData[key];
         }
-        // Skip if value is still undefined or if it's the fallback key 'matches' and 'matchesPlayed' was already processed
-        if (value === undefined || (key === 'matches' && statsData['matchesPlayed'] !== undefined)) {
+
+        // Skip if value is undefined or if this specific key combination was already added
+        if (value === undefined || addedKeys.has(actualKeyUsed)) {
              continue;
         }
 
         let displayValue = value;
-        // Format K/D Ratio
         if (key === 'kdRatio' && typeof value === 'number') {
             displayValue = value.toFixed(2);
         }
 
         statsDisplay.appendChild(createStatItem(statsMap[key], displayValue));
+        addedKeys.add(actualKeyUsed); // Mark this key/fallback as added
         statsAdded++;
     }
 
-
-    // Fallback message if no recognized stats were found in the object
     if (statsAdded === 0) {
-        statsDisplay.innerHTML = '<p>No specific leaderboard stats found.</p>';
+        const noStatsPara = document.createElement('p');
+        noStatsPara.textContent = 'No specific leaderboard stats found.';
+        statsDisplay.appendChild(noStatsPara);
     }
 }
 
@@ -424,8 +414,7 @@ function createStatItem(title, value) {
     titleH4.textContent = title;
 
     const valueP = document.createElement('p');
-    // Display '-' if value is null or undefined, otherwise the value itself
-    valueP.textContent = (value !== null && value !== undefined) ? value : '-';
+    valueP.textContent = (value !== null && value !== undefined) ? value : '-'; // Display '-' if null/undefined
 
     itemDiv.appendChild(titleH4);
     itemDiv.appendChild(valueP);
@@ -434,246 +423,180 @@ function createStatItem(title, value) {
 
 // --- Check and Grant Achievements based on fetched stats ---
 async function checkAndGrantAchievements(userId, currentUserProfile, freshLeaderboardStats) {
-    // Requires achievement definitions, user ID, the current profile state, and fresh stats
     if (!allAchievements || !userId || !currentUserProfile || !freshLeaderboardStats) {
-        console.log("Skipping achievement check due to missing data.", { allAchievements: !!allAchievements, userId, currentUserProfile: !!currentUserProfile, freshLeaderboardStats: !!freshLeaderboardStats });
+        console.log("Skipping achievement check due to missing data.");
         return null; // Indicate no profile update occurred
     }
-
     console.log(`Checking achievements for UID ${userId} using fresh stats:`, freshLeaderboardStats);
 
     try {
-        // 1. Get User's Currently Unlocked Achievements
         const userAchievementsRef = db.collection('userAchievements').doc(userId);
         const userAchievementsDoc = await userAchievementsRef.get();
         const unlockedIds = userAchievementsDoc.exists ? (userAchievementsDoc.data()?.unlocked || []) : [];
-        console.log(`User ${userId} already has achievements:`, unlockedIds);
 
-        // 2. Iterate Through All Defined Achievements
         let newAchievementsUnlocked = [];
-        let rewardsToApply = { titles: [], rank: null, rankPoints: 0 }; // Collect rewards
-        let needsDbUpdate = false; // Flag if any changes are needed
+        let rewardsToApply = { titles: [], rank: null, rankPoints: 0 };
+        let needsDbUpdate = false;
 
         for (const achievementId in allAchievements) {
-            // Skip if already unlocked
             if (unlockedIds.includes(achievementId)) continue;
 
             const achievement = allAchievements[achievementId];
             let criteriaMet = false;
 
-            // Check criteria against the freshLeaderboardStats
             if (achievement.criteria?.stat && freshLeaderboardStats[achievement.criteria.stat] !== undefined) {
                 const statValue = freshLeaderboardStats[achievement.criteria.stat];
                 const targetValue = achievement.criteria.value;
-
                 switch (achievement.criteria.operator) {
                     case '>=': criteriaMet = statValue >= targetValue; break;
                     case '<=': criteriaMet = statValue <= targetValue; break;
                     case '==': criteriaMet = statValue == targetValue; break;
-                    // Add other operators if needed (e.g., '>', '<')
-                    default: console.warn(`Unknown operator ${achievement.criteria.operator} for achievement ${achievementId}`);
+                    default: console.warn(`Unknown operator ${achievement.criteria.operator}`);
                 }
-            } else if (achievement.criteria?.stat) {
-                // Log if the required stat is missing in the user's stats data
-                // console.log(`Stat '${achievement.criteria.stat}' not found in user stats for achievement ${achievementId}.`);
-            } else {
-                 // Handle achievements without stat criteria if necessary (e.g., manual grant)
             }
 
-            // If criteria met, mark for unlock and collect rewards
             if (criteriaMet) {
                 console.log(`Criteria MET for achievement: ${achievement.name || achievementId}`);
                 newAchievementsUnlocked.push(achievementId);
-                needsDbUpdate = true; // We need to update Firestore
-                if (achievement.rewards?.title) {
-                    rewardsToApply.titles.push(achievement.rewards.title);
-                }
-                if (achievement.rewards?.rank) {
-                    // Consider logic if multiple achievements grant ranks (e.g., take highest?)
-                    rewardsToApply.rank = achievement.rewards.rank; // For now, last one wins
-                }
-                if (achievement.rewards?.rankPoints) {
-                    rewardsToApply.rankPoints += achievement.rewards.rankPoints;
-                }
+                needsDbUpdate = true;
+                if (achievement.rewards?.title) rewardsToApply.titles.push(achievement.rewards.title);
+                if (achievement.rewards?.rank) rewardsToApply.rank = achievement.rewards.rank;
+                if (achievement.rewards?.rankPoints) rewardsToApply.rankPoints += achievement.rewards.rankPoints;
             }
         }
 
-        // 3. Apply Updates if New Achievements Were Unlocked
         if (needsDbUpdate && newAchievementsUnlocked.length > 0) {
             console.log(`Unlocking ${newAchievementsUnlocked.length} new achievement(s):`, newAchievementsUnlocked);
             console.log("Applying rewards:", rewardsToApply);
 
-            const batch = db.batch(); // Use a batch for atomic updates
+            const batch = db.batch();
             const userProfileRef = db.collection('users').doc(userId);
 
             // Update unlocked achievements list
-            batch.set(userAchievementsRef, {
-                unlocked: firebase.firestore.FieldValue.arrayUnion(...newAchievementsUnlocked)
-            }, { merge: true }); // Use merge to not overwrite other fields if any
+            batch.set(userAchievementsRef, { unlocked: firebase.firestore.FieldValue.arrayUnion(...newAchievementsUnlocked) }, { merge: true });
 
-            // Prepare updates for the user's profile document
+            // Prepare profile updates
             const profileUpdateData = {};
-            // Keep track of changes to return the updated profile object
-            let updatedLocalProfile = { ...currentUserProfile };
+            let updatedLocalProfile = { ...currentUserProfile }; // Start with current profile
 
             // Apply Title Rewards
             if (rewardsToApply.titles.length > 0) {
                 profileUpdateData.availableTitles = firebase.firestore.FieldValue.arrayUnion(...rewardsToApply.titles);
-                // Update local profile state as well
-                updatedLocalProfile.availableTitles = [
-                    ...new Set([...(updatedLocalProfile.availableTitles || []), ...rewardsToApply.titles])
-                ];
-
-                // Equip the first new title if none is currently equipped
+                updatedLocalProfile.availableTitles = [...new Set([...(updatedLocalProfile.availableTitles || []), ...rewardsToApply.titles])];
+                // Equip first new title if none is equipped
                 if (!updatedLocalProfile.equippedTitle && rewardsToApply.titles[0]) {
                     profileUpdateData.equippedTitle = rewardsToApply.titles[0];
                     updatedLocalProfile.equippedTitle = rewardsToApply.titles[0];
-                    console.log(`Auto-equipping new title: ${rewardsToApply.titles[0]}`);
                 }
             }
 
-            // Apply Rank Rewards (if any)
+            // Apply Rank Rewards
             if (rewardsToApply.rank) {
                 profileUpdateData.currentRank = rewardsToApply.rank;
                 updatedLocalProfile.currentRank = rewardsToApply.rank;
             }
 
-            // Apply Rank Points (if you have a rankPoints field)
-            if (rewardsToApply.rankPoints > 0) {
-                 // Assuming you have a 'rankPoints' field in your user profile
-                 // profileUpdateData.rankPoints = firebase.firestore.FieldValue.increment(rewardsToApply.rankPoints);
-                 // updatedLocalProfile.rankPoints = (updatedLocalProfile.rankPoints || 0) + rewardsToApply.rankPoints;
-                 console.warn("Rank points reward found, but 'rankPoints' field update logic is commented out.");
-            }
-
-            // Ensure default values if fields were previously empty
-            if (!updatedLocalProfile.currentRank) {
-                profileUpdateData.currentRank = 'Unranked'; // Set a default if still no rank
-                updatedLocalProfile.currentRank = 'Unranked';
-            }
-             if (updatedLocalProfile.equippedTitle === undefined) { // Check specifically for undefined
-                 profileUpdateData.equippedTitle = ''; // Set a default if still no title
-                 updatedLocalProfile.equippedTitle = '';
+            // Ensure defaults if fields were empty
+             if (!updatedLocalProfile.currentRank) {
+                 profileUpdateData.currentRank = 'Unranked'; updatedLocalProfile.currentRank = 'Unranked';
+             }
+             if (updatedLocalProfile.equippedTitle === undefined) {
+                 profileUpdateData.equippedTitle = ''; updatedLocalProfile.equippedTitle = '';
              }
 
-
-            // Add profile updates to the batch if there are changes
+            // Add profile updates to batch if needed
             if (Object.keys(profileUpdateData).length > 0) {
                 batch.update(userProfileRef, profileUpdateData);
-                console.log("Profile updates added to batch:", profileUpdateData);
             }
 
-            // Commit the batch
             await batch.commit();
             console.log(`Firestore batch committed successfully for UID ${userId}.`);
-
-            // Return the updated profile data reflecting the rewards
-            return updatedLocalProfile;
+            return updatedLocalProfile; // Return the locally updated profile object
 
         } else {
             console.log(`No new achievements unlocked for UID ${userId}.`);
-            return null; // Indicate no profile update occurred
+            return null; // No update occurred
         }
 
     } catch (error) {
         console.error(`Error checking/granting achievements for UID ${userId}:`, error);
-        return null; // Indicate no profile update occurred due to error
+        return null; // Error occurred
     }
 }
-
 
 // -----------------------------------------------------------------------------
 // --- UI Display Helpers (Badges, Rank/Title Selector) ---
 // -----------------------------------------------------------------------------
 
-// --- Helper: Display Badges based on the viewed profile's data ---
 function displayUserBadges(profileData) {
-    profileBadgesContainer.innerHTML = ''; // Clear existing badges
+    profileBadgesContainer.innerHTML = '';
     const userEmail = profileData?.email;
     if (!userEmail) {
-        adminTag.style.display = 'none'; // Hide admin tag if no email
+        adminTag.style.display = 'none';
         return;
     }
-
     const emailLower = userEmail.toLowerCase();
-
-    // Check Admin Tag based on VIEWED profile's email
     adminTag.style.display = adminEmails.includes(emailLower) ? 'inline-block' : 'none';
 
-    // Check other badges based on config
     for (const badgeType in badgeConfig) {
         const config = badgeConfig[badgeType];
         if (config.emails.includes(emailLower)) {
             const badgeSpan = document.createElement('span');
             badgeSpan.classList.add('profile-badge', config.className);
-            badgeSpan.setAttribute('title', config.title); // Tooltip for badge name
+            badgeSpan.setAttribute('title', config.title); // Tooltip
             profileBadgesContainer.appendChild(badgeSpan);
         }
     }
 }
 
-// --- Helper: Update Profile Rank/Title Display & Interaction ---
 function updateProfileTitlesAndRank(profileData, allowInteraction) {
-    if (!rankDisplay || !titleDisplay) {
-        console.error("Rank or Title display element not found.");
-        return;
-    }
+    if (!rankDisplay || !titleDisplay) return;
 
-    // Reset interaction state
-    titleDisplay.classList.remove('selectable-title');
+    titleDisplay.classList.remove('selectable-title', 'no-title-placeholder');
     titleDisplay.removeEventListener('click', handleTitleClick);
-    closeTitleSelector(); // Ensure selector is closed if profile data changes
+    closeTitleSelector();
 
     if (profileData && typeof profileData === 'object') {
         const rank = profileData.currentRank || 'Unranked';
         const title = profileData.equippedTitle || '';
         const available = profileData.availableTitles || [];
 
-        // Update Rank Display
         rankDisplay.textContent = rank;
-        // Apply CSS class based on rank for potential styling
         rankDisplay.className = `profile-rank-display rank-${rank.toLowerCase().replace(/\s+/g, '-')}`;
 
-        // Update Title Display
         if (title) {
             titleDisplay.textContent = title;
-            titleDisplay.style.display = 'inline-block'; // Show title
-
-            // Enable interaction ONLY if it's the logged-in user's profile AND they have titles available
+            titleDisplay.style.display = 'inline-block';
             if (allowInteraction && available.length > 0) {
                 titleDisplay.classList.add('selectable-title');
                 titleDisplay.addEventListener('click', handleTitleClick);
             }
         } else {
-            // No equipped title
-            titleDisplay.textContent = '';
-            titleDisplay.style.display = 'none'; // Hide title element
-
-            // Still allow opening selector if titles are available but none equipped
-             if (allowInteraction && available.length > 0) {
-                 // Maybe add a placeholder or button to select a title?
-                 // For now, clicking the (hidden) title won't work, might need another trigger
-                 // Or, show a placeholder like "[No Title]" and make that clickable
-                 // Example: Display a placeholder if interaction allowed and titles available
+            // No title equipped
+            if (allowInteraction && available.length > 0) {
+                 // Show placeholder if interaction allowed and titles exist but none equipped
                  titleDisplay.textContent = '[Choose Title]';
                  titleDisplay.style.display = 'inline-block';
-                 titleDisplay.classList.add('selectable-title', 'no-title-placeholder'); // Add class for styling
+                 titleDisplay.classList.add('selectable-title', 'no-title-placeholder');
                  titleDisplay.addEventListener('click', handleTitleClick);
-             }
+            } else {
+                 // Hide completely if no interaction or no titles available
+                 titleDisplay.textContent = '';
+                 titleDisplay.style.display = 'none';
+            }
         }
     } else {
-        // No profile data available
+        // No profile data
         rankDisplay.textContent = '...';
-        rankDisplay.className = 'profile-rank-display rank-unranked'; // Default class
+        rankDisplay.className = 'profile-rank-display rank-unranked';
         titleDisplay.textContent = '';
         titleDisplay.style.display = 'none';
     }
 }
 
-// --- Handle Clicks on the Equipped Title (or placeholder) ---
 function handleTitleClick(event) {
-    event.stopPropagation(); // Prevent triggering outer listeners
-    if (!loggedInUser || loggedInUser.uid !== viewingUserProfileData.profile?.id) return; // Safety check
+    event.stopPropagation();
+    if (!loggedInUser || loggedInUser.uid !== viewingUserProfileData.profile?.id) return;
 
     if (isTitleSelectorOpen) {
         closeTitleSelector();
@@ -681,180 +604,134 @@ function handleTitleClick(event) {
         openTitleSelector();
     } else {
         console.log("No available titles to select.");
-        // Optionally provide feedback to user (e.g., tooltip, brief message)
     }
 }
 
-// --- Open Title Selector Dropdown ---
 function openTitleSelector() {
-    // Should only be callable if interaction is allowed and titles exist (checked in caller)
-    if (isTitleSelectorOpen || !profileIdentifiersDiv || !viewingUserProfileData.profile?.availableTitles?.length > 0) {
-        return;
-    }
+    if (isTitleSelectorOpen || !profileIdentifiersDiv || !viewingUserProfileData.profile?.availableTitles?.length > 0) return;
 
     const availableTitles = viewingUserProfileData.profile.availableTitles;
     const currentEquippedTitle = viewingUserProfileData.profile.equippedTitle || '';
 
-    // Create selector element if it doesn't exist
     if (!titleSelectorElement) {
         titleSelectorElement = document.createElement('div');
         titleSelectorElement.className = 'title-selector';
-        // Append it near the title display for better positioning context
-        profileIdentifiersDiv.appendChild(titleSelectorElement);
+        profileIdentifiersDiv.appendChild(titleSelectorElement); // Append near parent
     }
+    titleSelectorElement.innerHTML = ''; // Clear previous
 
-    titleSelectorElement.innerHTML = ''; // Clear previous options
-
-    // Add option to unequip title if one is currently equipped
+    // Add 'Remove Title' option if a title is currently equipped
     if (currentEquippedTitle) {
         const unequipOption = document.createElement('button');
-        unequipOption.className = 'title-option title-option-unequip';
-        unequipOption.dataset.title = ""; // Represent unequip with empty string
+        unequipOption.className = 'title-option title-option-unequip'; // Add class for styling?
+        unequipOption.dataset.title = ""; // Use empty string to signify unequip
         unequipOption.type = 'button';
         unequipOption.textContent = '[Remove Title]';
         unequipOption.addEventListener('click', handleTitleOptionClick);
         titleSelectorElement.appendChild(unequipOption);
     }
 
-
-    // Add button for each available title
     availableTitles.forEach(titleOptionText => {
         const optionElement = document.createElement('button');
         optionElement.className = 'title-option';
-        optionElement.dataset.title = titleOptionText; // Store title in data attribute
+        optionElement.dataset.title = titleOptionText;
         optionElement.type = 'button';
         optionElement.textContent = titleOptionText;
-
-        // Highlight the currently equipped title
         if (titleOptionText === currentEquippedTitle) {
             optionElement.classList.add('currently-equipped');
             optionElement.setAttribute('aria-pressed', 'true');
         } else {
             optionElement.setAttribute('aria-pressed', 'false');
         }
-
         optionElement.addEventListener('click', handleTitleOptionClick);
         titleSelectorElement.appendChild(optionElement);
     });
 
-    titleSelectorElement.style.display = 'block'; // Show the dropdown
+    titleSelectorElement.style.display = 'block';
     isTitleSelectorOpen = true;
-
-    // Add listener to close dropdown when clicking outside
-    // Use timeout to ensure this listener is added *after* the current click event finishes
-    setTimeout(() => {
-        document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true });
-    }, 0);
+    setTimeout(() => { document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true }); }, 0);
 }
 
-// --- Close Title Selector Dropdown ---
 function closeTitleSelector() {
     if (!isTitleSelectorOpen || !titleSelectorElement) return;
     titleSelectorElement.style.display = 'none';
     isTitleSelectorOpen = false;
-    // Clean up the outside click listener (though 'once' handles it, this is good practice)
     document.removeEventListener('click', handleClickOutsideTitleSelector, { capture: true });
 }
 
-// --- Handle Clicks Outside Selector to Close It ---
 function handleClickOutsideTitleSelector(event) {
     if (!isTitleSelectorOpen) return;
-
-    // Check if the click was inside the selector itself or on the title display that opened it
     const clickedInsideSelector = titleSelectorElement && titleSelectorElement.contains(event.target);
     const clickedOnTitleDisplay = titleDisplay && titleDisplay.contains(event.target);
 
     if (clickedInsideSelector || clickedOnTitleDisplay) {
-        // Click was inside, re-attach the listener for the *next* click outside
         document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true });
         return;
     }
-
-    // Click was outside, close the selector
     closeTitleSelector();
 }
 
-// --- Handle Clicks on a Title Option Button ---
 async function handleTitleOptionClick(event) {
-    event.stopPropagation(); // Prevent event bubbling
-    const selectedTitle = event.currentTarget.dataset.title; // Get title from data attribute
+    event.stopPropagation();
+    const selectedTitle = event.currentTarget.dataset.title;
     const currentUserId = loggedInUser?.uid;
     const currentlyViewedProfile = viewingUserProfileData.profile;
 
-    // Safety checks: Ensure it's the logged-in user modifying their own profile
     if (!currentUserId || !currentlyViewedProfile || currentUserId !== currentlyViewedProfile.id) {
-        console.error("Attempted to change title for wrong user or not logged in.");
+        console.error("Attempted to change title for wrong user.");
         closeTitleSelector();
         return;
     }
 
     const currentEquipped = currentlyViewedProfile.equippedTitle || '';
-
-    // Don't do anything if clicking the already equipped title (unless it's the unequip button)
     if (selectedTitle === currentEquipped) {
-        closeTitleSelector();
-        return;
+        closeTitleSelector(); return; // No change
     }
 
-    // Close selector immediately
     closeTitleSelector();
-
-    // Provide visual feedback
     titleDisplay.textContent = "Updating...";
-    titleDisplay.classList.remove('selectable-title'); // Disable clicking while updating
+    titleDisplay.classList.remove('selectable-title', 'no-title-placeholder');
 
     try {
         const userProfileRef = db.collection('users').doc(currentUserId);
-        // Update Firestore with the selected title (empty string for unequip)
-        await userProfileRef.update({ equippedTitle: selectedTitle });
-        console.log(`Firestore 'users' doc updated title to "${selectedTitle}" for UID ${currentUserId}`);
+        await userProfileRef.update({ equippedTitle: selectedTitle }); // Update Firestore
+        console.log(`Firestore 'users' doc updated title to "${selectedTitle || 'None'}" for UID ${currentUserId}`);
 
-        // Update local state immediately
+        // Update local state and cache
         viewingUserProfileData.profile.equippedTitle = selectedTitle;
-        // Update cache with the new profile state
         saveCombinedDataToCache(currentUserId, viewingUserProfileData);
-        // Refresh the title display area (reenables interaction)
+        // Refresh display
         updateProfileTitlesAndRank(viewingUserProfileData.profile, true);
 
     } catch (error) {
         console.error("Error updating equipped title in Firestore 'users':", error);
-        alert("Failed to update title. Please try again.");
-        // Revert local state and UI on error (optional but good UX)
+        alert("Failed to update title.");
+        // Revert local state and refresh display on error
         if (viewingUserProfileData.profile) {
-             viewingUserProfileData.profile.equippedTitle = currentEquipped; // Revert local state
+             viewingUserProfileData.profile.equippedTitle = currentEquipped;
         }
-        updateProfileTitlesAndRank(viewingUserProfileData.profile, true); // Refresh display with old title
+        updateProfileTitlesAndRank(viewingUserProfileData.profile, true);
     }
 }
-
 
 // -----------------------------------------------------------------------------
 // --- Authentication and Initialization ---
 // -----------------------------------------------------------------------------
 
-// --- Auth State Listener ---
 auth.onAuthStateChanged(user => {
-    loggedInUser = user; // Update global loggedInUser state
-    // Determine whose profile to load: URL param > logged-in user > none
+    loggedInUser = user;
     const targetUid = profileUidFromUrl || loggedInUser?.uid;
-
     console.log(`Auth state changed. Logged in: ${!!user}, Target UID: ${targetUid}`);
 
     if (targetUid) {
-        // User is logged in OR a UID is provided in the URL
         loadingIndicator.style.display = 'none';
         notLoggedInMsg.style.display = 'none';
-        profileContent.style.display = 'block';
+        profileContent.style.display = 'block'; // Use block as defined in styles
 
-        // Pre-fetch achievement definitions (can happen in parallel)
-        fetchAllAchievements();
+        fetchAllAchievements(); // Start fetching definitions early
+        loadCombinedUserData(targetUid); // Load profile data
 
-        // Load the profile data for the target user
-        loadCombinedUserData(targetUid);
-
-        // Show logout button only if viewing own profile
         profileLogoutBtn.style.display = (loggedInUser && loggedInUser.uid === targetUid) ? 'inline-block' : 'none';
-
     } else {
         // No user logged in AND no UID in URL
         console.log('No user logged in and no profile UID in URL.');
@@ -872,90 +749,63 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// --- Logout Button Event Listener ---
 profileLogoutBtn.addEventListener('click', () => {
-    const userId = loggedInUser?.uid; // Get ID before sign out
-
-    // Clean up listeners and state related to the logged-out user
+    const userId = loggedInUser?.uid;
     if (titleDisplay) titleDisplay.removeEventListener('click', handleTitleClick);
     closeTitleSelector();
 
     auth.signOut().then(() => {
         console.log('User signed out successfully.');
-        // Clear cached data for the logged-out user
         if (userId) {
             localStorage.removeItem(`poxelProfileCombinedData_${userId}`);
             console.log(`Cleared cache for UID: ${userId}`);
         }
-        viewingUserProfileData = {}; // Clear global state
-        // The onAuthStateChanged listener will automatically handle UI updates
-        // (e.g., showing the "not logged in" message or redirecting)
+        viewingUserProfileData = {};
+        // onAuthStateChanged will handle UI changes (potentially redirecting or showing login message)
+         window.location.href = 'index.html'; // Or wherever you want logged-out users to go
     }).catch((error) => {
         console.error('Sign out error:', error);
-        alert('Error signing out. Please try again.');
+        alert('Error signing out.');
     });
 });
-
 
 // -----------------------------------------------------------------------------
 // --- Local Storage Caching ---
 // -----------------------------------------------------------------------------
 
-// --- Load Combined Data from Local Storage Cache ---
 function loadCombinedDataFromCache(viewedUserId) {
     if (!viewedUserId) return false;
     const cacheKey = `poxelProfileCombinedData_${viewedUserId}`;
     const cachedDataString = localStorage.getItem(cacheKey);
+    if (!cachedDataString) return false;
 
-    if (cachedDataString) {
-        try {
-            const cachedData = JSON.parse(cachedDataString);
-            // Basic validation: Check if it has profile and potentially stats
-            if (cachedData && cachedData.profile) {
-                viewingUserProfileData = cachedData; // Load into global state
-                console.log("Loaded combined data from cache for VIEWED UID:", viewedUserId);
-                // Display cached data immediately for faster perceived load
-                displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats);
-                return true; // Indicate cache was successfully loaded
-            } else {
-                console.warn("Cached data format invalid for UID:", viewedUserId);
-                localStorage.removeItem(cacheKey); // Remove invalid cache entry
-                viewingUserProfileData = {};
-                return false;
-            }
-        } catch (error) {
-            console.error("Error parsing combined cached data:", error);
-            localStorage.removeItem(cacheKey); // Remove corrupted cache entry
-            viewingUserProfileData = {};
-            return false;
+    try {
+        const cachedData = JSON.parse(cachedDataString);
+        if (cachedData && cachedData.profile) {
+            viewingUserProfileData = cachedData;
+            console.log("Loaded combined data from cache for VIEWED UID:", viewedUserId);
+            displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats); // Display cached data immediately
+            return true;
+        } else {
+            localStorage.removeItem(cacheKey); return false;
         }
-    } else {
-        // console.log("No combined data found in cache for VIEWED UID:", viewedUserId);
-        viewingUserProfileData = {}; // Ensure state is clear if no cache
-        return false; // Indicate cache was not found or not loaded
+    } catch (error) {
+        console.error("Error parsing cached data:", error);
+        localStorage.removeItem(cacheKey); return false;
     }
 }
 
-// --- Save Combined Data to Local Storage Cache ---
 function saveCombinedDataToCache(viewedUserId, combinedData) {
-     // Ensure we have valid data and a user ID to cache for
-     if (!viewedUserId || !combinedData || !combinedData.profile) {
-         console.warn("Attempted to save invalid data to cache. Aborted.", { viewedUserId, combinedData });
-         return;
-     }
-
+     if (!viewedUserId || !combinedData || !combinedData.profile) return;
      const cacheKey = `poxelProfileCombinedData_${viewedUserId}`;
      try {
-         // Add a timestamp to the cached data (optional, for expiry logic later)
-         // combinedData.cacheTimestamp = Date.now();
          localStorage.setItem(cacheKey, JSON.stringify(combinedData));
          // console.log("Saved combined data to cache for VIEWED UID:", viewedUserId);
      } catch(error) {
-         console.error("Error saving combined data to cache:", error);
-         // Handle potential storage limit errors (though unlikely for this small data)
+         console.error("Error saving data to cache:", error);
          if (error.name === 'QuotaExceededError') {
-             alert('Could not save profile data locally - browser storage might be full.');
-             // Consider implementing cache clearing logic here
+             console.warn('Browser storage quota exceeded. Cannot cache profile data.');
+             // Consider clearing older cache items here if necessary
          }
      }
 }
