@@ -80,7 +80,7 @@ function escapeHtml(unsafe) {
    safe = safe.replace(/&/g, "&");
    safe = safe.replace(/</g, "<");
    safe = safe.replace(/>/g, ">");
-   safe = safe.replace(/"/g, """);
+   safe = safe.replace(/"/g, "&quot;");
    safe = safe.replace(/'/g, "'"); // Also handles single quotes
    return safe;
 }
