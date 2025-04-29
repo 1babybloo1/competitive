@@ -445,7 +445,7 @@
     function attachPlayerDeleteListeners() { /* ... existing ... */ document.querySelectorAll('#leaderboard-body-admin .delete-player-button').forEach(button => { const newButton = button.cloneNode(true); button.parentNode.replaceChild(newButton, button); newButton.addEventListener('click', async (e) => { const id = e.target.dataset.id; if (!id) return; const row = e.target.closest('tr'); const nameInput = row ? row.querySelector('input[data-field="name"]') : null; const playerName = nameInput ? nameInput.value : `Player ID: ${id}`; if (confirm(`Delete player "${playerName}"?`)) { try { await db.collection('leaderboard').doc(id).delete(); showSaveStatus('Player deleted!', false); loadLeaderboardAdmin(); } catch (error) { console.error(`Error deleting player ${id}:`, error); showSaveStatus(`Error deleting player: ${error.message}`, true); } } }); }); }
     addPlayerButton.addEventListener('click', () => { /* ... existing ... */ if (addPlayerForm) addPlayerForm.classList.toggle('hidden'); });
 
-    // --- MODIFIED saveNewPlayerButton Listener (with UID lookup) ---
+    // --- >>> REPLACED saveNewPlayerButton Listener (with UID lookup & logging) <<< ---
     saveNewPlayerButton.addEventListener('click', async () => {
         console.log("Attempting to save new player to leaderboard...");
         showSaveStatus('Processing new player...', false);
@@ -492,7 +492,7 @@
                 saveNewPlayerButton.disabled = false; return;
             } else {
                 targetUID = querySnapshot.docs[0].id;
-                console.log(`Found user UID: ${targetUID}`);
+                console.log(`Found user UID: ${targetUID}`); // Log UID confirmation
             }
         } catch (error) {
             console.error("Error querying user collection:", error);
@@ -504,7 +504,14 @@
         if (targetUID) {
             try {
                 showSaveStatus(`Saving leaderboard data for UID ${targetUID}...`, false);
-                await db.collection('leaderboard').doc(targetUID).set(newPlayerData);
+
+                // --- >>> ADDED LOGGING <<< ---
+                console.log(`>>> FINAL CHECK: Attempting to SET document with ID: ${targetUID}`);
+                console.log(`>>> FINAL CHECK: Data being set:`, JSON.stringify(newPlayerData));
+                // --- >>> END LOGGING <<< ---
+
+                await db.collection('leaderboard').doc(targetUID).set(newPlayerData); // << THE CORRECT LINE
+
                 console.log(`Leaderboard document set successfully for UID: ${targetUID}`);
                 showSaveStatus('New player added to leaderboard successfully!', false);
                 addPlayerForm.classList.add('hidden');
@@ -517,12 +524,12 @@
                  saveNewPlayerButton.disabled = false;
             }
         } else {
-            console.error("Failed to obtain target UID after checks.");
+            console.error(">>> FAILED to obtain target UID even after checks. Aborting save. Did not call .set()"); // Added log
             showSaveStatus('Error: Could not determine user ID. Save aborted.', true);
             saveNewPlayerButton.disabled = false;
         }
     });
-    // --- END MODIFIED Listener ---
+    // --- END REPLACED Listener ---
 
     saveLeaderboardChangesButton.addEventListener('click', async () => { /* ... existing ... */ console.log("Attempting to save all leaderboard changes..."); const updates = []; let errorsFound = false; document.querySelectorAll('#leaderboard-body-admin tr').forEach(row => { const id = row.dataset.id; if (!id) return; const playerData = {}; let hasRowError = false; row.querySelectorAll('input').forEach(input => { const field = input.dataset.field; if (!field) return; let value = input.value.trim(); if (input.type === 'number') { const parsedValue = parseInt(value); if (isNaN(parsedValue)) { showSaveStatus(`Error: Invalid number for ${field} in row ID ${id}.`, true); hasRowError = true; errorsFound = true; value = 0; } else { value = (field === 'matches' || field === 'wins' || field === 'losses') ? Math.max(0, parsedValue) : parsedValue; } } else if (input.type === 'text') { if (field === 'name' && !value) { showSaveStatus(`Error: Player Name required for ID ${id}.`, true); hasRowError = true; errorsFound = true; } if (field === 'avatar') { value = value.toUpperCase(); } } if (!errorsFound || input.type !== 'number' || !isNaN(parseInt(input.value))) { playerData[field] = value; } }); if (id && !hasRowError) { updates.push({ id: id, data: playerData }); } }); if (errorsFound) { showSaveStatus('Errors found. Please fix them before saving.', true); return; } if (updates.length === 0) { showSaveStatus('No changes detected.', false); return; } showSaveStatus(`Saving ${updates.length} player changes...`, false); const batch = db.batch(); updates.forEach(update => { const docRef = db.collection('leaderboard').doc(update.id); batch.update(docRef, update.data); }); try { await batch.commit(); showSaveStatus(`${updates.length} player(s) updated successfully!`, false); loadLeaderboardAdmin(); } catch (error) { console.error("Error committing leaderboard batch:", error); showSaveStatus(`Error saving leaderboard: ${error.message}`, true); } });
 
