@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +14,7 @@
             --text-secondary: #aaaaaa;
             --border-color: #444;
             --green-live: #2ecc71; /* Live indicator / Success */
-            --red-error: #e74c3c; /* Errors / Ban */
+            --red-error: #e74c3c; /* Errors / General Delete */
             --blue-action: #3498db; /* General actions */
             --input-bg: #333;
             --input-border: #555;
@@ -26,8 +25,8 @@
         button:hover { opacity: 0.9; }
         button:active { transform: scale(0.98); }
         button.secondary { background-color: var(--input-border); }
-        button.delete, button.ban { background-color: var(--red-error); }
-        button.confirm, button.unban { background-color: var(--green-live); }
+        button.delete { background-color: var(--red-error); } /* Keep for general deletes */
+        button.confirm { background-color: var(--green-live); }
         button:disabled { background-color: #555; cursor: not-allowed; opacity: 0.7; }
 
         /* ================== Layout & Containers ================== */
@@ -59,12 +58,15 @@
         th { background-color: rgba(255, 87, 34, 0.1); color: var(--orange); font-weight: 600; }
         td input { margin-bottom: 0; padding: 6px; width: calc(100% - 14px); font-size: 0.95em; box-sizing: border-box; } /* Inputs inside tables */
         td button { padding: 5px 10px; font-size: 0.9em; margin: 0 2px; }
-        /* Adjust column widths */
-        th:nth-child(1), td:nth-child(1) { width: 5%; } /* Rank/Index */
-        th:nth-child(2), td:nth-child(2) { width: 20%; } /* Name/UID */
-        th:nth-child(3), td:nth-child(3) { width: 25%; } /* Reason */
-        th:nth-child(4), td:nth-child(4) { width: 20%; } /* Date/Banned By */
-        th:nth-child(5), td:nth-child(5) { width: 15%; } /* Actions */
+        /* Leaderboard column widths */
+        #leaderboard-list th:nth-child(1), #leaderboard-list td:nth-child(1) { width: 8%; } /* Rank */
+        #leaderboard-list th:nth-child(2), #leaderboard-list td:nth-child(2) { width: 25%; } /* Name */
+        #leaderboard-list th:nth-child(3), #leaderboard-list td:nth-child(3) { width: 10%; } /* Avatar */
+        #leaderboard-list th:nth-child(4), #leaderboard-list td:nth-child(4) { width: 10%; } /* Matches */
+        #leaderboard-list th:nth-child(5), #leaderboard-list td:nth-child(5) { width: 10%; } /* Wins */
+        #leaderboard-list th:nth-child(6), #leaderboard-list td:nth-child(6) { width: 10%; } /* Losses */
+        #leaderboard-list th:nth-child(7), #leaderboard-list td:nth-child(7) { width: 12%; } /* Points */
+        #leaderboard-list th:nth-child(8), #leaderboard-list td:nth-child(8) { width: 15%; } /* Actions */
 
 
         /* ================== Specific Sections ================== */
@@ -103,12 +105,11 @@
         .loading-indicator { font-style: italic; color: var(--text-secondary); padding: 15px; text-align: center; width: 100%; box-sizing: border-box; background-color: rgba(0,0,0,0.1); border-radius: 4px; }
         .loading-indicator.inline { display: inline-block; width: auto; padding: 5px 10px; } /* For smaller indicators */
 
-        /* User Management / Ban Section */
-        #ban-user-form { background-color: var(--dark); padding: 20px; border-radius: 5px; border: 1px dashed var(--red-error); margin-top: 10px; max-width: 550px; }
-        #ban-user-form h4 { color: var(--red-error); }
-        #ban-status { margin-top: 12px; font-weight: bold; min-height: 1.2em; }
-        #banned-users-list h4 { margin-top: 30px; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px; }
-        #banned-users-list table button.unban { font-size: 0.9em; padding: 4px 8px; }
+        /* REMOVED: User Management / Ban Section Styles */
+        /* #ban-user-form { ... } */
+        /* #ban-status { ... } */
+        /* #banned-users-list h4 { ... } */
+        /* #banned-users-list table button.unban { ... } */
 
         /* Save Status */
         #global-save-status { padding: 10px; margin: 15px 0; border-radius: 4px; text-align: center; font-weight: bold; display: none; /* Hidden by default */ }
@@ -124,11 +125,23 @@
             .bracket-round-column { flex-basis: 90%; min-width: 250px; }
             table { table-layout: auto; } /* Allow table to adjust on smaller screens */
              th, td { font-size: 0.9em; padding: 8px; }
+             #leaderboard-list th:nth-child(3), #leaderboard-list td:nth-child(3) { display: none; } /* Hide Avatar */
+             #leaderboard-list th:nth-child(4), #leaderboard-list td:nth-child(4), /* Matches */
+             #leaderboard-list th:nth-child(5), #leaderboard-list td:nth-child(5), /* Wins */
+             #leaderboard-list th:nth-child(6), #leaderboard-list td:nth-child(6) { width: 12%; } /* Losses */
+             #leaderboard-list th:nth-child(7), #leaderboard-list td:nth-child(7) { width: 15%; } /* Points */
         }
         @media (max-width: 480px) {
-            th:nth-child(1), td:nth-child(1) { display: none; } /* Hide Rank on small screens */
-            th:nth-child(3), td:nth-child(3) { width: 35%; } /* Adjust widths */
-            th:nth-child(4), td:nth-child(4) { width: 25%; }
+            #leaderboard-list th:nth-child(1), #leaderboard-list td:nth-child(1) { display: none; } /* Hide Rank on small screens */
+            /* REMOVED: Responsive styles for Ban table columns */
+            /* th:nth-child(3), td:nth-child(3) { width: 35%; } */
+            /* th:nth-child(4), td:nth-child(4) { width: 25%; } */
+             #leaderboard-list th:nth-child(2), #leaderboard-list td:nth-child(2) { width: 40%; } /* Player Name */
+             #leaderboard-list th:nth-child(7), #leaderboard-list td:nth-child(7) { width: 20%; } /* Points */
+             #leaderboard-list th:nth-child(4), #leaderboard-list td:nth-child(4), /* Matches */
+             #leaderboard-list th:nth-child(5), #leaderboard-list td:nth-child(5), /* Wins */
+             #leaderboard-list th:nth-child(6), #leaderboard-list td:nth-child(6) { display: none; } /* Hide detailed stats */
+
         }
 
     </style>
@@ -247,44 +260,8 @@
         </div>
     </div>
 
-    <!-- ================= NEW/REWRITTEN: User Management / Ban Section ================= -->
-    <div class="admin-section user-management-section">
-        <h3>User Management</h3>
-
-        <div id="ban-user-form">
-            <h4>Ban User</h4>
-            <label for="ban-user-uid">User UID to Ban:</label>
-            <input type="text" id="ban-user-uid" placeholder="Enter the Firebase User ID (e.g., abc123xyz...)" required>
-
-            <label for="ban-reason">Ban Reason:</label>
-            <textarea id="ban-reason" placeholder="Enter reason for banning (required)" required></textarea>
-
-            <button id="ban-user-button" class="ban">Ban User</button>
-            <p id="ban-status" style="min-height: 1.2em; margin-top: 10px; font-weight: bold;"></p> <!-- Status specific to ban action -->
-        </div>
-
-        <div id="banned-users-list">
-            <h4 style="margin-top: 30px; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px;">Currently Banned Users</h4>
-            <button id="refresh-banned-list-button" class="secondary" style="float: right; margin-top: -45px; font-size: 0.9em;">Refresh List</button>
-             <div id="banned-users-loading" class="loading-indicator hidden" style="margin-top: 15px;">Loading banned users...</div>
-            <table>
-                <thead>
-                    <tr>
-                        <!-- Adjusting column headers slightly -->
-                        <th style="width: 25%;">UID</th>
-                        <th style="width: 30%;">Reason</th>
-                        <th style="width: 20%;">Banned At</th>
-                        <th style="width: 15%;">Banned By</th>
-                        <th style="width: 10%;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="banned-users-table-body">
-                    <!-- Banned users will be dynamically listed here -->
-                     <tr><td colspan="5" class="loading-indicator">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div> <!-- ================= END User Management Section ================= -->
+    <!-- REMOVED: User Management / Ban Section -->
+    <!-- <div class="admin-section user-management-section"> ... </div> -->
 
 </div> <!-- END Admin Panel -->
 
@@ -342,14 +319,14 @@
     const bracketLoadingIndicator = document.getElementById('bracket-loading-indicator');
     const addRoundButton = document.getElementById('add-round-button');
     const saveBracketChangesButton = document.getElementById('save-bracket-changes');
-    // --- Ban Section Elements ---
-    const banUserUidInput = document.getElementById('ban-user-uid');
-    const banReasonInput = document.getElementById('ban-reason');
-    const banUserButton = document.getElementById('ban-user-button');
-    const banStatus = document.getElementById('ban-status'); // Specific ban status element
-    const bannedUsersLoading = document.getElementById('banned-users-loading');
-    const bannedUsersTableBody = document.getElementById('banned-users-table-body');
-    const refreshBannedListButton = document.getElementById('refresh-banned-list-button');
+    // REMOVED: Ban Section Elements
+    // const banUserUidInput = document.getElementById('ban-user-uid');
+    // const banReasonInput = document.getElementById('ban-reason');
+    // const banUserButton = document.getElementById('ban-user-button');
+    // const banStatus = document.getElementById('ban-status');
+    // const bannedUsersLoading = document.getElementById('banned-users-loading');
+    // const bannedUsersTableBody = document.getElementById('banned-users-table-body');
+    // const refreshBannedListButton = document.getElementById('refresh-banned-list-button');
 
     // --- Global State ---
     let currentBracketData = { rounds: [] };
@@ -367,11 +344,11 @@
              try { unsafe = String(unsafe); } catch (e) { return ''; }
         }
         return unsafe
-             .replace(/&/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/"/g, "&quot;")
-             .replace(/'/g, "&#039;");
+             .replace(/&/g, "&")
+             .replace(/</g, "<")
+             .replace(/>/g, ">")
+             .replace(/"/g, """)
+             .replace(/'/g, "'");
     }
 
     // --- Helper: Show Global Status Message ---
@@ -393,21 +370,7 @@
          }, isError ? 8000 : 5000);
      }
 
-    // --- Helper: Show Ban-Specific Status Message ---
-    function showBanStatus(message, isError = false) {
-        console.log(`Ban Status: ${message} (Error: ${isError})`);
-        if (!banStatus) return;
-        banStatus.textContent = message;
-        banStatus.style.color = isError ? 'var(--red-error)' : 'var(--green-live)';
-        // Clear message after a delay
-        setTimeout(() => {
-             // Check if the message is still the one we set before clearing
-             if (banStatus.textContent === message) {
-                 banStatus.textContent = '';
-             }
-        }, isError ? 6000 : 4000);
-    }
-
+    // REMOVED: showBanStatus helper function
 
     // --- Authorization Check ---
     async function checkAdminAuthorization(uid) {
@@ -703,16 +666,18 @@
          if (matchesList) matchesList.innerHTML = '';
          if (leaderboardBodyAdmin) leaderboardBodyAdmin.innerHTML = '';
          if (bracketEditor) bracketEditor.innerHTML = '';
-         if (bannedUsersTableBody) bannedUsersTableBody.innerHTML = '';
+         // REMOVED: Clear ban table
+         // if (bannedUsersTableBody) bannedUsersTableBody.innerHTML = '';
 
          // Hide forms and reset status messages
          if (globalSaveStatus) { globalSaveStatus.textContent = ''; globalSaveStatus.style.display = 'none'; globalSaveStatus.className = ''; }
          if (addMatchForm) addMatchForm.classList.add('hidden');
          if (addPlayerForm) addPlayerForm.classList.add('hidden');
-         if (banUserUidInput) banUserUidInput.value = '';
-         if (banReasonInput) banReasonInput.value = '';
-         if (banStatus) banStatus.textContent = ''; // Clear ban-specific status
-         if (bannedUsersLoading) bannedUsersLoading.classList.add('hidden');
+         // REMOVED: Clear ban form/status
+         // if (banUserUidInput) banUserUidInput.value = '';
+         // if (banReasonInput) banReasonInput.value = '';
+         // if (banStatus) banStatus.textContent = '';
+         // if (bannedUsersLoading) bannedUsersLoading.classList.add('hidden');
 
          // Reset state variables if necessary
          currentBracketData = { rounds: [] };
@@ -732,7 +697,8 @@
          Promise.all([
              loadMatchesAdmin(),
              loadLeaderboardAdmin(),
-             loadBannedUsers(), // Load ban list
+             // REMOVED: Load ban list
+             // loadBannedUsers(),
              loadBracketAdmin(bracketSelect ? bracketSelect.value : 'pro') // Load initial/selected bracket
          ]).then(() => {
              showGlobalStatus('Admin data loaded.', false); // Indicate loading finished
@@ -1634,169 +1600,12 @@
          }
     }
 
-    // ================= NEW/REWRITTEN: Ban User Management =================
-
-    // Attach listener to the Ban User button
-    banUserButton.addEventListener('click', async () => {
-        const uidToBan = banUserUidInput.value.trim();
-        const reason = banReasonInput.value.trim();
-
-        // --- Input Validation ---
-        if (!uidToBan || !reason) {
-            showBanStatus("Error: Both User UID and Ban Reason are required.", true);
-            return;
-        }
-        // Basic Firebase UID format check (alphanumeric, typically 28 chars, but check length > 15 for tolerance)
-        if (uidToBan.includes(' ') || uidToBan.length < 15) {
-            showBanStatus("Error: Invalid User UID format provided.", true);
-            return;
-        }
-        if (!auth.currentUser) {
-            showBanStatus("Error: Admin not logged in.", true);
-            return; // Should not happen if UI is hidden, but good practice
-        }
-        // --- End Validation ---
-
-        // --- Confirmation ---
-        if (!confirm(`Are you sure you want to ban user UID:\n${uidToBan}\n\nReason: "${reason}"?`)) {
-            showBanStatus("Ban action cancelled.", false);
-            return;
-        }
-        // --- End Confirmation ---
-
-        banUserButton.disabled = true; banUserButton.textContent = 'Banning...';
-        showBanStatus("Processing ban request...", false);
-
-        try {
-            const banDocRef = db.collection('banned_users').doc(uidToBan);
-            // Set the ban document. This will create it if it doesn't exist or overwrite it if it does.
-            await banDocRef.set({
-                reason: reason,
-                bannedAt: firebase.firestore.FieldValue.serverTimestamp(), // Use server timestamp
-                bannedByUid: auth.currentUser.uid, // Log which admin performed the ban
-                bannedByEmail: auth.currentUser.email || 'unknown_admin_email' // Log admin email if available
-            });
-
-            showBanStatus("User banned successfully!", false);
-            banUserUidInput.value = ''; // Clear inputs after successful ban
-            banReasonInput.value = '';
-            loadBannedUsers(); // Refresh the list of banned users below
-        } catch (error) {
-            console.error("Error banning user:", error);
-            showBanStatus(`Error occurred while banning user: ${error.message}`, true);
-        } finally {
-            banUserButton.disabled = false; banUserButton.textContent = 'Ban User';
-        }
-    });
-
-    // Function to load and display the list of banned users
-    async function loadBannedUsers() {
-        if (!bannedUsersTableBody || !bannedUsersLoading) return Promise.reject("Banned users table elements not found");
-        console.log("Loading banned users list...");
-
-        bannedUsersLoading.classList.remove('hidden');
-        bannedUsersLoading.textContent = "Loading banned users...";
-        bannedUsersTableBody.innerHTML = ''; // Clear previous list
-
-        try {
-            // Fetch banned users, order by when they were banned (most recent first)
-            const snapshot = await db.collection('banned_users').orderBy('bannedAt', 'desc').get();
-
-            if (snapshot.empty) {
-                bannedUsersTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No users are currently banned.</td></tr>';
-            } else {
-                snapshot.forEach(doc => {
-                    const banData = doc.data();
-                    const uid = doc.id; // The document ID is the banned user's UID
-                    const reason = banData.reason || 'N/A'; // Default if reason is missing
-                    let bannedAtStr = 'Unknown Date';
-                    if (banData.bannedAt?.toDate) { // Safely check if timestamp exists and has toDate method
-                         try {
-                             bannedAtStr = banData.bannedAt.toDate().toLocaleString(); // Format timestamp nicely
-                         } catch (e) { console.warn("Error formatting bannedAt date for UID:", uid, e); }
-                    }
-                    // Prefer showing admin email, fall back to UID if email not stored/available
-                    const bannedBy = banData.bannedByEmail || banData.bannedByUid || 'Unknown Admin';
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${escapeHtml(uid)}</td>
-                        <td>${escapeHtml(reason)}</td>
-                        <td>${escapeHtml(bannedAtStr)}</td>
-                        <td>${escapeHtml(bannedBy)}</td>
-                        <td>
-                            <button class="unban unban-button" data-uid="${uid}" title="Remove Ban for this User">Unban</button>
-                        </td>
-                    `;
-                    bannedUsersTableBody.appendChild(row);
-                });
-                attachUnbanListeners(); // Attach listeners to the newly created buttons
-            }
-            bannedUsersLoading.classList.add('hidden'); // Hide loading indicator on success
-            return Promise.resolve();
-        } catch (error) {
-            console.error("Error loading banned users list:", error);
-            bannedUsersTableBody.innerHTML = '<tr><td colspan="5" style="color:var(--red-error); text-align: center;">Error loading banned users list. Check console.</td></tr>';
-            bannedUsersLoading.textContent = "Error loading list."; // Keep indicator visible with error
-            bannedUsersLoading.classList.remove('hidden');
-            return Promise.reject(error);
-        }
-    }
-
-    // Function to attach listeners to Unban buttons (using event delegation is better)
-    function attachUnbanListeners() {
-         // Use event delegation on the table body for unban buttons
-         bannedUsersTableBody.removeEventListener('click', handleUnbanClick); // Remove previous to prevent duplicates
-         bannedUsersTableBody.addEventListener('click', handleUnbanClick);
-    }
-
-    // Event handler for clicking an Unban button
-    async function handleUnbanClick(event) {
-        // Check if the clicked element is an unban button
-        if (!event.target.classList.contains('unban-button')) {
-            return; // Ignore clicks on other elements within the table body
-        }
-
-        const button = event.target;
-        const uidToUnban = button.dataset.uid;
-        if (!uidToUnban) {
-             console.error("Unban button clicked without a UID.");
-             return;
-        }
-
-        // Confirmation dialog
-        if (confirm(`Are you sure you want to unban user UID: ${uidToUnban}?`)) {
-            button.disabled = true; button.textContent = 'Unbanning...';
-            showBanStatus(`Attempting to unban ${uidToUnban}...`, false); // Use ban-specific status
-
-            try {
-                // Delete the ban document from Firestore
-                await db.collection('banned_users').doc(uidToUnban).delete();
-                showBanStatus("User unbanned successfully!", false);
-                // Remove the row directly instead of full reload for better UX
-                button.closest('tr')?.remove();
-                 // Optional: Show message if list becomes empty
-                 if (!bannedUsersTableBody.querySelector('tr')) {
-                     bannedUsersTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No users are currently banned.</td></tr>';
-                 }
-                // loadBannedUsers(); // Alternatively, reload the whole list
-            } catch (error) {
-                console.error("Error unbanning user:", error);
-                showBanStatus(`Error unbanning user: ${error.message}`, true);
-                button.disabled = false; button.textContent = 'Unban'; // Re-enable button on error
-            }
-        } else {
-            showBanStatus("Unban action cancelled.", false);
-        }
-    }
-
-    // Attach listener to the Refresh Banned List button
-    refreshBannedListButton.addEventListener('click', () => {
-        showGlobalStatus("Refreshing banned users list...", false);
-        loadBannedUsers().catch(err => { /* Error already shown by loadBannedUsers */ });
-    });
-
-    // ================= End Ban User Management =================
+    // REMOVED: All functions related to Ban User Management
+    // - banUserButton listener
+    // - loadBannedUsers()
+    // - attachUnbanListeners()
+    // - handleUnbanClick()
+    // - refreshBannedListButton listener
 
     // --- Initial Load Call ---
     console.log("Admin script initialized. Waiting for authentication state...");
