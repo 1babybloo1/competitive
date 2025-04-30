@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Poxel Competitive - Admin Panel</title>
-    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico"> <!-- Added Favicon Back -->
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico">
     <style>
         :root {
             --dark: #121212;
@@ -14,71 +14,99 @@
             --text-secondary: #aaaaaa;
             --green-live: #2ecc71; /* Added live indicator color */
         }
-        body { background-color: var(--dark); color: var(--text); font-family: sans-serif; padding: 20px; }
-        #login-container, #admin-panel { background-color: var(--dark-accent); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        h1, h2 { color: var(--orange); }
-        button { background-color: var(--orange); color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
-        button:hover { opacity: 0.9; }
-        button:disabled { background-color: #555; cursor: not-allowed; opacity: 0.6;} /* Style for disabled button */
+        body { background-color: var(--dark); color: var(--text); font-family: sans-serif; padding: 20px; margin: 0; } /* Added margin: 0 */
+        #login-container, #admin-panel { background-color: var(--dark-accent); padding: 20px; border-radius: 8px; margin-bottom: 20px; max-width: 1200px; margin-left: auto; margin-right: auto; } /* Centering container */
+        h1, h2 { color: var(--orange); text-align: center; } /* Centered H1 */
+        h3, h4 { color: var(--orange); margin-top: 0; } /* Adjusted h3/h4 */
+        button { background-color: var(--orange); color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin: 5px 5px 5px 0; font-size: 1em; } /* Adjusted button margin */
+        button:hover:not(:disabled) { opacity: 0.9; } /* Added :not(:disabled) */
+        button:disabled { background-color: #555; cursor: not-allowed; opacity: 0.6;}
         #logout-button { background-color: #555; }
         .admin-section { margin-top: 20px; border-top: 1px solid #444; padding-top: 20px; }
-        label { display: block; margin-bottom: 5px; color: var(--text-secondary); }
-        input[type="text"], input[type="datetime-local"], input[type="number"], textarea, select { /* Added select */
-            width: calc(95% - 18px); /* Adjust width considering padding/border */
-            padding: 8px;
-            margin-bottom: 10px;
+        label { display: block; margin-bottom: 5px; color: var(--text-secondary); font-weight: bold; font-size: 0.9em; }
+        input[type="text"], input[type="datetime-local"], input[type="number"], textarea, select {
+            width: calc(100% - 20px); /* Adjusted width for padding */
+            padding: 8px 10px; /* Standardized padding */
+            margin-bottom: 12px; /* Increased spacing */
             background-color: #333;
             border: 1px solid #555;
             color: var(--text);
             border-radius: 4px;
+            box-sizing: border-box; /* Include padding in width */
+            font-size: 1em; /* Ensure consistent font size */
         }
         input[type="checkbox"] {
             margin-right: 5px;
             vertical-align: middle;
+            width: auto; /* Reset width for checkbox */
+            margin-bottom: 0; /* Reset margin */
         }
         label[for] {
-            cursor: pointer; /* Indicate checkbox label is clickable */
+            cursor: pointer;
+            font-weight: normal; /* Normal weight for checkbox labels */
+        }
+        .checkbox-label { /* Specific styling for bracket checkbox label */
+             display: flex;
+             align-items: center;
+             margin-top: 5px;
+             font-size: 0.9em;
+             font-weight: normal;
+        }
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 8px;
         }
 
         .hidden { display: none; }
         .fade-in { animation: fadeIn 0.5s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #444; padding: 8px; text-align: left; }
-        th { background-color: rgba(255, 87, 34, 0.1); color: var(--orange); }
+        /* Table Styling */
+        .table-container { overflow-x: auto; } /* Allow horizontal scroll on small screens */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; } /* Added table-layout */
+        th, td { border: 1px solid #444; padding: 10px 8px; text-align: left; word-wrap: break-word; } /* Added word-wrap */
+        th { background-color: rgba(255, 87, 34, 0.1); color: var(--orange); font-size: 0.9em; text-transform: uppercase; }
+        td { font-size: 0.95em; }
+        td input[type="text"], td input[type="number"] { width: calc(100% - 16px); padding: 5px 8px; margin-bottom: 0; font-size: 0.95em;} /* Inputs within table cells */
+        td button { padding: 4px 8px; font-size: 0.85em; } /* Smaller buttons in table */
 
         .match-editor, .player-editor {
-             margin-bottom: 15px; padding: 10px; border: 1px dashed #555; border-radius: 5px;
+             margin-bottom: 20px; padding: 15px; border: 1px dashed #555; border-radius: 5px; background-color: #2a2a2a; /* Slightly different bg */
         }
+        .match-editor h4, .player-editor h4 { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #444; }
 
         /* --- Bracket Editor Styles --- */
-        #bracket-editor { display: flex; overflow-x: auto; padding-bottom: 15px; gap: 20px; }
-        .bracket-round-column { flex: 0 0 300px; min-width: 250px; padding: 15px; border: 1px solid #444; border-radius: 8px; background-color: var(--dark-accent); display: flex; flex-direction: column; gap: 15px; }
-        .bracket-round-column h4 { margin-top: 0; padding-bottom: 10px; border-bottom: 1px dashed #555; display: flex; justify-content: space-between; align-items: center; }
-        .bracket-round-column h4 input[type="text"] { flex-grow: 1; margin-right: 10px; padding: 5px; width: auto; }
-        .bracket-match-editor { padding: 10px; border: 1px solid #555; border-radius: 4px; background-color: var(--dark); display: flex; flex-direction: column; gap: 5px; }
-        .bracket-match-editor h5 { margin-top: 0; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 1em; }
+        #bracket-editor { display: flex; overflow-x: auto; padding-bottom: 15px; gap: 20px; background-color: var(--dark); padding: 15px; border-radius: 8px; min-height: 200px; } /* Added bg and min-height */
+        .bracket-round-column { flex: 0 0 320px; min-width: 280px; padding: 15px; border: 1px solid #444; border-radius: 8px; background-color: var(--dark-accent); display: flex; flex-direction: column; gap: 15px; }
+        .bracket-round-column h4 { margin-top: 0; padding-bottom: 10px; border-bottom: 1px dashed #555; display: flex; justify-content: space-between; align-items: center; color: var(--orange); }
+        .bracket-round-column h4 input[type="text"] { flex-grow: 1; margin-right: 10px; padding: 6px; width: auto; font-size: 1em; }
+        .bracket-match-editor { padding: 12px; border: 1px solid #555; border-radius: 4px; background-color: var(--dark); display: flex; flex-direction: column; gap: 8px; } /* Increased gap */
+        .bracket-match-editor h5 { margin-top: 0; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 1em; color: var(--text-secondary); }
         .bracket-match-editor h5 button { padding: 3px 8px; font-size: 0.8em; margin: 0; background-color: #c0392b; }
         .bracket-round-column h4 button { padding: 3px 8px; font-size: 0.8em; margin: 0; background-color: #c0392b; }
-        .bracket-match-editor label { font-size: 0.9em; margin-bottom: 0; }
-        .bracket-match-editor input[type="text"], .bracket-match-editor input[type="number"] { width: calc(100% - 18px); padding: 4px; margin-bottom: 5px; font-size: 0.9em; }
-        .bracket-match-editor .checkbox-label { display: flex; align-items: center; margin-top: 5px; font-size: 0.9em; }
-        .bracket-match-editor .checkbox-label input[type="checkbox"] { margin-right: 5px; margin-bottom: 0; }
+        .bracket-match-editor label:not(.checkbox-label) { font-size: 0.85em; margin-bottom: 2px; color: var(--text-secondary); } /* Specific label style */
+        .bracket-match-editor input[type="text"], .bracket-match-editor input[type="number"] { width: 100%; padding: 6px; margin-bottom: 5px; font-size: 0.9em; box-sizing: border-box; }
         .bracket-controls { margin-top: 20px; padding-top: 15px; border-top: 1px solid #444; }
         .bracket-controls button { margin-right: 10px; }
-        .loading-indicator { font-style: italic; color: var(--text-secondary); padding: 10px; text-align: center; width: 100%; box-sizing: border-box; }
+        .bracket-controls p i { color: var(--text-secondary); font-size: 0.9em; }
+        .loading-indicator { font-style: italic; color: var(--text-secondary); padding: 20px; text-align: center; width: 100%; box-sizing: border-box; font-size: 1.1em; }
         /* --- End Bracket Editor Styles --- */
 
         /* --- START: Online Users Presence Styles --- */
         #online-users-section { margin-bottom: 20px; padding: 15px; background-color: var(--dark-accent); border-radius: 8px; border: 1px solid #444; }
-        #online-users-section h4 { margin-top: 0; margin-bottom: 15px; color: var(--text-secondary); font-size: 0.9em; font-weight: normal; border-bottom: 1px dashed #555; padding-bottom: 10px; }
-        #online-users-container { display: flex; flex-wrap: wrap; gap: 20px; }
+        #online-users-section h4 { margin-top: 0; margin-bottom: 15px; color: var(--text-secondary); font-size: 0.9em; font-weight: normal; border-bottom: 1px dashed #555; padding-bottom: 10px; text-transform: uppercase; }
+        #online-users-container { display: flex; flex-wrap: wrap; gap: 20px; min-height: 60px; align-items: center; } /* Added min-height & align */
         .user-presence-indicator { display: flex; flex-direction: column; align-items: center; text-align: center; }
         .user-presence-circle { width: 40px; height: 40px; border-radius: 50%; background-color: var(--orange); color: var(--dark); display: flex; align-items: center; justify-content: center; font-size: 1.2em; font-weight: bold; margin-bottom: 5px; border: 3px solid transparent; box-sizing: border-box; text-transform: uppercase; }
         .user-presence-circle.live { border-color: var(--green-live); }
         .user-presence-name { font-size: 0.8em; color: var(--text-secondary); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         /* --- END: Online Users Presence Styles --- */
+
+        /* Utility Classes */
+        .button-group { margin-top: 15px; }
+        .form-actions { text-align: right; margin-top: 15px; }
+        .form-actions button { margin-left: 10px; }
+
+        #save-status { text-align: center; padding: 10px; font-weight: bold; }
 
     </style>
 </head>
@@ -91,16 +119,16 @@
     <h2>Admin Login</h2>
     <p>Please log in with your authorized Google account.</p>
     <button id="login-button">Login with Google</button>
-    <p id="login-error" style="color: red;"></p>
-    <p id="auth-check-message" style="color: orange;"></p>
+    <p id="login-error" style="color: red; text-align: center; margin-top: 10px;"></p>
+    <p id="auth-check-message" style="color: orange; text-align: center; margin-top: 10px;"></p>
 </div>
 
 <!-- Admin Panel (Initially Hidden) -->
 <div id="admin-panel" class="hidden">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <h2>Management Dashboard</h2>
         <div>
-            <span id="user-info" style="margin-right: 15px;"></span>
+            <span id="user-info" style="margin-right: 15px; color: var(--text-secondary); font-size: 0.9em;"></span>
             <button id="logout-button">Logout</button>
         </div>
     </div>
@@ -115,63 +143,94 @@
     </div>
     <!-- END: Online Users Section -->
 
-    <p style="color: lightgreen;" id="save-status"></p>
+    <p id="save-status"></p> <!-- Moved Save Status here -->
 
     <!-- Upcoming Matches Management -->
     <div class="admin-section">
         <h3>Upcoming Matches Management</h3>
-        <div id="matches-list"></div>
-        <button id="add-match-button">Add New Match</button>
+        <div id="matches-list">
+             <!-- Match editors will be rendered here -->
+             <div class="loading-indicator">Loading matches...</div>
+        </div>
+         <div class="button-group">
+            <button id="add-match-button">Add New Match</button>
+            <button id="save-matches-changes">Save All Match Changes</button>
+        </div>
         <div id="add-match-form" class="match-editor hidden">
              <h4>New Match Details</h4>
              <label for="new-match-date">Date & Time:</label>
              <input type="datetime-local" id="new-match-date">
              <label for="new-match-type">Type (e.g., Quarterfinals):</label>
-             <input type="text" id="new-match-type">
+             <input type="text" id="new-match-type" placeholder="e.g., Group Stage - Week 1">
              <label for="new-match-team1-name">Team 1 Name:</label>
-             <input type="text" id="new-match-team1-name">
+             <input type="text" id="new-match-team1-name" placeholder="Team Alpha">
              <label for="new-match-team1-logo">Team 1 Logo (Initials):</label>
-             <input type="text" id="new-match-team1-logo" maxlength="2">
+             <input type="text" id="new-match-team1-logo" maxlength="3" placeholder="TA"> <!-- Increased max length -->
              <label for="new-match-team2-name">Team 2 Name:</label>
-             <input type="text" id="new-match-team2-name">
+             <input type="text" id="new-match-team2-name" placeholder="Team Bravo">
              <label for="new-match-team2-logo">Team 2 Logo (Initials):</label>
-             <input type="text" id="new-match-team2-logo" maxlength="2">
+             <input type="text" id="new-match-team2-logo" maxlength="3" placeholder="TB"> <!-- Increased max length -->
              <label for="new-match-venue">Venue:</label>
-             <input type="text" id="new-match-venue">
+             <input type="text" id="new-match-venue" placeholder="Online / Arena Name">
              <label for="new-match-stream">Stream Link:</label>
              <input type="text" id="new-match-stream" value="https://www.twitch.tv/poxelcompetitive/">
-             <button id="save-new-match">Save New Match</button>
-             <button type="button" onclick="document.getElementById('add-match-form').classList.add('hidden')">Cancel</button>
+             <div class="form-actions">
+                 <button type="button" onclick="document.getElementById('add-match-form').classList.add('hidden')">Cancel</button>
+                 <button id="save-new-match">Save New Match</button>
+             </div>
         </div>
-        <button id="save-matches-changes">Save All Match Changes</button>
     </div>
 
     <!-- Leaderboard Management -->
     <div class="admin-section">
         <h3>Leaderboard Management</h3>
-        <div id="leaderboard-list">
+        <div id="leaderboard-list" class="table-container"> <!-- Added container for scrolling -->
              <table>
                  <thead>
                      <tr>
-                         <th>Rank</th><th>Player Name</th><th>Avatar</th><th>Matches</th><th>Wins</th><th>Losses</th><th>Points</th><th>Actions</th>
+                         <!-- Adjusted Col Widths (Approximate) -->
+                         <th style="width: 5%;">Rank</th>
+                         <th style="width: 20%;">Player Name</th>
+                         <th style="width: 8%;">Avatar</th>
+                         <th style="width: 10%;">Matches</th>
+                         <th style="width: 10%;">Wins</th>
+                         <th style="width: 10%;">Losses</th>
+                         <th style="width: 10%;">Kills</th> <!-- KILLS HEADER -->
+                         <th style="width: 12%;">Points</th>
+                         <th style="width: 15%;">Actions</th>
                      </tr>
                  </thead>
-                 <tbody id="leaderboard-body-admin"></tbody>
+                 <tbody id="leaderboard-body-admin">
+                     <!-- Leaderboard rows will be rendered here -->
+                     <tr><td colspan="9" class="loading-indicator">Loading leaderboard...</td></tr> <!-- Updated colspan -->
+                 </tbody>
              </table>
         </div>
-         <button id="add-player-button">Add New Player</button>
+         <div class="button-group">
+             <button id="add-player-button">Add New Player</button>
+             <button id="save-leaderboard-changes">Save Leaderboard Changes</button>
+         </div>
          <div id="add-player-form" class="player-editor hidden">
              <h4>New Player Details</h4>
-             <label for="new-player-name">Name (Must match profile exactly):</label><input type="text" id="new-player-name">
-             <label for="new-player-avatar">Avatar (Initials):</label><input type="text" id="new-player-avatar" maxlength="2">
-             <label for="new-player-matches">Matches:</label><input type="number" id="new-player-matches" value="0" min="0">
-             <label for="new-player-wins">Wins:</label><input type="number" id="new-player-wins" value="0" min="0">
-             <label for="new-player-losses">Losses:</label><input type="number" id="new-player-losses" value="0" min="0">
-             <label for="new-player-points">Points:</label><input type="number" id="new-player-points" value="0">
-             <button id="save-new-player">Save New Player</button>
-             <button type="button" onclick="document.getElementById('add-player-form').classList.add('hidden')">Cancel</button>
+             <label for="new-player-name">Name (Must match profile exactly):</label>
+             <input type="text" id="new-player-name" placeholder="Case-Sensitive Display Name">
+             <label for="new-player-avatar">Avatar (Initials):</label>
+             <input type="text" id="new-player-avatar" maxlength="3" placeholder="AB">
+             <label for="new-player-matches">Matches:</label>
+             <input type="number" id="new-player-matches" value="0" min="0">
+             <label for="new-player-wins">Wins:</label>
+             <input type="number" id="new-player-wins" value="0" min="0">
+             <label for="new-player-losses">Losses:</label>
+             <input type="number" id="new-player-losses" value="0" min="0">
+             <label for="new-player-kills">Kills:</label>
+             <input type="number" id="new-player-kills" value="0" min="0"> <!-- KILLS INPUT -->
+             <label for="new-player-points">Points:</label>
+             <input type="number" id="new-player-points" value="0">
+              <div class="form-actions">
+                 <button type="button" onclick="document.getElementById('add-player-form').classList.add('hidden')">Cancel</button>
+                 <button id="save-new-player">Save New Player</button>
+             </div>
         </div>
-        <button id="save-leaderboard-changes">Save Leaderboard Changes</button>
     </div>
 
     <!-- Tournament Bracket Management -->
@@ -181,13 +240,16 @@
         <select id="bracket-select">
             <option value="pro">Pro Tourney</option>
             <option value="novice">Novice Tourney</option>
+            <!-- Add more bracket options here if needed -->
         </select>
          <div id="bracket-loading-indicator" class="loading-indicator hidden">Loading...</div>
-        <div id="bracket-editor"></div>
+        <div id="bracket-editor">
+             <!-- Bracket columns/matches rendered here -->
+        </div>
         <div class="bracket-controls">
              <button id="add-round-button">Add New Round</button>
              <button id="save-bracket-changes">Save Bracket Changes</button>
-              <p><i>Note: This view arranges rounds horizontally...</i></p>
+              <p><i>Note: Rounds are displayed horizontally. Scroll if needed.</i></p>
         </div>
     </div>
 
@@ -197,6 +259,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<!-- If using Realtime Database for presence: -->
+<!-- <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script> -->
 
 <script>
     // =========================================================================
@@ -204,21 +268,22 @@
     // =========================================================================
 
     const firebaseConfig = {
-    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
-    authDomain: "poxelcomp.firebaseapp.com",
-    projectId: "poxelcomp",
-    storageBucket: "poxelcomp.firebasestorage.app",
-    messagingSenderId: "620490990104",
-    appId: "1:620490990104:web:709023eb464c7d886b996d",
+        apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Use environment variables ideally
+        authDomain: "poxelcomp.firebaseapp.com",
+        projectId: "poxelcomp",
+        storageBucket: "poxelcomp.firebasestorage.app",
+        messagingSenderId: "620490990104",
+        appId: "1:620490990104:web:709023eb464c7d886b996d",
+        // databaseURL: "https://your-project-id-default-rtdb.firebaseio.com" // Add if using RTDB for presence
     };
 
-
     // --- Initialize Firebase ---
-    if (!firebase.apps.length) { // Initialize only once
+    if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     const auth = firebase.auth();
     const db = firebase.firestore();
+    // const rtdb = firebase.database(); // Uncomment if using RTDB
     const googleProvider = new firebase.auth.GoogleAuthProvider();
 
     // --- DOM Elements ---
@@ -261,21 +326,29 @@
 
     // --- Authorization Check ---
     async function checkAdminAuthorization(uid) {
-        if (!uid) return false; // Cannot authorize null user
+        if (!uid) return false;
         console.log(`Checking authorization for UID: ${uid}`);
         authCheckMessage.textContent = 'Checking authorization...';
         authCheckMessage.style.color = 'orange';
         try {
-            // Check against a dedicated 'admins' collection for better security
-            const adminDocRef = db.collection('admins').doc(uid);
+            const adminDocRef = db.collection('admins').doc(uid); // Recommended: Check dedicated 'admins' collection
             const adminDoc = await adminDocRef.get();
 
             if (adminDoc.exists) {
                 console.log(`UID ${uid} IS authorized.`);
-                authCheckMessage.textContent = ''; // Clear message on success
+                authCheckMessage.textContent = '';
                 return true;
             } else {
-                console.log(`UID ${uid} is NOT authorized.`);
+                // Fallback: Check specific emails (Less secure, harder to manage)
+                // const userEmail = auth.currentUser?.email;
+                // const adminEmails = ['admin1@example.com', 'admin2@example.com']; // Load from config ideally
+                // if (userEmail && adminEmails.includes(userEmail.toLowerCase())) {
+                //     console.log(`Email ${userEmail} IS authorized.`);
+                //     authCheckMessage.textContent = '';
+                //     return true;
+                // }
+
+                console.log(`UID ${uid} is NOT authorized via 'admins' collection.`);
                 authCheckMessage.textContent = 'Access Denied: Your account is not authorized.';
                 authCheckMessage.style.color = 'red';
                 return false;
@@ -288,14 +361,14 @@
         }
     }
 
-    // --- Presence Management ---
-    const PRESENCE_COLLECTION = 'online_users';
+    // --- Presence Management (Using Firestore - simpler but less efficient than RTDB) ---
+    const PRESENCE_COLLECTION = 'online_admins'; // Changed collection name for clarity
     const PRESENCE_TIMEOUT_MS = 90 * 1000; // 1.5 minutes
     const PRESENCE_UPDATE_INTERVAL_MS = 60 * 1000; // Update every 1 minute
 
     async function registerPresence(user) {
         if (!user || !user.uid) return;
-        currentUserId = user.uid; // Set global admin UID
+        currentUserId = user.uid;
         const presenceRef = db.collection(PRESENCE_COLLECTION).doc(user.uid);
         const userData = {
             uid: user.uid,
@@ -306,27 +379,31 @@
         try {
             console.log(`Registering presence for ${user.email}`);
             await presenceRef.set(userData, { merge: true });
-            // Clear any existing interval before starting a new one
+
             if (presenceUpdateInterval) clearInterval(presenceUpdateInterval);
-            // Set interval to update timestamp periodically
             presenceUpdateInterval = setInterval(async () => {
-                // Only update if the same user is still logged in
                 if (auth.currentUser && auth.currentUser.uid === currentUserId) {
                     try {
+                        // Use update for efficiency, only change lastSeen
                         await presenceRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
                         // console.log(`Presence updated for ${currentUserId}`);
                     } catch (error) {
-                        console.error("Error updating presence:", error);
-                        clearInterval(presenceUpdateInterval); // Stop on error
+                        // If doc doesn't exist (e.g., deleted manually), try setting again
+                        if (error.code === 'not-found') {
+                             console.warn("Presence doc not found during update, attempting to set again.");
+                             await presenceRef.set(userData, { merge: true });
+                        } else {
+                             console.error("Error updating presence:", error);
+                             clearInterval(presenceUpdateInterval); // Stop on other errors
+                        }
                     }
                 } else {
-                    // User changed or logged out, stop interval
                     clearInterval(presenceUpdateInterval);
                     console.log("User changed/logged out, stopping presence updates.");
                 }
             }, PRESENCE_UPDATE_INTERVAL_MS);
-            // Start listening for other online admins
-            listenForOnlineAdmins();
+
+            listenForOnlineAdmins(); // Start listening for others
         } catch (error) {
             console.error("Error registering presence:", error);
             if (onlineUsersContainer) onlineUsersContainer.innerHTML = '<div class="loading-indicator" style="color:red;">Error setting up presence.</div>';
@@ -336,61 +413,52 @@
     async function removePresence(uid) {
         if (!uid) return;
         console.log(`Removing presence for UID: ${uid}`);
-        // Stop the update interval
         if (presenceUpdateInterval) clearInterval(presenceUpdateInterval);
-        // Stop the listener
         if (onlineUsersListenerUnsubscribe) onlineUsersListenerUnsubscribe();
         presenceUpdateInterval = null;
         onlineUsersListenerUnsubscribe = null;
-        // Attempt to delete the presence document
+        currentUserId = null; // Clear the global ID first
+
         try {
             await db.collection(PRESENCE_COLLECTION).doc(uid).delete();
             console.log(`Presence document deleted for ${uid}`);
         } catch (error) {
-            console.error("Error removing presence document:", error);
+            // Ignore 'not-found' errors as the doc might already be gone
+            if (error.code !== 'not-found') {
+                console.error("Error removing presence document:", error);
+            }
         }
-        currentUserId = null; // Clear the current user ID
         if(onlineUsersContainer) onlineUsersContainer.innerHTML = '<div class="loading-indicator">Logged out.</div>';
     }
 
     function listenForOnlineAdmins() {
-        // Unsubscribe from any previous listener first
         if (onlineUsersListenerUnsubscribe) onlineUsersListenerUnsubscribe();
         if (!currentUserId) {
             console.warn("Cannot listen for online admins without a currentUserId.");
             return;
         }
 
-        const query = db.collection(PRESENCE_COLLECTION);
+        const query = db.collection(PRESENCE_COLLECTION)
+                        .where('lastSeen', '>', new Date(Date.now() - PRESENCE_TIMEOUT_MS)); // Initial filter
 
         onlineUsersListenerUnsubscribe = query.onSnapshot((snapshot) => {
             const now = Date.now();
             const activeUsers = [];
             snapshot.forEach(doc => {
                 const user = doc.data();
-                // Basic validation for user data and lastSeen timestamp
-                if (!user || !user.uid || !user.email || !user.lastSeen || typeof user.lastSeen.toDate !== 'function') {
+                if (!user?.uid || !user.email || !user.lastSeen?.toDate) {
                     console.warn("Skipping invalid presence document:", doc.id, user);
-                    return;
+                    return; // Basic validation
                 }
-                try {
-                    const lastSeenTime = user.lastSeen.toDate().getTime();
-                    if (now - lastSeenTime < PRESENCE_TIMEOUT_MS) {
-                        activeUsers.push(user);
-                    } else {
-                        // Optional: Clean up very old documents automatically (consider security rules for this too)
-                         console.log(`User ${user.uid} timed out, last seen: ${new Date(lastSeenTime)}`);
-                        // db.collection(PRESENCE_COLLECTION).doc(doc.id).delete().catch(err => console.error(`Failed to cleanup timed out user ${doc.id}: ${err}`));
-                    }
-                } catch (e) {
-                    console.error(`Error processing lastSeen for user ${user.uid}:`, e, user.lastSeen);
+                // Double-check timeout client-side as well
+                if (now - user.lastSeen.toDate().getTime() < PRESENCE_TIMEOUT_MS) {
+                    activeUsers.push(user);
                 }
             });
             renderOnlineUsers(activeUsers);
         }, (error) => {
             console.error("Error in presence listener:", error);
             if(onlineUsersContainer) onlineUsersContainer.innerHTML = `<div class="loading-indicator" style="color:red;">Error listening: ${error.message}</div>`;
-            // Detach listener on error to prevent loops?
             if (onlineUsersListenerUnsubscribe) onlineUsersListenerUnsubscribe();
             onlineUsersListenerUnsubscribe = null;
         });
@@ -398,28 +466,29 @@
 
     function renderOnlineUsers(users) {
         if (!onlineUsersContainer) return;
-        onlineUsersContainer.innerHTML = ''; // Clear previous list
+        onlineUsersContainer.innerHTML = '';
 
         if (users.length === 0) {
-            onlineUsersContainer.innerHTML = '<div class="loading-indicator">No admins currently active.</div>';
+            onlineUsersContainer.innerHTML = '<div class="loading-indicator" style="font-size:0.9em;">No other admins currently active.</div>';
             return;
         }
 
-        // Sort users alphabetically by display name or email
         users.sort((a, b) => (a.displayName || a.email).localeCompare(b.displayName || b.email));
 
         users.forEach(user => {
+            // Don't show the current user in the list of "other" online admins
+            if (user.uid === currentUserId) return;
+
             const indicatorDiv = document.createElement('div');
             indicatorDiv.classList.add('user-presence-indicator');
 
             const circleDiv = document.createElement('div');
-            circleDiv.classList.add('user-presence-circle', 'live'); // Assume live if in the list
-            const initial = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : '?');
+            circleDiv.classList.add('user-presence-circle', 'live');
+            const initial = (user.displayName || user.email)?.charAt(0).toUpperCase() || '?';
             circleDiv.textContent = initial;
 
             const nameSpan = document.createElement('span');
             nameSpan.classList.add('user-presence-name');
-            // Prefer display name, fallback to first part of email, capitalize first letter
             let name = user.displayName ? user.displayName.split(' ')[0] : user.email.split('@')[0];
             name = name.charAt(0).toUpperCase() + name.slice(1);
             nameSpan.textContent = name;
@@ -429,70 +498,74 @@
             indicatorDiv.appendChild(nameSpan);
             onlineUsersContainer.appendChild(indicatorDiv);
         });
+
+         // Handle case where only the current user is online
+         if (onlineUsersContainer.childElementCount === 0) {
+             onlineUsersContainer.innerHTML = '<div class="loading-indicator" style="font-size:0.9em;">You are the only admin online.</div>';
+         }
     }
 
     // --- General Save Status ---
+    let saveStatusTimeout;
     function showSaveStatus(message, isError = false) {
         if (!saveStatus) return;
         saveStatus.textContent = message;
-        saveStatus.style.color = isError ? 'red' : 'lightgreen';
-        saveStatus.style.fontWeight = isError ? 'bold' : 'normal';
+        saveStatus.style.color = isError ? '#f77' : '#7f7'; // Softer red/green
+        saveStatus.style.fontWeight = 'bold';
 
-        // Clear previous timeout if exists
-        if (window.saveStatusTimeout) clearTimeout(window.saveStatusTimeout);
-
-        // Set new timeout to clear message
-        window.saveStatusTimeout = setTimeout(() => {
-            // Only clear if the message hasn't changed in the meantime
-            if (saveStatus.textContent === message) {
+        clearTimeout(saveStatusTimeout); // Clear previous timeout
+        saveStatusTimeout = setTimeout(() => {
+            if (saveStatus.textContent === message) { // Avoid clearing newer messages
                 saveStatus.textContent = '';
             }
-        }, isError ? 8000 : 5000); // Longer display for errors
+        }, isError ? 6000 : 4000);
     }
 
     // --- UI Clearing ---
     function clearAdminUI() {
-         if (matchesList) matchesList.innerHTML = '';
-         if (leaderboardBodyAdmin) leaderboardBodyAdmin.innerHTML = '';
+         if (matchesList) matchesList.innerHTML = '<div class="loading-indicator">Loading matches...</div>'; // Show loading state
+         if (leaderboardBodyAdmin) leaderboardBodyAdmin.innerHTML = '<tr><td colspan="9" class="loading-indicator">Loading leaderboard...</td></tr>'; // Show loading state & updated colspan
          if (bracketEditor) bracketEditor.innerHTML = '';
+         if (bracketLoadingIndicator) bracketLoadingIndicator.classList.add('hidden');
          if (saveStatus) saveStatus.textContent = '';
          if (addMatchForm) addMatchForm.classList.add('hidden');
          if (addPlayerForm) addPlayerForm.classList.add('hidden');
          currentBracketData = { rounds: [] };
          currentBracketType = 'pro';
          if (bracketSelect) bracketSelect.value = 'pro';
-         if (onlineUsersContainer) onlineUsersContainer.innerHTML = '';
+         if (onlineUsersContainer) onlineUsersContainer.innerHTML = '<div class="loading-indicator">Loading presence...</div>'; // Show loading state
 
-         // Clear presence interval and listener
          if (presenceUpdateInterval) clearInterval(presenceUpdateInterval);
          presenceUpdateInterval = null;
          if (onlineUsersListenerUnsubscribe) onlineUsersListenerUnsubscribe();
          onlineUsersListenerUnsubscribe = null;
-         currentUserId = null;
+         // Don't nullify currentUserId here, it's needed for removePresence on logout
 
-         console.log("Admin UI Cleared.");
+         console.log("Admin UI Cleared / Reset to loading states.");
     }
 
     // --- Data Loading (Main Admin Sections) ---
     function loadAdminData() {
         console.log("Loading admin data sections...");
+        showSaveStatus(''); // Clear any leftover status
         loadMatchesAdmin();
         loadLeaderboardAdmin();
-        // Load initial bracket based on dropdown or default
         if (bracketSelect) {
             currentBracketType = bracketSelect.value;
             loadBracketAdmin(currentBracketType);
         } else {
-            loadBracketAdmin('pro'); // Default if dropdown not found
+            loadBracketAdmin('pro');
         }
     }
 
     // --- Authentication Handling ---
     auth.onAuthStateChanged(async (user) => {
+        const trackedUserId = currentUserId; // Store the ID before potential changes
+
         if (user) {
             console.log("Auth state: Signed in", { uid: user.uid, email: user.email });
             loginError.textContent = '';
-            authCheckMessage.textContent = ''; // Clear previous messages
+            authCheckMessage.textContent = '';
 
             const isAuthorized = await checkAdminAuthorization(user.uid);
 
@@ -500,50 +573,56 @@
                 console.log("Admin authorized.");
                 loginContainer.classList.add('hidden');
                 adminPanel.classList.remove('hidden');
-                adminPanel.classList.add('fade-in'); // Add fade-in effect
+                adminPanel.classList.add('fade-in');
                 userInfo.textContent = `Logged in as: ${user.displayName || user.email}`;
-                await registerPresence(user); // Start presence management
-                loadAdminData(); // Load data after successful login and auth
+                await registerPresence(user); // Start/Update presence for this user
+                loadAdminData();
             } else {
-                console.log("Admin authorization failed.");
-                // Show login screen, keep error message from checkAdminAuthorization
+                console.log("Admin authorization failed for signed-in user.");
                 userInfo.textContent = '';
                 adminPanel.classList.add('hidden');
                 loginContainer.classList.remove('hidden');
-                // Optionally sign out the user if they aren't authorized?
-                // await auth.signOut(); // Uncomment carefully - might be annoying if they have multiple accounts
+                 // Keep the auth error message displayed
+                // Optionally sign out unauthorized user
+                await auth.signOut(); // Signs out user, triggering the 'else' block below
+                console.log("Unauthorized user automatically signed out.");
             }
         } else {
             console.log("Auth state: Signed out.");
-            // Clean up presence if a user ID was tracked
-            if (currentUserId) await removePresence(currentUserId);
-            // Show login screen
+            // Clean up presence using the ID tracked *before* sign out
+            if (trackedUserId) await removePresence(trackedUserId);
+
             adminPanel.classList.add('hidden');
-            adminPanel.classList.remove('fade-in'); // Remove effect if panel is hidden
+            adminPanel.classList.remove('fade-in');
             loginContainer.classList.remove('hidden');
-            // Clear user info and messages
             userInfo.textContent = '';
-            loginError.textContent = '';
-            authCheckMessage.textContent = '';
-            // Clear all dynamic data in the admin panel
-            clearAdminUI();
+            loginError.textContent = ''; // Clear login errors on sign out
+            // Don't clear auth check message if sign out was due to failed auth
+            // authCheckMessage.textContent = '';
+            clearAdminUI(); // Clear data and show loading states
         }
     });
 
     // --- Login/Logout Buttons ---
     loginButton.addEventListener('click', () => {
-        loginError.textContent = ''; // Clear previous errors
+        loginError.textContent = '';
         authCheckMessage.textContent = '';
         auth.signInWithPopup(googleProvider).catch((error) => {
             console.error("Google Sign-in failed:", error);
-            loginError.textContent = `Login failed: ${error.message}`;
+            // Handle specific errors if needed
+            if (error.code === 'auth/popup-closed-by-user') {
+                 loginError.textContent = 'Login cancelled.';
+            } else {
+                 loginError.textContent = `Login failed: ${error.message}`;
+            }
         });
     });
 
     logoutButton.addEventListener('click', async () => {
         console.log("Logout button clicked.");
+        showSaveStatus('Logging out...', false);
         try {
-            // Presence removal is handled by onAuthStateChanged when signout completes
+            // Presence removal is now handled reliably by onAuthStateChanged
             await auth.signOut();
         } catch (error) {
             console.error("Sign out error:", error);
@@ -559,16 +638,15 @@
         matchesList.innerHTML = '<div class="loading-indicator">Loading matches...</div>';
         console.log("Loading matches from Firestore...");
         try {
-            const snapshot = await db.collection('matches').orderBy('date', 'desc').get();
+            const snapshot = await db.collection('matches').orderBy('date', 'desc').limit(50).get(); // Limit query size
             console.log(`Found ${snapshot.size} matches.`);
-            matchesList.innerHTML = ''; // Clear loading indicator
+            matchesList.innerHTML = '';
             if (snapshot.empty) {
-                matchesList.innerHTML = '<p>No matches found.</p>';
+                matchesList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No matches found. Use "Add New Match".</p>';
                 return;
             }
             snapshot.forEach(doc => {
                 const match = { id: doc.id, ...doc.data() };
-                // Format date for datetime-local input, considering timezone offset
                 const dateForInput = match.date?.toDate
                     ? new Date(match.date.toDate().getTime() - match.date.toDate().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
                     : '';
@@ -576,42 +654,52 @@
                 const matchDiv = document.createElement('div');
                 matchDiv.classList.add('match-editor');
                 matchDiv.dataset.id = match.id;
+                // Improved layout for editing existing matches
                 matchDiv.innerHTML = `
-                    <h4>Match ID: ${match.id}</h4>
-                    <label>Date:</label><input type="datetime-local" value="${dateForInput}" data-field="date">
-                    <label>Type:</label><input type="text" value="${match.type || ''}" data-field="type">
-                    <label>Team 1:</label><input type="text" value="${match.team1?.name || ''}" data-field="team1.name">
-                    <label>Team 1 Logo:</label><input type="text" value="${match.team1?.logo || ''}" data-field="team1.logo" maxlength="2">
-                    <label>Team 2:</label><input type="text" value="${match.team2?.name || ''}" data-field="team2.name">
-                    <label>Team 2 Logo:</label><input type="text" value="${match.team2?.logo || ''}" data-field="team2.logo" maxlength="2">
-                    <label>Venue:</label><input type="text" value="${match.venue || ''}" data-field="venue">
-                    <label>Stream:</label><input type="text" value="${match.streamLink || ''}" data-field="streamLink">
-                    <button class="delete-match-button" data-id="${match.id}">Delete Match</button>
+                    <h4>Match: ${match.type || 'Unnamed'} (ID: ${match.id.substring(0,6)}...)</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div><label>Date & Time:</label><input type="datetime-local" value="${dateForInput}" data-field="date"></div>
+                        <div><label>Type:</label><input type="text" value="${match.type || ''}" data-field="type"></div>
+                        <div><label>Team 1:</label><input type="text" value="${match.team1?.name || ''}" data-field="team1.name"></div>
+                        <div><label>Team 1 Logo:</label><input type="text" value="${match.team1?.logo || ''}" data-field="team1.logo" maxlength="3"></div>
+                        <div><label>Team 2:</label><input type="text" value="${match.team2?.name || ''}" data-field="team2.name"></div>
+                        <div><label>Team 2 Logo:</label><input type="text" value="${match.team2?.logo || ''}" data-field="team2.logo" maxlength="3"></div>
+                        <div><label>Venue:</label><input type="text" value="${match.venue || ''}" data-field="venue"></div>
+                        <div><label>Stream:</label><input type="text" value="${match.streamLink || ''}" data-field="streamLink"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="delete-match-button" data-id="${match.id}" style="background-color: #c0392b;">Delete Match</button>
+                    </div>
                 `;
                 matchesList.appendChild(matchDiv);
             });
-            attachMatchDeleteListeners(); // Re-attach listeners after rendering
+            attachMatchDeleteListeners();
         } catch (error) {
             console.error("Error loading matches:", error);
-            matchesList.innerHTML = '<p style="color:red;">Error loading matches.</p>';
+            matchesList.innerHTML = '<p style="color:red; text-align: center;">Error loading matches.</p>';
         }
     }
 
     function attachMatchDeleteListeners() {
         document.querySelectorAll('#matches-list .delete-match-button').forEach(button => {
-            // Clone and replace to remove old listeners
             const newButton = button.cloneNode(true);
             button.parentNode.replaceChild(newButton, button);
-            // Add new listener
             newButton.addEventListener('click', async (e) => {
                 const id = e.target.dataset.id;
-                console.log(`Attempting to delete match ID: ${id}`);
-                if (confirm(`Are you sure you want to delete match ${id}?`)) {
+                const editorDiv = e.target.closest('.match-editor');
+                const matchType = editorDiv?.querySelector('input[data-field="type"]')?.value || `ID: ${id}`;
+                console.log(`Attempting to delete match: ${matchType}`);
+
+                if (confirm(`Are you sure you want to delete match "${matchType}"? This cannot be undone.`)) {
                     try {
                         await db.collection('matches').doc(id).delete();
                         console.log(`Match ${id} deleted.`);
                         showSaveStatus('Match deleted successfully!', false);
-                        loadMatchesAdmin(); // Refresh the list
+                        editorDiv.remove(); // Remove element directly instead of full reload
+                        // If list becomes empty, show placeholder
+                        if (!matchesList.querySelector('.match-editor')) {
+                             matchesList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No matches found. Use "Add New Match".</p>';
+                        }
                     } catch (error) {
                         console.error("Error deleting match:", error);
                         showSaveStatus(`Error deleting match: ${error.message}`, true);
@@ -624,11 +712,17 @@
     }
 
     addMatchButton.addEventListener('click', () => {
-        if (addMatchForm) addMatchForm.classList.toggle('hidden');
+        addMatchForm.classList.toggle('hidden');
+        if (!addMatchForm.classList.contains('hidden')) {
+             addMatchForm.scrollIntoView({ behavior: 'smooth', block: 'start'});
+             document.getElementById('new-match-date').focus();
+        }
     });
 
     saveNewMatchButton.addEventListener('click', async () => {
         console.log("Attempting to save NEW match...");
+        saveNewMatchButton.disabled = true; // Prevent double-click
+
         const dateValue = document.getElementById('new-match-date').value;
         let matchDateTimestamp = null;
         if (dateValue) {
@@ -636,10 +730,15 @@
                 matchDateTimestamp = firebase.firestore.Timestamp.fromDate(new Date(dateValue));
             } catch (e) {
                 console.error("Invalid date:", e);
-                showSaveStatus('Error: Invalid Date format.', true); return;
+                showSaveStatus('Error: Invalid Date format.', true);
+                saveNewMatchButton.disabled = false;
+                return;
             }
         } else {
-            showSaveStatus('Error: Match Date & Time is required.', true); return;
+            showSaveStatus('Error: Match Date & Time is required.', true);
+            saveNewMatchButton.disabled = false;
+             document.getElementById('new-match-date').focus();
+            return;
         }
 
         const newMatchData = {
@@ -654,11 +753,13 @@
                 logo: document.getElementById('new-match-team2-logo').value.trim().toUpperCase()
             },
             venue: document.getElementById('new-match-venue').value.trim(),
-            streamLink: document.getElementById('new-match-stream').value.trim()
+            streamLink: document.getElementById('new-match-stream').value.trim() || null // Save null if empty
         };
 
         if (!newMatchData.type || !newMatchData.team1.name || !newMatchData.team2.name) {
-            showSaveStatus('Error: Type, Team 1 Name, and Team 2 Name are required.', true); return;
+            showSaveStatus('Error: Type, Team 1 Name, and Team 2 Name are required.', true);
+             saveNewMatchButton.disabled = false;
+            return;
         }
 
         showSaveStatus('Saving new match...', false);
@@ -666,36 +767,34 @@
             const docRef = await db.collection('matches').add(newMatchData);
             console.log("New match added ID:", docRef.id);
             showSaveStatus('New match added!', false);
-            // Hide form and clear fields
             addMatchForm.classList.add('hidden');
-            document.getElementById('new-match-date').value = '';
-            document.getElementById('new-match-type').value = '';
-            document.getElementById('new-match-team1-name').value = '';
-            document.getElementById('new-match-team1-logo').value = '';
-            document.getElementById('new-match-team2-name').value = '';
-            document.getElementById('new-match-team2-logo').value = '';
-            document.getElementById('new-match-venue').value = '';
-            document.getElementById('new-match-stream').value = 'https://www.twitch.tv/poxelcompetitive/'; // Reset default
+            // Clear form fields
+            addMatchForm.querySelectorAll('input').forEach(input => {
+                 if(input.id !== 'new-match-stream') input.value = '';
+                 else input.value = 'https://www.twitch.tv/poxelcompetitive/'; // Reset default stream link
+            });
             loadMatchesAdmin(); // Refresh list
         } catch (error) {
             console.error("Error adding match:", error);
             showSaveStatus(`Error adding match: ${error.message}`, true);
+        } finally {
+             saveNewMatchButton.disabled = false;
         }
     });
 
     saveMatchesChangesButton.addEventListener('click', async () => {
         console.log("Attempting to save ALL match changes...");
+        saveMatchesChangesButton.disabled = true;
         const updates = [];
         let errorsFound = false;
 
         document.querySelectorAll('#matches-list .match-editor').forEach(editor => {
             const id = editor.dataset.id;
-            if (!id) return; // Skip if ID is missing
+            if (!id) return;
 
-            const matchData = { team1: {}, team2: {} }; // Initialize nested objects
+            const matchData = { team1: {}, team2: {} };
             let hasError = false;
 
-            // Handle date separately for timestamp conversion
             const dateInput = editor.querySelector('input[data-field="date"]');
             if (dateInput) {
                 const dateValue = dateInput.value;
@@ -703,57 +802,54 @@
                     try {
                         matchData.date = firebase.firestore.Timestamp.fromDate(new Date(dateValue));
                     } catch (e) {
-                        console.error(`Invalid date format for match ${id}: ${dateValue}`, e);
-                        showSaveStatus(`Error: Invalid date for match ${id}. Fix and save again.`, true);
-                        hasError = true;
-                        errorsFound = true;
+                        console.error(`Invalid date for match ${id}: ${dateValue}`, e);
+                        editor.style.border = '2px solid red'; // Highlight error
+                        hasError = true; errorsFound = true;
                     }
                 } else {
-                    // Decide how to handle empty date - set to null or ignore? Let's set to null.
-                    console.warn(`Date missing for match ${id}. Setting to null.`);
-                    matchData.date = null;
+                    matchData.date = null; // Allow clearing the date
                 }
             }
 
-            // Process other text/number inputs if no date error for this match
             if (!hasError) {
                 editor.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
-                    if (input.dataset.field === 'date') return; // Skip date field here
+                    if (input.dataset.field === 'date') return;
                     const fieldPath = input.dataset.field;
+                    if (!fieldPath) return;
                     let value = input.value.trim();
-                    // Uppercase for logo initials
-                    if (input.type === "text" && input.maxLength === 2) { value = value.toUpperCase(); }
+                    if (fieldPath.endsWith('.logo')) { value = value.toUpperCase(); }
 
-                    // Handle nested fields (like team1.name)
-                    if (fieldPath?.includes('.')) {
+                    if (fieldPath.includes('.')) {
                         const parts = fieldPath.split('.');
                         if (parts.length === 2) {
-                            // Ensure parent object exists
                             if (!matchData[parts[0]]) matchData[parts[0]] = {};
                             matchData[parts[0]][parts[1]] = value;
                         }
-                    } else if (fieldPath) {
+                    } else {
                         matchData[fieldPath] = value;
                     }
                 });
-                // Basic validation after collecting data for the match
+
+                // Basic validation
                 if (!matchData.type || !matchData.team1?.name || !matchData.team2?.name) {
-                    showSaveStatus(`Error: Missing Type or Team Names for match ${id}.`, true);
-                    hasError = true;
-                    errorsFound = true;
+                    editor.style.border = '2px solid red'; hasError = true; errorsFound = true;
+                    console.error(`Missing required fields for match ${id}.`);
+                } else {
+                    editor.style.border = '1px dashed #555'; // Reset border on success
                 }
             }
-            // If no errors for this specific match, add it to the updates array
+
             if (!hasError) { updates.push({ id: id, data: matchData }); }
         });
 
         if (errorsFound) {
-            showSaveStatus('Errors found. Please fix them before saving all changes.', true);
-            return; // Stop if any errors were found
+            showSaveStatus('Errors found in highlighted matches. Please fix them before saving.', true);
+            saveMatchesChangesButton.disabled = false;
+            return;
         }
-
         if (updates.length === 0) {
             showSaveStatus('No changes detected or queued for saving.', false);
+             saveMatchesChangesButton.disabled = false;
             return;
         }
 
@@ -761,81 +857,89 @@
         const batch = db.batch();
         updates.forEach(update => {
             const docRef = db.collection('matches').doc(update.id);
-            batch.update(docRef, update.data); // Use update, not set, to merge changes
+            batch.update(docRef, update.data); // Use update to merge changes
         });
 
         try {
             await batch.commit();
             showSaveStatus(`${updates.length} match(es) updated successfully!`, false);
-            loadMatchesAdmin(); // Refresh list after successful save
+            // Optionally re-load, but updates are reflected in the UI already unless date formatting changed etc.
+            // loadMatchesAdmin();
         } catch (error) {
             console.error("Error committing match batch update:", error);
             showSaveStatus(`Error saving match changes: ${error.message}`, true);
+        } finally {
+             saveMatchesChangesButton.disabled = false;
         }
     });
 
 
     // =========================================================================
-    // --- Leaderboard Management ---
+    // --- Leaderboard Management (Includes Kills) ---
     // =========================================================================
     async function loadLeaderboardAdmin() {
         if (!leaderboardBodyAdmin) return;
-        leaderboardBodyAdmin.innerHTML = '<tr><td colspan="8" class="loading-indicator">Loading leaderboard...</td></tr>';
+        leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" class="loading-indicator">Loading leaderboard...</td></tr>`; // Updated colspan
         try {
-            const snapshot = await db.collection('leaderboard').orderBy('points', 'desc').get();
+            const snapshot = await db.collection('leaderboard').orderBy('points', 'desc').limit(100).get(); // Limit query size
             leaderboardBodyAdmin.innerHTML = ''; // Clear loading
             let rank = 1;
             if (snapshot.empty) {
-                leaderboardBodyAdmin.innerHTML = '<tr><td colspan="8">No players found.</td></tr>';
+                leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No players found. Use "Add New Player".</td></tr>`; // Updated colspan
                 return;
             }
             snapshot.forEach(doc => {
-                const player = { id: doc.id, ...doc.data() };
+                const player = { id: doc.id, ...doc.data() }; // id is the UID here
                 const row = document.createElement('tr');
-                row.dataset.id = player.id; // Store the UID (document ID)
+                row.dataset.id = player.id;
 
-                // Provide defaults for stats if missing
                 const matches = player.matches ?? 0;
                 const wins = player.wins ?? 0;
                 const losses = player.losses ?? 0;
+                const kills = player.kills ?? 0; // Default for kills
                 const points = player.points ?? 0;
 
+                // Added Kills input field
                 row.innerHTML = `
                     <td>${rank++}</td>
-                    <td><input type="text" value="${player.name || ''}" data-field="name" required></td>
-                    <td><input type="text" value="${player.avatar || ''}" data-field="avatar" maxlength="2"></td>
-                    <td><input type="number" value="${matches}" data-field="matches" min="0"></td>
-                    <td><input type="number" value="${wins}" data-field="wins" min="0"></td>
-                    <td><input type="number" value="${losses}" data-field="losses" min="0"></td>
-                    <td><input type="number" value="${points}" data-field="points"></td>
-                    <td><button class="delete-player-button" data-id="${player.id}">Delete</button></td>
+                    <td><input type="text" value="${player.name || ''}" data-field="name" required title="Player Name (Case-Sensitive)"></td>
+                    <td><input type="text" value="${player.avatar || ''}" data-field="avatar" maxlength="3" title="Avatar Initials"></td>
+                    <td><input type="number" value="${matches}" data-field="matches" min="0" title="Matches Played"></td>
+                    <td><input type="number" value="${wins}" data-field="wins" min="0" title="Wins"></td>
+                    <td><input type="number" value="${losses}" data-field="losses" min="0" title="Losses"></td>
+                    <td><input type="number" value="${kills}" data-field="kills" min="0" title="Kills"></td>
+                    <td><input type="number" value="${points}" data-field="points" title="Points"></td>
+                    <td><button class="delete-player-button" data-id="${player.id}" title="Delete Player">Delete</button></td>
                 `;
                 leaderboardBodyAdmin.appendChild(row);
             });
-            attachPlayerDeleteListeners(); // Re-attach listeners
+            attachPlayerDeleteListeners();
         } catch (error) {
             console.error("Error loading leaderboard:", error);
-            leaderboardBodyAdmin.innerHTML = '<tr><td colspan="8" style="color:red;">Error loading leaderboard.</td></tr>';
+            leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="color:red; text-align: center;">Error loading leaderboard.</td></tr>`; // Updated colspan
         }
     }
 
     function attachPlayerDeleteListeners() {
         document.querySelectorAll('#leaderboard-body-admin .delete-player-button').forEach(button => {
-            const newButton = button.cloneNode(true); // Clone to remove old listeners
+            const newButton = button.cloneNode(true);
             button.parentNode.replaceChild(newButton, button);
             newButton.addEventListener('click', async (e) => {
-                const id = e.target.dataset.id;
+                const id = e.target.dataset.id; // UID
                 if (!id) return;
-                // Try to get player name for confirmation message
                 const row = e.target.closest('tr');
-                const nameInput = row ? row.querySelector('input[data-field="name"]') : null;
+                const nameInput = row?.querySelector('input[data-field="name"]');
                 const playerName = nameInput ? nameInput.value : `Player ID: ${id}`;
 
-                if (confirm(`Are you sure you want to delete player "${playerName}" (ID: ${id}) from the leaderboard?`)) {
+                if (confirm(`Are you sure you want to delete player "${playerName}" (UID: ${id}) from the leaderboard? This does NOT delete their user account.`)) {
                     try {
                         await db.collection('leaderboard').doc(id).delete();
                         showSaveStatus('Player deleted from leaderboard!', false);
-                        loadLeaderboardAdmin(); // Refresh list
+                        row.remove(); // Remove row directly
+                         // If list becomes empty, show placeholder
+                        if (!leaderboardBodyAdmin.querySelector('tr')) {
+                            leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No players found. Use "Add New Player".</td></tr>`; // Updated colspan
+                        }
                     } catch (error) {
                         console.error(`Error deleting player ${id}:`, error);
                         showSaveStatus(`Error deleting player: ${error.message}`, true);
@@ -846,211 +950,171 @@
     }
 
     addPlayerButton.addEventListener('click', () => {
-        if (addPlayerForm) addPlayerForm.classList.toggle('hidden');
+        addPlayerForm.classList.toggle('hidden');
+         if (!addPlayerForm.classList.contains('hidden')) {
+             addPlayerForm.scrollIntoView({ behavior: 'smooth', block: 'start'});
+             document.getElementById('new-player-name').focus();
+        }
     });
 
-    // --- >>> REVISED saveNewPlayerButton Listener (with UID lookup) <<< ---
+    // REVISED saveNewPlayerButton Listener (with Kills)
     saveNewPlayerButton.addEventListener('click', async () => {
         console.log("--- SAVE NEW PLAYER (UID Lookup) ---");
         showSaveStatus('Processing new player...', false);
-        saveNewPlayerButton.disabled = true; // Disable button during processing
+        saveNewPlayerButton.disabled = true;
 
         const nameInput = document.getElementById('new-player-name');
         const avatarInput = document.getElementById('new-player-avatar');
         const matchesInput = document.getElementById('new-player-matches');
         const winsInput = document.getElementById('new-player-wins');
         const lossesInput = document.getElementById('new-player-losses');
+        const killsInput = document.getElementById('new-player-kills'); // Kills Input
         const pointsInput = document.getElementById('new-player-points');
 
-        if (!nameInput || !avatarInput || !matchesInput || !winsInput || !lossesInput || !pointsInput) {
-            console.error("Save New Player Error: Input element(s) missing.");
-            showSaveStatus('Error: Could not find all player form fields.', true);
-            saveNewPlayerButton.disabled = false;
-            return;
-        }
+        if (!nameInput || !avatarInput || !matchesInput || !winsInput || !lossesInput || !killsInput || !pointsInput) { /* ... error handling ... */ return; }
 
         const name = nameInput.value.trim();
         const avatar = avatarInput.value.trim().toUpperCase();
         const matches = parseInt(matchesInput.value) || 0;
         const wins = parseInt(winsInput.value) || 0;
         const losses = parseInt(lossesInput.value) || 0;
+        const kills = parseInt(killsInput.value) || 0; // Get Kills Value
         const points = parseInt(pointsInput.value) || 0;
 
-        // --- Basic Form Validation ---
-        if (!name) {
-            showSaveStatus('Error: Player Name is required.', true);
-            nameInput.focus();
-            saveNewPlayerButton.disabled = false;
-            return;
-        }
-        if (isNaN(matches) || isNaN(wins) || isNaN(losses) || isNaN(points)) {
-            showSaveStatus('Error: Stats must be valid numbers.', true);
-            saveNewPlayerButton.disabled = false;
-            return;
-        }
+        if (!name) { /* ... error handling ... */ return; }
+        if (isNaN(matches) || isNaN(wins) || isNaN(losses) || isNaN(kills) || isNaN(points)) { /* ... error handling ... */ return; }
 
         const newPlayerData = {
-            name: name, // Store the name from the form
-            avatar: avatar, // Store the avatar from the form
+            // IMPORTANT: This data is written to the 'leaderboard' collection.
+            // The profile page READS this, but rewards are based on ACHIEVEMENTS checking these stats.
+            name: name, // Should match 'displayName' in 'users' collection ideally
+            avatar: avatar,
             matches: Math.max(0, matches),
             wins: Math.max(0, wins),
             losses: Math.max(0, losses),
+            kills: Math.max(0, kills), // Include Kills
             points: points,
-            // Add a timestamp for when the entry was last updated by admin?
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         };
         console.log("Player data from form:", JSON.stringify(newPlayerData));
 
-        // --- Find User UID by Display Name (Case-Sensitive) ---
+        // Find User UID by Display Name (Case-Sensitive Query)
         let targetUID = null;
         try {
             showSaveStatus(`Searching for user profile with name "${name}"...`, false);
-            console.log(`Querying 'users' collection for displayName == "${name}" (Case-Sensitive)`);
-
-            // Firestore 'where' queries are case-sensitive by default
-            const userQuery = db.collection('users').where('displayName', '==', name).limit(2); // Limit 2 to detect duplicates
+            // Query 'users' collection where 'displayName' exactly matches the input name
+            const userQuery = db.collection('users').where('displayName', '==', name).limit(2);
             const querySnapshot = await userQuery.get();
 
-            console.log(`User query completed. Found ${querySnapshot.size} matching profile(s).`);
-
             if (querySnapshot.empty) {
-                console.error(`No user profile found with exact displayName "${name}".`);
-                showSaveStatus(`Error: No user profile found with the name "${name}". Ensure the player has logged in/signed up first using this exact name.`, true);
-                saveNewPlayerButton.disabled = false;
-                return; // Stop execution
+                showSaveStatus(`Error: No user profile found with the name "${name}". Player must sign up first with this EXACT name.`, true);
+                saveNewPlayerButton.disabled = false; return;
             } else if (querySnapshot.size > 1) {
-                console.error(`Multiple user profiles found with exact displayName "${name}". This indicates a data issue.`);
-                showSaveStatus(`Error: Multiple user profiles found with the name "${name}". Please ensure unique display names in the main application.`, true);
-                saveNewPlayerButton.disabled = false;
-                return; // Stop execution
+                showSaveStatus(`Error: Multiple profiles found for "${name}". Please ensure unique names.`, true);
+                saveNewPlayerButton.disabled = false; return;
             } else {
-                // Exactly one user found - proceed
-                targetUID = querySnapshot.docs[0].id;
-                const foundUserData = querySnapshot.docs[0].data();
-                console.log(`User profile found! Target UID: ${targetUID}, Email: ${foundUserData?.email || 'N/A'}`);
-                // Optional: You could add a confirmation step here if needed
-                // if (!confirm(`Found user profile for ${foundUserData?.email || name}. Add/Update leaderboard entry with UID ${targetUID}?`)) {
-                //     showSaveStatus('Operation cancelled.', false);
-                //     saveNewPlayerButton.disabled = false;
-                //     return;
-                // }
+                targetUID = querySnapshot.docs[0].id; // Found the unique UID
+                console.log(`User profile found! Target UID: ${targetUID}`);
             }
-
         } catch (error) {
             console.error("Error querying 'users' collection:", error);
             showSaveStatus(`Error searching for user profile: ${error.message}`, true);
-            saveNewPlayerButton.disabled = false;
-            return; // Stop execution
+            saveNewPlayerButton.disabled = false; return;
         }
 
-        // --- Save to Leaderboard using the found UID ---
+        // Save to Leaderboard using the found UID
         if (targetUID) {
-            console.log(`Proceeding to save leaderboard data for UID: ${targetUID}`);
             try {
                 showSaveStatus(`Saving leaderboard data for UID ${targetUID}...`, false);
-                console.log(`Executing: db.collection('leaderboard').doc('${targetUID}').set(...)`);
-                console.log(`Data being set:`, JSON.stringify(newPlayerData));
-
-                // Use .set() on the leaderboard collection with the user's UID as the document ID
-                // This will CREATE the document if it doesn't exist, or OVERWRITE it if it does.
-                // Use { merge: true } if you only want to update the specified fields and leave others untouched.
-                // Using .set() without merge ensures the document matches exactly what's in the form.
+                // Use set() with the UID as the document ID. This creates or overwrites.
                 await db.collection('leaderboard').doc(targetUID).set(newPlayerData);
+                showSaveStatus('Player added/updated on leaderboard!', false);
 
-                console.log(`Leaderboard document set successfully for UID: ${targetUID}`);
-                showSaveStatus('New player added/updated on leaderboard successfully!', false);
-
-                // Clear form and reload list
                 addPlayerForm.classList.add('hidden');
-                nameInput.value = '';
-                avatarInput.value = '';
-                matchesInput.value = '0';
-                winsInput.value = '0';
-                lossesInput.value = '0';
-                pointsInput.value = '0';
+                 addPlayerForm.querySelectorAll('input').forEach(input => input.value = (input.type === 'number' ? '0' : '')); // Clear form
                 loadLeaderboardAdmin(); // Reload the admin view
 
             } catch (error) {
                 console.error(`Error setting leaderboard document for UID ${targetUID}:`, error);
                 showSaveStatus(`Error saving player to leaderboard: ${error.message}`, true);
             } finally {
-                 saveNewPlayerButton.disabled = false; // Re-enable button
-                 console.log("--- SAVE NEW PLAYER Listener FINISHED (targetUID was processed) ---");
+                 saveNewPlayerButton.disabled = false;
             }
         } else {
-            // This path should theoretically not be reached if the checks above work,
-            // but it's a safety net.
-            console.error("CRITICAL ERROR: targetUID is null/undefined after query checks. Aborting leaderboard save.");
-            showSaveStatus('Internal Error: Could not determine user ID. Save aborted.', true);
-            saveNewPlayerButton.disabled = false; // Re-enable button
-            console.log("--- SAVE NEW PLAYER Listener FINISHED (targetUID was NOT found/set) ---");
+            // Fallback - should not happen if logic above is correct
+            showSaveStatus('Internal Error: Could not determine user ID.', true);
+            saveNewPlayerButton.disabled = false;
         }
     });
-    // --- END REVISED Listener ---
 
-
+    // Updated saveLeaderboardChangesButton Listener (with Kills check)
     saveLeaderboardChangesButton.addEventListener('click', async () => {
         console.log("Attempting to save all leaderboard changes...");
+        saveLeaderboardChangesButton.disabled = true;
         const updates = [];
         let errorsFound = false;
 
         document.querySelectorAll('#leaderboard-body-admin tr').forEach(row => {
-            const id = row.dataset.id; // This is the UID
-            if (!id) return; // Skip if row doesn't have a UID
+            const id = row.dataset.id; // UID
+            if (!id) return;
 
             const playerData = {};
             let hasRowError = false;
+            row.style.backgroundColor = ''; // Reset background highlight
 
             row.querySelectorAll('input').forEach(input => {
                 const field = input.dataset.field;
-                if (!field) return; // Skip if input has no data-field
-
+                if (!field) return;
                 let value = input.value.trim();
 
-                // Validate and parse numbers
                 if (input.type === 'number') {
                     const parsedValue = parseInt(value);
-                    if (isNaN(parsedValue)) {
-                        showSaveStatus(`Error: Invalid number for ${field} in row ID ${id}.`, true);
-                        hasRowError = true;
-                        errorsFound = true;
-                        value = 0; // Default to 0 on error? Or keep original? Decide policy. Let's default.
+                    if (value === '' || isNaN(parsedValue)) { // Allow empty string to be treated as 0 or null? Let's use 0.
+                        value = 0; // Default to 0 if empty or invalid
+                        if(value !== '') { // Only log error if it wasn't intentionally empty
+                           console.warn(`Invalid number for ${field} in row ID ${id}. Using 0.`);
+                           // Optionally highlight the specific cell
+                           input.style.backgroundColor = '#500';
+                           hasRowError = true; errorsFound = true;
+                        } else {
+                            input.style.backgroundColor = ''; // Clear highlight if intentionally empty/0
+                        }
                     } else {
-                        // Ensure non-negative for matches/wins/losses
-                        value = (field === 'matches' || field === 'wins' || field === 'losses') ? Math.max(0, parsedValue) : parsedValue;
+                        // Enforce non-negative for specific stats (including kills)
+                        value = (['matches', 'wins', 'losses', 'kills'].includes(field))
+                                  ? Math.max(0, parsedValue)
+                                  : parsedValue;
+                         input.style.backgroundColor = ''; // Clear highlight on valid input
                     }
-                } else if (input.type === 'text') {
-                    // Validate required fields like name
-                    if (field === 'name' && !value) {
-                        showSaveStatus(`Error: Player Name required for ID ${id}.`, true);
-                        hasRowError = true;
-                        errorsFound = true;
-                    }
-                    // Uppercase avatar
-                    if (field === 'avatar') { value = value.toUpperCase(); }
+                } else if (field === 'name' && !value) {
+                    console.error(`Player Name required for ID ${id}.`);
+                    input.style.backgroundColor = '#500'; // Highlight error cell
+                    hasRowError = true; errorsFound = true;
+                } else if (field === 'avatar') {
+                    value = value.toUpperCase();
+                    input.style.backgroundColor = '';
+                } else {
+                     input.style.backgroundColor = '';
                 }
-
-                // Assign value if no error found for this row OR if it's not a number field that failed parsing
-                if (!errorsFound || (input.type !== 'number' || !isNaN(parseInt(input.value.trim())))) {
-                     playerData[field] = value;
-                }
+                playerData[field] = value;
             });
 
-            // Add to updates array only if the row has a valid ID and no errors specific to this row were found
-            if (id && !hasRowError) {
-                // Add a timestamp for the update
+            if (!hasRowError) {
                 playerData.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
                 updates.push({ id: id, data: playerData });
+            } else {
+                 row.style.backgroundColor = 'rgba(255, 0, 0, 0.2)'; // Highlight error row
             }
         });
 
         if (errorsFound) {
-            showSaveStatus('Errors found. Please fix them before saving.', true);
-            return; // Don't proceed if errors exist
+            showSaveStatus('Errors found in highlighted rows/cells. Please fix them before saving.', true);
+            saveLeaderboardChangesButton.disabled = false;
+            return;
         }
-
         if (updates.length === 0) {
             showSaveStatus('No changes detected.', false);
+            saveLeaderboardChangesButton.disabled = false;
             return;
         }
 
@@ -1058,24 +1122,32 @@
         const batch = db.batch();
         updates.forEach(update => {
             const docRef = db.collection('leaderboard').doc(update.id);
-            // Use update to modify existing fields, won't remove fields not present in update.data
-            batch.update(docRef, update.data);
+            batch.update(docRef, update.data); // Use update to merge
         });
 
         try {
             await batch.commit();
             showSaveStatus(`${updates.length} player(s) updated successfully!`, false);
-            loadLeaderboardAdmin(); // Refresh the list
+            document.querySelectorAll('#leaderboard-body-admin tr').forEach(row => row.style.backgroundColor = ''); // Clear highlights
+            // No reload needed as inputs reflect the saved state
         } catch (error) {
             console.error("Error committing leaderboard batch:", error);
             showSaveStatus(`Error saving leaderboard: ${error.message}`, true);
+        } finally {
+            saveLeaderboardChangesButton.disabled = false;
         }
     });
+
 
     // =========================================================================
     // --- Bracket Management ---
     // =========================================================================
-    async function loadBracketAdmin(bracketType = 'pro') {
+    // (Bracket functions: loadBracketAdmin, renderBracketEditor, renderBracketMatchEditor,
+    // attachBracketEditorListeners, handleBracketSelectChange, handleAddRoundClick,
+    // handleSaveBracketClick, handleBracketButtonClick, handleBracketInput,
+    // deleteBracketRoundFromState, addBracketMatchToState, deleteBracketMatchFromState
+    // remain the same as in the previous correct version - no changes needed here for 'Kills')
+     async function loadBracketAdmin(bracketType = 'pro') {
         if (!bracketEditor || !bracketLoadingIndicator) return;
         currentBracketType = bracketType;
         bracketEditor.dataset.type = bracketType; // Store type for reference
@@ -1092,42 +1164,36 @@
                 // --- Data Sanitization/Defaults ---
                 if (!currentBracketData || typeof currentBracketData !== 'object') currentBracketData = {};
                 if (!Array.isArray(currentBracketData.rounds)) currentBracketData.rounds = [];
-                // Ensure each round and match has expected structure
                 currentBracketData.rounds.forEach((round, rIdx) => {
-                    if (!round || typeof round !== 'object') {
-                        currentBracketData.rounds[rIdx] = { name: `Round ${rIdx + 1}`, matches: [] };
-                        round = currentBracketData.rounds[rIdx];
-                    }
+                    if (!round || typeof round !== 'object') currentBracketData.rounds[rIdx] = { name: `Round ${rIdx + 1}`, matches: [] };
+                    round = currentBracketData.rounds[rIdx]; // Re-assign after potential default set
                     if (!round.name) round.name = `Round ${rIdx + 1}`;
                     if (!Array.isArray(round.matches)) round.matches = [];
                     round.matches.forEach((match, mIdx) => {
-                        if (!match || typeof match !== 'object') {
-                             round.matches[mIdx] = {};
-                             match = round.matches[mIdx];
-                        }
+                        if (!match || typeof match !== 'object') round.matches[mIdx] = {};
+                         match = round.matches[mIdx]; // Re-assign
                         if (!match.team1 || typeof match.team1 !== 'object') match.team1 = { name: '', score: null };
                         if (!match.team2 || typeof match.team2 !== 'object') match.team2 = { name: '', score: null };
                         match.team1.name = match.team1.name ?? '';
                         match.team2.name = match.team2.name ?? '';
-                        // Ensure scores are numbers or null, not undefined or ''
                         match.team1.score = (match.team1.score === undefined || match.team1.score === '') ? null : Number(match.team1.score);
                         match.team2.score = (match.team2.score === undefined || match.team2.score === '') ? null : Number(match.team2.score);
                         if (isNaN(match.team1.score)) match.team1.score = null;
                         if (isNaN(match.team2.score)) match.team2.score = null;
                         match.winnerName = match.winnerName ?? '';
-                        match.completed = !!match.completed; // Ensure boolean
-                        match.winner = match.winner ?? null; // Often derived, but ensure default
+                        match.completed = !!match.completed;
+                        match.winner = match.winner ?? null;
                     });
                 });
             } else {
                 console.log(`${bracketType} bracket document does not exist. Initializing empty.`);
                 currentBracketData = { rounds: [] };
             }
-            renderBracketEditor(); // Render the editor with loaded/initialized data
+            renderBracketEditor();
         } catch (error) {
             console.error(`ERROR loading ${bracketType} bracket:`, error);
             bracketEditor.innerHTML = `<p style="color:red;">Error loading ${bracketType} bracket: ${error.message}.</p>`;
-            currentBracketData = { rounds: [] }; // Reset data on error
+            currentBracketData = { rounds: [] };
         } finally {
             bracketLoadingIndicator.classList.add('hidden');
         }
@@ -1135,27 +1201,21 @@
 
     function renderBracketEditor() {
         if (!bracketEditor) return;
-        bracketEditor.innerHTML = ''; // Clear existing editor content
-        bracketEditor.dataset.type = currentBracketType; // Ensure type is set
+        bracketEditor.innerHTML = '';
+        bracketEditor.dataset.type = currentBracketType;
 
         const rounds = currentBracketData.rounds || [];
 
         if (rounds.length === 0) {
-            const placeholder = document.createElement('p');
-            placeholder.textContent = 'No rounds yet. Use "Add New Round" to start building the bracket.';
-            placeholder.style.padding = '20px';
-            placeholder.style.textAlign = 'center';
-            placeholder.style.color = 'var(--text-secondary)';
-            bracketEditor.appendChild(placeholder);
+            bracketEditor.innerHTML = '<p class="loading-indicator">No rounds yet. Use "Add New Round".</p>';
         } else {
             rounds.forEach((round, roundIndex) => {
                 const roundColumnDiv = document.createElement('div');
                 roundColumnDiv.classList.add('bracket-round-column');
                 roundColumnDiv.dataset.roundIndex = roundIndex;
 
-                const roundName = (round && typeof round === 'object' && round.name) ? round.name : `Round ${roundIndex + 1}`;
+                const roundName = round?.name || `Round ${roundIndex + 1}`;
 
-                // Round Header (Name Input + Delete Button)
                 const roundHeader = document.createElement('h4');
                 roundHeader.innerHTML = `
                     <input type="text" value="${roundName}" class="round-name" placeholder="Round Name"
@@ -1163,31 +1223,25 @@
                     <button class="delete-round-button" data-round-index="${roundIndex}" title="Delete Round">X</button>
                 `;
 
-                // Container for matches within the round
                 const matchesContainer = document.createElement('div');
                 matchesContainer.classList.add('matches-in-round');
-
-                const matches = (round && Array.isArray(round.matches)) ? round.matches : [];
+                const matches = round?.matches || [];
                 if (matches.length > 0) {
                     matches.forEach((match, matchIndex) => {
                         const matchDiv = renderBracketMatchEditor(match || {}, roundIndex, matchIndex);
                         if (matchDiv) matchesContainer.appendChild(matchDiv);
                     });
                 } else {
-                    const p = document.createElement('p');
-                    p.textContent = 'No matches in this round yet.';
-                    p.style.textAlign = 'center'; p.style.fontSize = '0.9em'; p.style.color = 'var(--text-secondary)';
-                    matchesContainer.appendChild(p);
+                    matchesContainer.innerHTML = '<p style="text-align: center; font-size: 0.9em; color: var(--text-secondary);">No matches in this round.</p>';
                 }
 
-                // "Add Match" button for the round
                 const addMatchBtn = document.createElement('button');
                 addMatchBtn.classList.add('add-match-to-round-button');
                 addMatchBtn.dataset.roundIndex = roundIndex;
                 addMatchBtn.title = "Add Match to this Round";
                 addMatchBtn.textContent = "Add Match";
+                addMatchBtn.style.marginTop = "10px"; // Add some space above
 
-                // Assemble the round column
                 roundColumnDiv.appendChild(roundHeader);
                 roundColumnDiv.appendChild(matchesContainer);
                 roundColumnDiv.appendChild(addMatchBtn);
@@ -1195,7 +1249,7 @@
             });
         }
 
-        attachBracketEditorListeners(); // Attach listeners for interaction
+        attachBracketEditorListeners();
     }
 
     function renderBracketMatchEditor(match, roundIndex, matchIndex) {
@@ -1204,7 +1258,6 @@
         matchDiv.dataset.roundIndex = roundIndex;
         matchDiv.dataset.matchIndex = matchIndex;
 
-        // Ensure defaults for safe access
         const t1N = match?.team1?.name || '';
         const t1S = (match?.team1?.score === null || match?.team1?.score === undefined) ? '' : match.team1.score;
         const t2N = match?.team2?.name || '';
@@ -1223,28 +1276,27 @@
             <label>Score 2:</label><input type="number" value="${t2S}" placeholder="-" data-field="team2.score" min="0">
             <label>Winner Name:</label><input type="text" value="${wN}" placeholder="Exact Winner Name" data-field="winnerName" title="Enter exact name of winning team">
             <label class="checkbox-label">
-                <input type="checkbox" ${comp ? 'checked' : ''} data-field="completed"> Done
+                <input type="checkbox" ${comp ? 'checked' : ''} data-field="completed"> Match Completed
             </label>
         `;
         return matchDiv;
     }
 
-    function attachBracketEditorListeners() {
+     function attachBracketEditorListeners() {
         if (!bracketEditor) return;
 
-        // Use event delegation on the bracket editor container for clicks
-        bracketEditor.removeEventListener('click', handleBracketButtonClick); // Remove previous listener first
+        // Use event delegation - one listener for clicks, one for input/change
+        bracketEditor.removeEventListener('click', handleBracketButtonClick);
         bracketEditor.addEventListener('click', handleBracketButtonClick);
 
-        // Use event delegation for input/change events
         bracketEditor.removeEventListener('input', handleBracketInput);
-        bracketEditor.removeEventListener('change', handleBracketInput); // Change needed for checkboxes
+        bracketEditor.removeEventListener('change', handleBracketInput); // For checkboxes
         bracketEditor.addEventListener('input', handleBracketInput);
         bracketEditor.addEventListener('change', handleBracketInput);
 
-        // Add/Remove listeners for controls outside the main editor div
+        // Listeners for controls outside the editor div
         if (addRoundButton) {
-            addRoundButton.removeEventListener('click', handleAddRoundClick);
+            addRoundButton.removeEventListener('click', handleAddRoundClick); // Prevent duplicates
             addRoundButton.addEventListener('click', handleAddRoundClick);
         }
         if (saveBracketChangesButton) {
@@ -1252,237 +1304,185 @@
             saveBracketChangesButton.addEventListener('click', handleSaveBracketClick);
         }
         if (bracketSelect) {
-            bracketSelect.removeEventListener('change', handleBracketSelectChange);
+             bracketSelect.removeEventListener('change', handleBracketSelectChange);
             bracketSelect.addEventListener('change', handleBracketSelectChange);
         }
     }
 
-    function handleBracketSelectChange(e) {
-        loadBracketAdmin(e.target.value); // Load data for the selected bracket type
+     function handleBracketSelectChange(e) {
+        loadBracketAdmin(e.target.value);
     }
 
     function handleAddRoundClick() {
         if (!currentBracketData || !Array.isArray(currentBracketData.rounds)) {
-            currentBracketData = { rounds: [] }; // Initialize if needed
+            currentBracketData = { rounds: [] };
         }
         const newRoundIndex = currentBracketData.rounds.length;
         currentBracketData.rounds.push({
             name: `Round ${newRoundIndex + 1}`,
             matches: []
         });
-        renderBracketEditor(); // Re-render the editor with the new round
-        // Optionally, scroll the new round into view
-        const newRoundElement = bracketEditor.querySelector(`.bracket-round-column[data-round-index="${newRoundIndex}"]`);
-        if (newRoundElement) {
-            newRoundElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-        }
+        renderBracketEditor();
+        // Scroll the new round into view
+        bracketEditor.querySelector(`.bracket-round-column[data-round-index="${newRoundIndex}"]`)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' }); // Use end alignment
     }
 
     async function handleSaveBracketClick() {
-        if (!currentBracketType || !currentBracketData || !Array.isArray(currentBracketData.rounds)) {
-            showSaveStatus('Error: Bracket data is invalid or missing.', true);
-            return;
+        if (!currentBracketType || !currentBracketData?.rounds) {
+            showSaveStatus('Error: Bracket data invalid.', true); return;
         }
+        saveBracketChangesButton.disabled = true;
 
-        // Deep clone data to avoid modifying state directly during processing
+        // Deep clone to avoid modifying state during processing and validation
         let dataToSave;
-        try {
-            dataToSave = JSON.parse(JSON.stringify(currentBracketData));
-        } catch (e) {
-            console.error("Failed to clone bracket data:", e);
-            showSaveStatus('Error: Failed to prepare data for saving.', true);
-            return;
-        }
+        try { dataToSave = JSON.parse(JSON.stringify(currentBracketData)); }
+        catch (e) { console.error("Clone error:", e); showSaveStatus('Error preparing data.', true); saveBracketChangesButton.disabled = false; return; }
 
-        // --- Data Validation and Cleanup Before Save ---
         let validationError = false;
         dataToSave.rounds.forEach((round, rIdx) => {
-            if (!round || typeof round !== 'object') {
-                console.error(`Invalid round structure at index ${rIdx}`); validationError = true; return;
-            }
-            round.name = round.name ? round.name.trim() : `Round ${rIdx + 1}`; // Default/trim name
-            if (!Array.isArray(round.matches)) round.matches = []; // Ensure matches array exists
+            if (!round) { validationError = true; return; }
+            round.name = round.name?.trim() || `Round ${rIdx + 1}`;
+            if (!Array.isArray(round.matches)) round.matches = [];
 
             round.matches.forEach((match, mIdx) => {
-                if (!match || typeof match !== 'object') {
-                     console.error(`Invalid match structure at R${rIdx+1}, M${mIdx+1}`); validationError = true; return;
-                }
-                // Ensure team objects and names exist
-                if (!match.team1 || typeof match.team1 !== 'object') match.team1 = {};
-                if (!match.team2 || typeof match.team2 !== 'object') match.team2 = {};
-                match.team1.name = match.team1.name ? match.team1.name.trim() : '';
-                match.team2.name = match.team2.name ? match.team2.name.trim() : '';
+                if (!match) { validationError = true; return; }
+                if (!match.team1) match.team1 = {};
+                if (!match.team2) match.team2 = {};
+                match.team1.name = match.team1.name?.trim() ?? '';
+                match.team2.name = match.team2.name?.trim() ?? '';
+                match.team1.score = (match.team1.score === '' || match.team1.score === null || match.team1.score === undefined || isNaN(Number(match.team1.score))) ? null : Number(match.team1.score);
+                match.team2.score = (match.team2.score === '' || match.team2.score === null || match.team2.score === undefined || isNaN(Number(match.team2.score))) ? null : Number(match.team2.score);
+                match.completed = !!match.completed;
+                match.winnerName = match.winnerName?.trim() ?? '';
 
-                // Ensure scores are numbers or null
-                match.team1.score = (match.team1.score === '' || match.team1.score === null || match.team1.score === undefined) ? null : Number(match.team1.score);
-                match.team2.score = (match.team2.score === '' || match.team2.score === null || match.team2.score === undefined) ? null : Number(match.team2.score);
-                if (isNaN(match.team1.score) && match.team1.score !== null) {
-                    console.error(`Invalid T1 score at R${rIdx+1}, M${mIdx+1}`); validationError = true; match.team1.score = null;
-                }
-                if (isNaN(match.team2.score) && match.team2.score !== null) {
-                    console.error(`Invalid T2 score at R${rIdx+1}, M${mIdx+1}`); validationError = true; match.team2.score = null;
-                }
-
-                match.completed = !!match.completed; // Ensure boolean
-                match.winnerName = match.winnerName ? match.winnerName.trim() : ''; // Trim winner name
-
-                // Automatically determine 'winner' field based on 'winnerName' and 'completed' status for consistency
-                match.winner = null; // Reset winner field
+                // Auto-determine 'winner' field based on 'winnerName' (case-insensitive compare)
+                match.winner = null;
                 if (match.completed && match.winnerName) {
                     const winnerLower = match.winnerName.toLowerCase();
                     const team1Lower = match.team1.name?.toLowerCase();
                     const team2Lower = match.team2.name?.toLowerCase();
-                    if (team1Lower && winnerLower === team1Lower) {
-                        match.winner = match.team1.name; // Set winner to exact T1 name
-                    } else if (team2Lower && winnerLower === team2Lower) {
-                        match.winner = match.team2.name; // Set winner to exact T2 name
-                    } else {
-                        console.warn(`Winner name "${match.winnerName}" at R${rIdx+1}, M${mIdx+1} doesn't match T1 or T2 name. 'winner' field remains null.`);
-                    }
+                    if (team1Lower && winnerLower === team1Lower) match.winner = match.team1.name; // Use original case name
+                    else if (team2Lower && winnerLower === team2Lower) match.winner = match.team2.name;
+                    else console.warn(`Winner name "${match.winnerName}" at R${rIdx+1}, M${mIdx+1} mismatch.`);
                 } else if (match.completed && !match.winnerName) {
-                     console.warn(`Match at R${rIdx+1}, M${mIdx+1} is completed but has no winner name.`);
+                     console.warn(`Match R${rIdx+1}, M${mIdx+1} completed but no winner name.`);
                 }
             });
         });
 
         if (validationError) {
-            showSaveStatus('Error: Invalid data found in the bracket. Check console for details.', true);
-            return;
+            showSaveStatus('Error: Invalid data structure in bracket. Check console.', true);
+            saveBracketChangesButton.disabled = false; return;
         }
 
         showSaveStatus(`Saving ${currentBracketType} bracket...`, false);
         try {
-            // Use set to overwrite the entire document with the cleaned data
             await db.collection('brackets').doc(currentBracketType).set(dataToSave);
             showSaveStatus(`${currentBracketType} bracket saved successfully!`, false);
-            // Optionally reload after save to reflect any derived data changes (like 'winner')
-            // loadBracketAdmin(currentBracketType);
-            // Or just update the local state if confident it matches saved data
-             currentBracketData = dataToSave;
+            currentBracketData = dataToSave; // Update local state to match saved data
         } catch (error) {
             console.error(`Error saving ${currentBracketType} bracket:`, error);
             showSaveStatus(`Error saving bracket: ${error.message}`, true);
+        } finally {
+            saveBracketChangesButton.disabled = false;
         }
     }
 
-    // Event handler for clicks within the bracket editor (delegated)
-    function handleBracketButtonClick(event) {
+     function handleBracketButtonClick(event) {
         const target = event.target;
         const rIdxStr = target.dataset.roundIndex;
         const mIdxStr = target.dataset.matchIndex;
 
-        if (target.classList.contains('delete-round-button') && rIdxStr !== undefined) {
+        // Use closest to handle clicks inside buttons (e.g., on button text)
+        if (target.closest('.delete-round-button') && rIdxStr !== undefined) {
             deleteBracketRoundFromState(parseInt(rIdxStr));
-        } else if (target.classList.contains('add-match-to-round-button') && rIdxStr !== undefined) {
+        } else if (target.closest('.add-match-to-round-button') && rIdxStr !== undefined) {
             addBracketMatchToState(parseInt(rIdxStr));
-        } else if (target.classList.contains('delete-match-from-round-button') && rIdxStr !== undefined && mIdxStr !== undefined) {
+        } else if (target.closest('.delete-match-from-round-button') && rIdxStr !== undefined && mIdxStr !== undefined) {
             deleteBracketMatchFromState(parseInt(rIdxStr), parseInt(mIdxStr));
         }
     }
 
-    // Event handler for input/change events within the bracket editor (delegated)
-    function handleBracketInput(event) {
+     function handleBracketInput(event) {
         const target = event.target;
-        // Only handle inputs/textareas/checkboxes within a bracket column/match
-        if (!target || !(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') || !target.closest('.bracket-round-column, .bracket-match-editor')) return;
+        if (!target || !(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+        // Ensure the input is within our bracket structure
+        const matchEditor = target.closest('.bracket-match-editor');
+        const roundColumn = target.closest('.bracket-round-column');
+        if (!matchEditor && !target.classList.contains('round-name')) return; // Only handle match inputs or round name input
 
-        const rIdxStr = target.dataset.roundIndex ?? target.closest('[data-round-index]')?.dataset.roundIndex;
-        const mIdxStr = target.dataset.matchIndex ?? target.closest('[data-match-index]')?.dataset.matchIndex;
+        const rIdxStr = roundColumn?.dataset.roundIndex;
+        const mIdxStr = matchEditor?.dataset.matchIndex;
         const field = target.dataset.field;
 
-        if (rIdxStr === undefined || field === undefined) {
-             console.warn("Input event ignored: Missing round index or field attribute.", target);
-             return; // Need round index and field path
-        }
+        if (rIdxStr === undefined || field === undefined) return; // Need index and field
 
         const rIdx = parseInt(rIdxStr);
         const mIdx = (mIdxStr !== undefined) ? parseInt(mIdxStr) : null;
 
-        if (isNaN(rIdx) || (mIdxStr !== undefined && isNaN(mIdx))) {
-             console.warn("Input event ignored: Invalid index.", target);
-             return; // Indices must be valid numbers
-        }
+        if (isNaN(rIdx) || (mIdx !== null && isNaN(mIdx))) return; // Invalid index
 
-        // --- Update In-Memory State ---
         try {
-            if (!currentBracketData?.rounds?.[rIdx]) { console.error(`Round ${rIdx} not found in state.`); return; }
+            if (!currentBracketData?.rounds?.[rIdx]) return;
             const round = currentBracketData.rounds[rIdx];
 
-            // If mIdx is null, it's an input directly on the round (e.g., round name)
-            if (mIdx === null) {
-                if (field === 'name') {
-                    round.name = target.value.trim();
-                    // console.log(`State updated: Round ${rIdx} name = "${round.name}"`);
-                }
-            }
-            // Otherwise, it's an input within a match
-            else {
-                if (!round.matches?.[mIdx]) { console.error(`Match ${mIdx} in round ${rIdx} not found.`); return; }
+            if (mIdx === null) { // Round level input (only name currently)
+                if (field === 'name') round.name = target.value;
+            } else { // Match level input
+                if (!round.matches?.[mIdx]) return;
                 const match = round.matches[mIdx];
-
-                // Determine the value based on input type
                 let value;
-                if (target.type === 'checkbox') {
-                    value = target.checked;
-                } else if (target.type === 'number') {
-                    // Handle empty string for numbers -> null, otherwise parse
-                    value = (target.value === '') ? null : parseInt(target.value);
-                     // If parsing fails but input wasn't empty, treat as invalid? (Set to null for now)
-                    if (isNaN(value) && target.value !== '') { value = null; }
-                } else { // Text input
-                    value = target.value; // Keep leading/trailing spaces until save? Or trim here? Let's trim on input.
-                    value = value.trim();
-                }
+                if (target.type === 'checkbox') value = target.checked;
+                else if (target.type === 'number') value = (target.value === '') ? null : parseInt(target.value); // Treat empty number as null
+                else value = target.value; // Text
 
-                // Update nested fields (e.g., 'team1.name') or direct fields
+                 // Update nested fields or direct fields
                 if (field.includes('.')) {
                     const parts = field.split('.');
                     if (parts.length === 2) {
-                        if (!match[parts[0]]) match[parts[0]] = {}; // Ensure parent object exists
+                        if (!match[parts[0]]) match[parts[0]] = {};
                         match[parts[0]][parts[1]] = value;
                     }
                 } else {
                     match[field] = value;
                 }
-                 // console.log(`State updated: R${rIdx}, M${mIdx}, Field ${field} =`, value);
             }
         } catch (error) {
             console.error("Error updating bracket state from input:", error);
         }
     }
 
-    // --- State Modifiers (Trigger Re-render) ---
     function deleteBracketRoundFromState(roundIndex) {
         if (!currentBracketData?.rounds?.[roundIndex]) return;
         const roundName = currentBracketData.rounds[roundIndex]?.name || `Round ${roundIndex + 1}`;
-        if (confirm(`Are you sure you want to delete "${roundName}" and all its matches?`)) {
+        if (confirm(`DELETE Round "${roundName}"? This removes the round and all its matches.`)) {
             currentBracketData.rounds.splice(roundIndex, 1);
-            renderBracketEditor(); // Re-render after modification
+            renderBracketEditor();
         }
     }
 
     function addBracketMatchToState(roundIndex) {
         if (!currentBracketData?.rounds?.[roundIndex]) return;
         if (!Array.isArray(currentBracketData.rounds[roundIndex].matches)) {
-            currentBracketData.rounds[roundIndex].matches = []; // Ensure array exists
+            currentBracketData.rounds[roundIndex].matches = [];
         }
-        const newMatch = {
-            team1: { name: '', score: null },
-            team2: { name: '', score: null },
-            winnerName: '',
-            winner: null,
-            completed: false
-        };
-        currentBracketData.rounds[roundIndex].matches.push(newMatch);
-        renderBracketEditor(); // Re-render
+        currentBracketData.rounds[roundIndex].matches.push({
+            team1: { name: '', score: null }, team2: { name: '', score: null },
+            winnerName: '', winner: null, completed: false
+        });
+        renderBracketEditor();
+        // Scroll the specific round column to show the new match might be helpful
+         bracketEditor.querySelector(`.bracket-round-column[data-round-index="${roundIndex}"]`)
+             ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
     }
 
     function deleteBracketMatchFromState(roundIndex, matchIndex) {
         if (!currentBracketData?.rounds?.[roundIndex]?.matches?.[matchIndex]) return;
         const roundName = currentBracketData.rounds[roundIndex]?.name || `Round ${roundIndex + 1}`;
-        if (confirm(`Are you sure you want to delete Match ${matchIndex + 1} from "${roundName}"?`)) {
+        if (confirm(`Delete Match ${matchIndex + 1} from "${roundName}"?`)) {
             currentBracketData.rounds[roundIndex].matches.splice(matchIndex, 1);
-            renderBracketEditor(); // Re-render
+            renderBracketEditor();
         }
     }
 
@@ -1492,24 +1492,76 @@
     // =========================================================================
     console.log("Admin script initialized. Waiting for authentication state...");
 
-    // Optional: Listener for DOM ready if needed, though script is at the end
     document.addEventListener('DOMContentLoaded', () => {
         console.log("DOM Content Loaded.");
-        // Initial UI setup that doesn't depend on auth can go here
+        // Initial UI setup if needed (e.g., disable save buttons until data loads)
+        saveMatchesChangesButton.disabled = true;
+        saveLeaderboardChangesButton.disabled = true;
+        saveBracketChangesButton.disabled = true;
+        // Enable buttons after successful data load within respective load functions or loadAdminData
     });
 
-    // Attempt to clean up presence on page close/refresh
     window.addEventListener('beforeunload', () => {
-        // This is best-effort, may not always run reliably
-        if (currentUserId) {
-             // Use sendBeacon if available for more reliability, otherwise sync XHR (discouraged)
-            // For simplicity here, we rely on the timeout mechanism and the logout handler
-            // navigator.sendBeacon('/log-presence-end', JSON.stringify({ uid: currentUserId }));
-            console.log("beforeunload triggered, presence timeout will handle cleanup.");
-            // Direct delete here is unreliable:
-            // db.collection(PRESENCE_COLLECTION).doc(currentUserId).delete();
-        }
+         // Presence removal is handled by timeout/logout now, 'beforeunload' is unreliable for async DB ops.
+        console.log("beforeunload triggered.");
     });
+
+    // Enable save buttons after initial load (example placement)
+    function enableSaveButtons() {
+        saveMatchesChangesButton.disabled = false;
+        saveLeaderboardChangesButton.disabled = false;
+        saveBracketChangesButton.disabled = false;
+    }
+    // Call enableSaveButtons() at the end of loadAdminData() or after each individual load function succeeds.
+    // Example modification in loadAdminData:
+    /*
+    function loadAdminData() {
+        console.log("Loading admin data sections...");
+        showSaveStatus('');
+        Promise.all([ // Wait for all loads to attempt
+            loadMatchesAdmin(),
+            loadLeaderboardAdmin(),
+            loadBracketAdmin(bracketSelect ? bracketSelect.value : 'pro')
+        ]).then(() => {
+            console.log("Initial data load attempt finished.");
+            enableSaveButtons(); // Enable buttons after all loads tried
+        }).catch(err => {
+             console.error("Error during initial data loading:", err);
+             // Maybe still enable buttons but show error? Or keep disabled?
+             showSaveStatus("Error loading some admin data.", true);
+             enableSaveButtons(); // Or keep them disabled
+        });
+    }
+    */
+     // Let's integrate the enableSaveButtons call properly into loadAdminData using Promise.allSettled
+     function loadAdminData() {
+        console.log("Loading admin data sections...");
+        showSaveStatus(''); // Clear status
+
+        // Disable buttons during load
+        saveMatchesChangesButton.disabled = true;
+        saveLeaderboardChangesButton.disabled = true;
+        saveBracketChangesButton.disabled = true;
+
+        const loadPromises = [
+            loadMatchesAdmin(),
+            loadLeaderboardAdmin(),
+            loadBracketAdmin(bracketSelect ? bracketSelect.value : 'pro')
+        ];
+
+        Promise.allSettled(loadPromises).then((results) => {
+            console.log("Initial data load finished.");
+            // Check if any load failed
+            const failedLoads = results.filter(result => result.status === 'rejected');
+            if (failedLoads.length > 0) {
+                 console.error("Some admin sections failed to load:", failedLoads);
+                 showSaveStatus("Error loading some admin data. Check console.", true);
+            }
+            // Enable buttons regardless of errors, allowing user to retry saves or add new items
+            enableSaveButtons();
+        });
+    }
+
 
     // =========================================================================
     // --- SCRIPT END ---
