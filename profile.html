@@ -1,3 +1,16 @@
+Okay, here are the complete `profile.html` and `profile.js` files with the friend system changes integrated.
+
+**Important:**
+
+1.  **Replace Placeholders:** Make sure your actual Firebase config and Cloudinary details are correctly placed in the JS file.
+2.  **Firestore Security Rules:** You **MUST** deploy updated Firestore security rules similar to the ones provided in the previous response to allow these friend actions securely. The example rules need careful review and adaptation. Using Cloud Functions for friend actions is often a more secure and manageable approach.
+3.  **Testing:** Test all friend actions thoroughly (sending, canceling, accepting, declining, removing) from both the profile page controls and the friend list buttons. Check UI updates and Firestore data consistency.
+
+---
+
+**`profile.html` (Complete File)**
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +21,7 @@
     <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico">
 
     <!-- Link to external CSS (Consider consolidating styles here) -->
-    <link rel="stylesheet" href="profile-styles.css">
+    <link rel="stylesheet" href="profile-styles.css"> <!-- If you have one -->
 
     <!-- Cropper.js CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -76,6 +89,37 @@
         .btn-primary:hover:not(:disabled) { background-color: var(--primary-orange-darker); border-color: var(--primary-orange-darker); box-shadow: 0 0 10px rgba(255, 102, 0, 0.5); color: var(--text-dark); }
         .btn-secondary { background-color: transparent; color: var(--text-light); border: 2px solid var(--border-light); }
         .btn-secondary:hover:not(:disabled) { background-color: rgba(224, 224, 224, 0.1); border-color: var(--text-light); color: var(--text-light); }
+
+        /* Specific Friend Button Styles */
+        .btn-small {
+             padding: 0.3rem 0.8rem;
+             font-size: 0.8rem;
+             min-width: 70px; /* Ensure buttons have some width */
+             text-align: center;
+        }
+        .btn-accept {
+             background-color: #28a745; /* Green */
+             color: white !important; /* Override potential inheritance */
+             border: 1px solid #28a745;
+        }
+        .btn-accept:hover:not(:disabled) {
+             background-color: #218838;
+             border-color: #1e7e34;
+             box-shadow: none; /* Remove orange shadow */
+        }
+        .btn-decline, .btn-cancel, .btn-remove {
+             background-color: #dc3545; /* Red */
+             color: white !important; /* Override potential inheritance */
+             border: 1px solid #dc3545;
+        }
+        .btn-decline:hover:not(:disabled),
+        .btn-cancel:hover:not(:disabled),
+        .btn-remove:hover:not(:disabled) {
+             background-color: #c82333;
+             border-color: #bd2130;
+             box-shadow: none; /* Remove orange shadow */
+        }
+
 
         /* ======================================== */
         /* Profile Page Specific Styles           */
@@ -311,6 +355,167 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .btn .spinner { border-top-color: currentColor; } /* Inherit color for spinner on btn */
 
+        /* ======================================== */
+        /* Friend System Styles                   */
+        /* ======================================== */
+        #friendship-controls-container button {
+            margin-right: 0.5rem; /* Spacing between buttons if multiple appear */
+        }
+
+        #friends-section { /* Container for the whole friend system UI */
+            text-align: left; /* Override centered text from profile container */
+            margin-top: 2.5rem;
+            border-top: 1px solid var(--border-light);
+            padding-top: 2.5rem;
+        }
+
+        #friends-section h3 {
+            text-align: center; /* Center the main section title */
+            margin-bottom: 1.5rem;
+            color: var(--primary-orange);
+            font-size: 1.7rem;
+            font-weight: 600;
+        }
+        #friends-section h4 {
+            color: #ccc;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 0.5rem;
+        }
+
+        .friends-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-button {
+            background: none;
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .tab-button:hover {
+            background-color: var(--bg-secondary);
+            border-color: var(--text-light);
+            color: var(--text-light);
+        }
+
+        .tab-button.active {
+            background-color: var(--primary-orange);
+            border-color: var(--primary-orange);
+            color: var(--text-dark);
+        }
+
+        .tab-content {
+            display: none; /* Hide tabs by default */
+            background-color: var(--bg-dark);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .tab-content.active {
+            display: block; /* Show active tab */
+        }
+
+        .friend-request-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px; /* Limit height and allow scrolling */
+            overflow-y: auto;
+        }
+
+        .friend-request-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem 0.5rem;
+            border-bottom: 1px solid var(--bg-secondary);
+            transition: background-color 0.2s ease;
+        }
+        .friend-request-list li:last-child {
+            border-bottom: none;
+        }
+        .friend-request-list li:hover {
+           background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .friend-item-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-grow: 1;
+            margin-right: 1rem; /* Space before buttons */
+        }
+
+        .friend-item-pfp {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: var(--bg-secondary); /* Fallback */
+            flex-shrink: 0;
+        }
+        .friend-item-pfp-initial {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-orange-darker);
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .friend-item-name {
+            font-weight: 600;
+            color: var(--text-light);
+            word-break: break-all; /* Prevent long names breaking layout */
+        }
+        .friend-item-name a { /* Make name clickable */
+            color: inherit;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .friend-item-name a:hover {
+            color: var(--primary-orange);
+            text-decoration: underline;
+        }
+
+        .friend-item-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Combined friend action button styles are with other .btn styles above */
+
+        .list-message { /* Style for loading/empty messages */
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 1rem;
+            font-style: italic;
+            justify-content: center; /* Center message text */
+            border-bottom: none !important; /* Override border */
+        }
+        .list-message:hover {
+            background-color: transparent !important; /* Override hover */
+        }
+
 
         /* ======================================== */
         /* Footer (Shared)                        */
@@ -336,6 +541,8 @@
             .modal-content { padding: 20px; }
             .modal-header h3 { font-size: 1.4rem; }
             #cropper-image-container { min-height: 250px; }
+            /* Friends section responsive */
+            #friends-section h3 { font-size: 1.5rem; }
         }
          @media (max-width: 480px) {
             .logo { font-size: 1.5rem; }
@@ -371,6 +578,31 @@
             #cropper-image-container { min-height: 200px; max-height: calc(90vh - 160px); }
             .modal-footer { gap: 8px; padding-top: 10px; }
             .modal-footer .btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
+
+             /* Responsive adjustments for friend list */
+            .friend-request-list li {
+                flex-direction: column;
+                align-items: flex-start; /* Align items left */
+                gap: 0.5rem;
+            }
+            .friend-item-info {
+               margin-right: 0;
+               margin-bottom: 0.5rem; /* Space between info and buttons */
+            }
+            .friend-item-actions {
+                width: 100%;
+                justify-content: flex-end; /* Buttons to the right */
+            }
+            .tab-button {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+            #friends-section h4 {
+                font-size: 1rem;
+            }
+             .tab-content {
+                padding: 1rem;
+            }
         }
     </style>
      <!-- End of your large inline style block -->
@@ -421,8 +653,11 @@
                         <span id="profile-title" class="profile-title-display" style="display: none;"><!-- Title added/updated by JS --></span>
                          <!-- Title selector dropdown div will be appended here by JS -->
                     </div>
-                    <!-- The email paragraph is still here in the HTML structure, -->
-                    <!-- but it will be hidden by the CSS rule added above -->
+                    <!-- *** Friend Action Buttons Container *** -->
+                    <div id="friendship-controls-container" style="margin-top: 1rem;">
+                        <!-- Friend buttons will be added here by JS -->
+                    </div>
+                    <!-- The email paragraph is still here in the HTML structure -->
                     <p id="profile-email">useremail@example.com</p>
                 </div>
             </div>
@@ -442,6 +677,40 @@
                     <p>Loading Poxel.io stats...</p>
                 </div>
             </div>
+
+             <!-- *** FRIENDS SECTION (Only shown for own profile) *** -->
+            <div class="profile-section" id="friends-section" style="display: none;">
+                <h3>Friends & Requests</h3>
+
+                <div class="friends-tabs">
+                    <button class="tab-button active" data-tab="friends-list">Friends</button>
+                    <button class="tab-button" data-tab="incoming-requests">Incoming (<span id="incoming-count">0</span>)</button>
+                    <button class="tab-button" data-tab="outgoing-requests">Outgoing (<span id="outgoing-count">0</span>)</button>
+                </div>
+
+                <div class="tab-content active" id="friends-list-container">
+                    <h4>Current Friends</h4>
+                    <ul class="friend-request-list" id="friends-list">
+                        <li class="list-message">Loading friends...</li>
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="incoming-requests-container">
+                    <h4>Incoming Requests</h4>
+                    <ul class="friend-request-list" id="incoming-requests-list">
+                         <li class="list-message">Loading incoming requests...</li>
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="outgoing-requests-container">
+                    <h4>Outgoing Requests</h4>
+                    <ul class="friend-request-list" id="outgoing-requests-list">
+                        <li class="list-message">Loading outgoing requests...</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- *** END OF FRIENDS SECTION *** -->
+
 
         </div> <!-- End #profile-content -->
 
