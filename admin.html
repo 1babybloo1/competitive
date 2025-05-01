@@ -1,3 +1,1686 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poxel Competitive - Admin Panel</title>
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/djttn4xvk/image/upload/v1744016662/iv8s8dkwdzxgnubsnhla.ico">
+<style>
+    :root {
+        --dark-bg: #1a1a1d; /* Slightly lighter dark */
+        --dark-card: #252529; /* Card background */
+        --dark-accent: #333336; /* Borders, accents */
+        --orange-glow: #ff5722;
+        --orange-dim: #d84315;
+        --text-primary: #e0e0e0; /* Slightly off-white */
+        --text-secondary: #a0a0a0;
+        --green-live: #4caf50; /* Brighter green */
+        --red-error: #e53935; /* Brighter red */
+        --blue-focus: #2979ff; /* Focus indicator */
+
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+        --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.4);
+        --border-radius-sm: 4px;
+        --border-radius-md: 8px;
+        --border-radius-lg: 12px;
+        --transition-fast: all 0.2s ease-in-out;
+        --transition-medium: all 0.3s ease-in-out;
+    }
+
+    /* --- Global Resets & Base Styles --- */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: var(--dark-bg);
+        color: var(--text-primary);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Nicer font stack */
+        padding: 25px;
+        line-height: 1.6;
+    }
+
+    /* --- Containers & Layout --- */
+    #login-container,
+    #admin-panel {
+        background: linear-gradient(145deg, var(--dark-card), var(--dark-bg)); /* Subtle gradient */
+        padding: 30px;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 30px;
+        max-width: 1300px; /* Slightly wider */
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--dark-accent);
+    }
+
+    .admin-section {
+        margin-top: 35px;
+        border-top: 1px solid var(--dark-accent);
+        padding-top: 35px;
+    }
+
+    /* --- Typography --- */
+    h1 {
+        color: var(--orange-glow);
+        text-align: center;
+        font-size: 2.5em;
+        margin-bottom: 25px;
+        text-shadow: 0 0 10px rgba(255, 87, 34, 0.4); /* Subtle glow */
+    }
+
+    h2 {
+        color: var(--orange-glow);
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.8em;
+    }
+
+    h3 {
+        color: var(--orange-glow);
+        margin-top: 0;
+        border-bottom: 2px solid var(--orange-dim);
+        padding-bottom: 10px;
+        margin-bottom: 25px;
+        font-size: 1.5em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    /* Optional: Add an icon before h3 if you have a library */
+    /* h3::before { content: '⚙️'; /* Example */ } */
+
+    h4 {
+        color: var(--text-primary); /* Make h4 less dominant than h3 */
+        margin-top: 0;
+        margin-bottom: 15px; /* Added margin */
+        font-size: 1.2em;
+        font-weight: 600;
+    }
+
+    p {
+        margin-bottom: 1em;
+        color: var(--text-secondary);
+    }
+
+    /* --- Buttons --- */
+    button {
+        background: linear-gradient(145deg, var(--orange-glow), var(--orange-dim));
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: var(--border-radius-md);
+        cursor: pointer;
+        margin: 5px 5px 5px 0;
+        font-size: 1em;
+        font-weight: 600;
+        transition: var(--transition-fast);
+        box-shadow: var(--shadow-sm);
+        text-transform: uppercase; /* Uppercase for emphasis */
+        letter-spacing: 0.5px;
+    }
+
+    button:hover:not(:disabled) {
+        opacity: 0.95;
+        transform: translateY(-2px); /* Subtle lift */
+        box-shadow: var(--shadow-md);
+    }
+
+    button:active:not(:disabled) {
+        transform: translateY(0px);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    button:focus-visible {
+        outline: 2px solid var(--blue-focus);
+        outline-offset: 2px;
+    }
+
+    button:disabled {
+        background: #444; /* Darker disabled */
+        color: #888;
+        cursor: not-allowed;
+        opacity: 0.6;
+        box-shadow: none;
+        transform: none;
+    }
+
+    button.delete-button {
+        background: linear-gradient(145deg, var(--red-error), #b71c1c); /* Red gradient */
+    }
+    button.delete-button:hover:not(:disabled) {
+        background: linear-gradient(145deg, #f44336, var(--red-error)); /* Slightly brighter hover */
+    }
+
+    #logout-button {
+        background: linear-gradient(145deg, #616161, #424242); /* Grey gradient */
+    }
+     #logout-button:hover:not(:disabled) {
+        background: linear-gradient(145deg, #757575, #616161);
+    }
+
+    /* Make primary save actions slightly more prominent */
+    #save-matches-changes,
+    #save-leaderboard-changes,
+    #save-bracket-changes {
+        padding: 14px 24px;
+        font-size: 1.05em;
+    }
+
+    .button-group {
+        margin-top: 20px;
+        display: flex; /* Align buttons */
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .form-actions {
+        text-align: right;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px dashed var(--dark-accent);
+    }
+    .form-actions button {
+        margin-left: 10px;
+    }
+
+    /* --- Forms & Inputs --- */
+    label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--text-secondary);
+        font-weight: 500; /* Slightly lighter weight */
+        font-size: 0.9em;
+        text-transform: uppercase; /* Label style */
+        letter-spacing: 0.3px;
+    }
+
+    input[type="text"],
+    input[type="datetime-local"],
+    input[type="number"],
+    textarea,
+    select {
+        width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 15px;
+        background-color: var(--dark-bg); /* Match body bg */
+        border: 1px solid var(--dark-accent);
+        color: var(--text-primary);
+        border-radius: var(--border-radius-sm);
+        font-size: 1em;
+        transition: var(--transition-fast);
+    }
+
+    input[type="text"]:focus,
+    input[type="datetime-local"]:focus,
+    input[type="number"]:focus,
+    textarea:focus,
+    select:focus {
+        outline: none;
+        border-color: var(--blue-focus);
+        box-shadow: 0 0 0 2px rgba(41, 121, 255, 0.3); /* Focus glow */
+        background-color: #2a2a2f; /* Slightly lighter focus bg */
+    }
+
+    input::placeholder {
+        color: var(--text-secondary);
+        opacity: 0.7;
+    }
+
+    input[type="checkbox"] {
+        margin-right: 10px;
+        vertical-align: middle;
+        width: 1.2em; /* Slightly larger checkbox */
+        height: 1.2em;
+        accent-color: var(--orange-glow); /* Style checkbox color */
+        cursor: pointer;
+    }
+
+    label[for] {
+        cursor: pointer;
+        font-weight: normal; /* Reset weight for labels linked to inputs */
+        text-transform: none; /* Normal case for most labels */
+        letter-spacing: normal;
+    }
+    /* Make specific labels uppercase again if needed */
+    .match-editor label:not(.checkbox-label),
+    .player-editor label:not(.checkbox-label),
+    .bracket-match-editor label:not(.checkbox-label) {
+         text-transform: uppercase; letter-spacing: 0.3px; font-size: 0.85em;
+    }
+
+    .checkbox-label {
+         display: flex;
+         align-items: center;
+         margin-top: 8px;
+         font-size: 0.95em;
+         font-weight: normal;
+         color: var(--text-primary);
+         cursor: pointer;
+    }
+    .checkbox-label input[type="checkbox"] {
+        margin-right: 10px;
+    }
+
+
+    /* --- Utility & Animation --- */
+    .hidden { display: none; }
+    .fade-in { animation: fadeIn 0.6s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- Table Styling --- */
+    .table-container {
+        overflow-x: auto;
+        margin-bottom: 20px;
+        border: 1px solid var(--dark-accent);
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--shadow-sm);
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed; /* Keep fixed layout */
+    }
+    th, td {
+        padding: 12px 10px; /* Increased padding */
+        text-align: left;
+        word-wrap: break-word;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--dark-accent); /* Only bottom borders */
+    }
+    th {
+        background-color: rgba(255, 87, 34, 0.15); /* Slightly stronger header bg */
+        color: var(--orange-glow);
+        font-size: 0.8em; /* Smaller header font */
+        font-weight: 600;
+        text-transform: uppercase;
+        white-space: nowrap;
+        letter-spacing: 0.5px;
+        border-bottom-width: 2px; /* Thicker bottom border for header */
+        border-bottom-color: var(--orange-dim);
+    }
+    td {
+        font-size: 0.95em;
+        color: var(--text-primary);
+    }
+    tbody tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.03); /* Subtle striping */
+    }
+    tbody tr:hover {
+        background-color: rgba(255, 87, 34, 0.1); /* Hover effect */
+    }
+    td input[type="text"], td input[type="number"] {
+        width: calc(100% - 16px);
+        padding: 6px 8px; /* Slightly more padding */
+        margin-bottom: 0;
+        font-size: 0.95em;
+        background-color: var(--dark-card); /* Slightly different bg in table */
+        border-color: #444;
+    }
+    td input:focus {
+         background-color: var(--dark-accent);
+    }
+    td button {
+        padding: 5px 10px;
+        font-size: 0.8em;
+        margin: 0;
+    }
+
+    /* --- Editor Sections --- */
+    .match-editor,
+    .player-editor {
+         margin-bottom: 25px;
+         padding: 20px;
+         border: none; /* Remove dashed border */
+         border-radius: var(--border-radius-md);
+         background-color: var(--dark-card); /* Use card background */
+         box-shadow: var(--shadow-md);
+         transition: var(--transition-medium);
+    }
+    .match-editor:hover,
+    .player-editor:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35); /* Slightly stronger hover shadow */
+    }
+
+    .match-editor h4,
+    .player-editor h4 {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--dark-accent);
+        color: var(--text-primary); /* Normal text color for these headers */
+    }
+
+    /* Grid layout for match editor */
+    .match-editor > div:not(.form-actions) { /* Target the grid container */
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Adjust minmax */
+        gap: 15px 20px; /* Row and column gap */
+    }
+
+
+    /* --- Bracket Editor Styles --- */
+    #bracket-editor {
+        display: flex;
+        overflow-x: auto;
+        padding: 20px;
+        gap: 25px; /* Increased gap */
+        background-color: var(--dark-bg); /* Match body */
+        border-radius: var(--border-radius-lg);
+        min-height: 250px; /* Increased height */
+        margin-bottom: 20px;
+        border: 1px solid var(--dark-accent);
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.3); /* Inner shadow */
+    }
+    .bracket-round-column {
+        flex: 0 0 340px; /* Wider rounds */
+        min-width: 300px;
+        padding: 20px;
+        border: 1px solid var(--dark-accent);
+        border-radius: var(--border-radius-md);
+        background-color: var(--dark-card); /* Use card bg */
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Increased gap */
+        box-shadow: var(--shadow-md);
+        transition: var(--transition-medium);
+    }
+    .bracket-round-column:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .bracket-round-column h4 {
+        margin-top: 0;
+        padding-bottom: 10px;
+        border-bottom: 1px dashed var(--orange-dim);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--orange-glow);
+        font-size: 1.1em; /* Slightly larger round title */
+    }
+    .bracket-round-column h4 input[type="text"] {
+        flex-grow: 1;
+        margin-right: 10px;
+        padding: 8px;
+        width: auto;
+        font-size: 1em;
+        background: transparent; /* Cleaner look */
+        border: none;
+        border-bottom: 1px solid var(--dark-accent);
+        color: var(--text-primary);
+        border-radius: 0;
+    }
+     .bracket-round-column h4 input[type="text"]:focus {
+        background: var(--dark-bg);
+        border-bottom-color: var(--blue-focus);
+        box-shadow: none;
+    }
+
+    .bracket-match-editor {
+        padding: 15px;
+        border: 1px solid var(--dark-accent); /* Subtle border */
+        border-radius: var(--border-radius-sm);
+        background-color: var(--dark-bg); /* Match body bg */
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* Spacing inside match editor */
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition-fast);
+    }
+     .bracket-match-editor:focus-within { /* Highlight when editing inside */
+        border-color: var(--blue-focus);
+        box-shadow: 0 0 8px rgba(41, 121, 255, 0.2);
+    }
+
+    .bracket-match-editor h5 {
+        margin: 0 0 10px 0; /* Adjusted margin */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1em;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+    .bracket-match-editor h5 button,
+    .bracket-round-column h4 button { /* Style the small 'X' delete buttons */
+        padding: 4px 8px;
+        font-size: 0.75em;
+        margin: 0;
+        background: var(--dark-accent); /* Less intrusive bg */
+        color: var(--text-secondary);
+        border-radius: var(--border-radius-sm);
+        line-height: 1; /* Ensure 'X' fits */
+        box-shadow: none;
+    }
+    .bracket-match-editor h5 button:hover,
+    .bracket-round-column h4 button:hover {
+        background: var(--red-error); /* Red on hover only */
+        color: white;
+        transform: none; /* No lift for small buttons */
+    }
+
+    .bracket-match-editor label:not(.checkbox-label) {
+        font-size: 0.8em;
+        margin-bottom: 3px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+    .bracket-match-editor input[type="text"],
+    .bracket-match-editor input[type="number"] {
+        width: 100%;
+        padding: 8px; /* Consistent padding */
+        margin-bottom: 8px;
+        font-size: 0.9em;
+        box-sizing: border-box;
+    }
+    .bracket-controls {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--dark-accent);
+    }
+    .bracket-controls button { margin-right: 12px; }
+    .bracket-controls p i { color: var(--text-secondary); font-size: 0.9em; }
+
+    /* --- Loading & Status Indicators --- */
+    .loading-indicator {
+        font-style: italic;
+        color: var(--text-secondary);
+        padding: 30px 20px; /* More padding */
+        text-align: center;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 1.1em;
+        opacity: 0.8;
+    }
+    #save-status {
+        text-align: center;
+        padding: 12px 0;
+        min-height: 1.8em; /* Ensure space */
+        font-weight: 600;
+        font-size: 1.05em;
+        border-radius: var(--border-radius-sm);
+        margin: 15px auto; /* Center it somewhat */
+        max-width: 80%;
+        transition: all 0.3s ease;
+    }
+    #save-status:not(:empty) { /* Style only when it has content */
+         background-color: rgba(46, 204, 113, 0.1); /* Default green background */
+         border: 1px solid var(--green-live);
+    }
+     /* Error status gets specific styling from JS */
+
+
+    /* --- Online Users Presence --- */
+    #online-users-section {
+        margin-bottom: 25px;
+        padding: 20px;
+        background-color: var(--dark-card); /* Use card bg */
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--dark-accent);
+        box-shadow: var(--shadow-sm);
+    }
+    #online-users-section h4 {
+        margin: 0 0 20px 0; /* Reset top margin */
+        color: var(--text-secondary);
+        font-size: 0.9em;
+        font-weight: 600;
+        border-bottom: 1px dashed var(--dark-accent);
+        padding-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    #online-users-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px 25px; /* Gaps */
+        min-height: 60px;
+        align-items: center;
+    }
+    .user-presence-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    .user-presence-indicator:hover {
+         transform: scale(1.05);
+    }
+
+    .user-presence-circle {
+        width: 45px; /* Larger circle */
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, var(--orange-glow), var(--orange-dim)); /* Use button gradient */
+        color: white; /* White text on orange */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3em; /* Larger initial */
+        font-weight: bold;
+        margin-bottom: 6px;
+        border: 3px solid transparent;
+        box-sizing: border-box;
+        text-transform: uppercase;
+        box-shadow: var(--shadow-sm);
+        position: relative; /* For potential pseudo-elements */
+    }
+    .user-presence-circle.live {
+        border-color: var(--green-live);
+        box-shadow: 0 0 12px rgba(76, 175, 80, 0.6); /* Green glow for live */
+        animation: pulseLive 2s infinite ease-in-out;
+    }
+     @keyframes pulseLive {
+        0% { box-shadow: 0 0 8px rgba(76, 175, 80, 0.4); }
+        50% { box-shadow: 0 0 16px rgba(76, 175, 80, 0.8); }
+        100% { box-shadow: 0 0 8px rgba(76, 175, 80, 0.4); }
+    }
+
+    .user-presence-name {
+        font-size: 0.8em; /* Slightly larger name */
+        color: var(--text-secondary);
+        max-width: 80px; /* Allow slightly wider names */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    /* --- Specific Overrides & Responsive Tweaks --- */
+     #login-container p { text-align: center; } /* Center login text */
+     #login-button { display: block; margin: 20px auto; padding: 15px 30px; font-size: 1.1em; } /* Center login button */
+     #login-error, #auth-check-message { text-align: center; margin-top: 15px; font-weight: 600;}
+
+    /* Example: Smaller padding on mobile? */
+    @media (max-width: 768px) {
+        body { padding: 15px; }
+        #login-container, #admin-panel { padding: 20px; }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.5em; }
+        h3 { font-size: 1.3em; }
+        button { padding: 10px 15px; font-size: 0.9em; }
+        #save-matches-changes, #save-leaderboard-changes, #save-bracket-changes { padding: 12px 20px; font-size: 0.95em; }
+        .bracket-round-column { flex-basis: 300px; min-width: 280px; } /* Slightly smaller bracket columns */
+        td input[type="text"], td input[type="number"] { font-size: 0.9em; }
+        th, td { padding: 10px 8px; }
+        .user-presence-circle { width: 40px; height: 40px; font-size: 1.2em; }
+        .user-presence-name { font-size: 0.75em; max-width: 70px; }
+    }
+
+</style>
+</head>
+<body>
+
+<h1>Poxel Competitive - Admin</h1>
+
+<!-- Login Section -->
+<div id="login-container">
+    <h2>Admin Login</h2>
+    <p>Please log in with your authorized Google account.</p>
+    <button id="login-button">Login with Google</button>
+    <p id="login-error" style="color: var(--red-error); text-align: center; margin-top: 10px;"></p>
+    <p id="auth-check-message" style="color: orange; text-align: center; margin-top: 10px;"></p>
+</div>
+
+<!-- Admin Panel (Initially Hidden) -->
+<div id="admin-panel" class="hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <h2>Management Dashboard</h2>
+        <div>
+            <span id="user-info" style="margin-right: 15px; color: var(--text-secondary); font-size: 0.9em;"></span>
+            <button id="logout-button">Logout</button>
+        </div>
+    </div>
+
+    <!-- START: Online Users Section -->
+    <div id="online-users-section">
+        <h4>Online Admins:</h4>
+        <div id="online-users-container">
+            <div class="loading-indicator">Loading presence...</div>
+            <!-- Online users will be rendered here -->
+        </div>
+    </div>
+    <!-- END: Online Users Section -->
+
+    <p id="save-status"></p>
+
+    <!-- Upcoming Matches Management -->
+    <div class="admin-section">
+        <h3>Upcoming Matches</h3>
+        <div id="matches-list">
+             <div class="loading-indicator">Loading matches...</div>
+        </div>
+         <div class="button-group">
+            <button id="add-match-button">Add New Match</button>
+            <button id="save-matches-changes" disabled>Save All Match Changes</button>
+        </div>
+        <div id="add-match-form" class="match-editor hidden">
+             <h4>New Match Details</h4>
+             <label for="new-match-date">Date & Time:</label>
+             <input type="datetime-local" id="new-match-date">
+             <label for="new-match-type">Type:</label>
+             <input type="text" id="new-match-type" placeholder="e.g., Group Stage - Week 1">
+             <label for="new-match-team1-name">Team 1 Name:</label>
+             <input type="text" id="new-match-team1-name" placeholder="Team Alpha">
+             <label for="new-match-team1-logo">Team 1 Logo (Max 3 Chars):</label>
+             <input type="text" id="new-match-team1-logo" maxlength="3" placeholder="TA">
+             <label for="new-match-team2-name">Team 2 Name:</label>
+             <input type="text" id="new-match-team2-name" placeholder="Team Bravo">
+             <label for="new-match-team2-logo">Team 2 Logo (Max 3 Chars):</label>
+             <input type="text" id="new-match-team2-logo" maxlength="3" placeholder="TB">
+             <label for="new-match-venue">Venue:</label>
+             <input type="text" id="new-match-venue" placeholder="Online / Arena Name">
+             <label for="new-match-stream">Stream Link:</label>
+             <input type="text" id="new-match-stream" value="https://www.twitch.tv/poxelcompetitive/">
+             <div class="form-actions">
+                 <button type="button" onclick="document.getElementById('add-match-form').classList.add('hidden')">Cancel</button>
+                 <button id="save-new-match">Save New Match</button>
+             </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Management -->
+    <div class="admin-section">
+        <h3>Leaderboard</h3>
+        <div id="leaderboard-list" class="table-container">
+             <table>
+                 <thead>
+                     <tr>
+                         <!-- Adjusted Col Widths (Approximate) -->
+                         <th style="width: 5%;">Rank</th>
+                         <th style="width: 20%;">Player Name</th>
+                         <th style="width: 8%;">Avatar</th>
+                         <th style="width: 9%;">Matches</th> <!-- Adjusted -->
+                         <th style="width: 9%;">Wins</th> <!-- Adjusted -->
+                         <th style="width: 9%;">Losses</th> <!-- Adjusted -->
+                         <th style="width: 9%;">Kills</th>   <!-- KILLS HEADER -->
+                         <th style="width: 11%;">Points</th> <!-- Adjusted -->
+                         <th style="width: 11%;">Actions</th> <!-- Adjusted -->
+                     </tr>
+                 </thead>
+                 <tbody id="leaderboard-body-admin">
+                     <tr><td colspan="9" class="loading-indicator">Loading leaderboard...</td></tr> <!-- Colspan="9" -->
+                 </tbody>
+             </table>
+        </div>
+         <div class="button-group">
+             <button id="add-player-button">Add New Player</button>
+             <button id="save-leaderboard-changes" disabled>Save Leaderboard Changes</button>
+         </div>
+         <div id="add-player-form" class="player-editor hidden">
+             <h4>New Player Details</h4>
+             <label for="new-player-name">Name (Must match profile exactly):</label>
+             <input type="text" id="new-player-name" placeholder="Case-Sensitive Display Name">
+             <label for="new-player-avatar">Avatar (Max 3 Chars):</label>
+             <input type="text" id="new-player-avatar" maxlength="3" placeholder="AB">
+             <label for="new-player-matches">Matches:</label>
+             <input type="number" id="new-player-matches" value="0" min="0">
+             <label for="new-player-wins">Wins:</label>
+             <input type="number" id="new-player-wins" value="0" min="0">
+             <label for="new-player-losses">Losses:</label>
+             <input type="number" id="new-player-losses" value="0" min="0">
+             <label for="new-player-kills">Kills:</label> <!-- KILLS LABEL -->
+             <input type="number" id="new-player-kills" value="0" min="0"> <!-- KILLS INPUT -->
+             <label for="new-player-points">Points:</label>
+             <input type="number" id="new-player-points" value="0">
+              <div class="form-actions">
+                 <button type="button" onclick="document.getElementById('add-player-form').classList.add('hidden')">Cancel</button>
+                 <button id="save-new-player">Save New Player</button>
+             </div>
+        </div>
+    </div>
+
+    <!-- Tournament Bracket Management -->
+    <div class="admin-section">
+        <h3>Tournament Bracket</h3>
+        <label for="bracket-select">Select Bracket:</label>
+        <select id="bracket-select">
+            <option value="pro">Pro Tourney</option>
+            <option value="novice">Novice Tourney</option>
+        </select>
+         <div id="bracket-loading-indicator" class="loading-indicator hidden">Loading...</div>
+        <div id="bracket-editor">
+             <!-- Bracket columns/matches rendered here -->
+        </div>
+        <div class="bracket-controls">
+             <button id="add-round-button">Add New Round</button>
+             <button id="save-bracket-changes" disabled>Save Bracket Changes</button>
+              <p><i>Note: Rounds are displayed horizontally. Scroll if needed.</i></p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+    // =========================================================================
+    // --- SCRIPT START ---
+    // =========================================================================
+
+    const firebaseConfig = {
+        // YOUR FIREBASE CONFIG IS OK
+        apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Use environment variables ideally
+        authDomain: "poxelcomp.firebaseapp.com",
+        projectId: "poxelcomp",
+        storageBucket: "poxelcomp.firebasestorage.app",
+        messagingSenderId: "620490990104",
+        appId: "1:620490990104:web:709023eb464c7d886b996d",
+    };
+
+    // --- Initialize Firebase ---
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+    // --- DOM Elements (No change here) ---
+    const loginContainer = document.getElementById('login-container');
+    const adminPanel = document.getElementById('admin-panel');
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
+    const userInfo = document.getElementById('user-info');
+    const loginError = document.getElementById('login-error');
+    const authCheckMessage = document.getElementById('auth-check-message');
+    const saveStatus = document.getElementById('save-status');
+    const onlineUsersContainer = document.getElementById('online-users-container');
+    const matchesList = document.getElementById('matches-list');
+    const addMatchButton = document.getElementById('add-match-button');
+    const addMatchForm = document.getElementById('add-match-form');
+    const saveNewMatchButton = document.getElementById('save-new-match');
+    const saveMatchesChangesButton = document.getElementById('save-matches-changes');
+    const leaderboardList = document.getElementById('leaderboard-list');
+    const leaderboardBodyAdmin = document.getElementById('leaderboard-body-admin');
+    const addPlayerButton = document.getElementById('add-player-button');
+    const addPlayerForm = document.getElementById('add-player-form');
+    const saveNewPlayerButton = document.getElementById('save-new-player');
+    const saveLeaderboardChangesButton = document.getElementById('save-leaderboard-changes');
+    const bracketSelect = document.getElementById('bracket-select');
+    const bracketEditor = document.getElementById('bracket-editor');
+    const bracketLoadingIndicator = document.getElementById('bracket-loading-indicator');
+    const addRoundButton = document.getElementById('add-round-button');
+    const saveBracketChangesButton = document.getElementById('save-bracket-changes');
+
+    // --- Global State (No change here) ---
+    let currentBracketData = { rounds: [] };
+    let currentBracketType = 'pro';
+    let currentUserId = null;
+    let presenceUpdateInterval = null;
+    let onlineUsersListenerUnsubscribe = null;
+    let saveStatusTimeout;
+
+    // =========================================================================
+    // --- Core Functions ---
+    // =========================================================================
+
+    // === *** ORIGINAL checkAdminAuthorization FUNCTION - RETAINED BUT NOT USED BY MODIFIED onAuthStateChanged *** ===
+    // This function remains in the code but is bypassed by the modified auth listener below.
+    // You can uncomment the call to it later when you implement admin collection checks.
+    async function checkAdminAuthorization(user) {
+        if (!user || !user.uid) return false;
+        console.log(`Checking authorization for UID: ${user.uid}`);
+        authCheckMessage.textContent = 'Checking authorization...';
+        authCheckMessage.style.color = 'orange';
+        try {
+            // Force refresh the token to get latest claims
+            const idTokenResult = await user.getIdTokenResult(true);
+            const isAdminClaim = idTokenResult.claims.admin === true;
+
+            if (isAdminClaim) {
+                console.log(`UID ${user.uid} IS authorized via 'admin:true' claim.`);
+                authCheckMessage.textContent = ''; // Clear message on success
+                return true;
+            } else {
+                console.log(`UID ${user.uid} is NOT authorized. Missing or false 'admin' claim.`);
+                authCheckMessage.textContent = 'Access Denied: Your account does not have admin privileges.';
+                authCheckMessage.style.color = 'var(--red-error)';
+                return false;
+            }
+        } catch (error) {
+            console.error("Error checking admin token claims:", error);
+            authCheckMessage.textContent = `Authorization check error: ${error.message}`;
+            authCheckMessage.style.color = 'var(--red-error)';
+            // This error could be network issue, revoked session, etc. Treat as unauthorized.
+            return false;
+        }
+    }
+    // === *** END OF ORIGINAL CHECK FUNCTION *** ===
+
+    // --- Presence Management ---
+    // --- registerPresence, removePresence, listenForOnlineAdmins, renderOnlineUsers ---
+    // --- These functions remain the same as before ---
+    const PRESENCE_COLLECTION = 'online_admins'; // Clarity: Changed name
+    const PRESENCE_TIMEOUT_MS = 90 * 1000;
+    const PRESENCE_UPDATE_INTERVAL_MS = 60 * 1000;
+
+    async function registerPresence(user) {
+        if (!user || !user.uid) return;
+        currentUserId = user.uid;
+        const presenceRef = db.collection(PRESENCE_COLLECTION).doc(user.uid);
+        const userData = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email.split('@')[0],
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        try {
+            console.log(`Registering presence for ${user.email}`);
+            await presenceRef.set(userData, { merge: true });
+            if (presenceUpdateInterval) clearInterval(presenceUpdateInterval);
+            presenceUpdateInterval = setInterval(async () => {
+                if (auth.currentUser && auth.currentUser.uid === currentUserId) {
+                    try {
+                        await presenceRef.update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
+                    } catch (error) {
+                         if (error.code === 'not-found') { // Handle doc deletion during interval
+                             console.warn("Presence doc not found during update, attempting to set again.");
+                             await presenceRef.set(userData, { merge: true }).catch(e => console.error("Error resetting presence:", e));
+                         } else {
+                            console.error("Error updating presence:", error);
+                            clearInterval(presenceUpdateInterval); // Stop on other errors
+                         }
+                    }
+                } else {
+                    clearInterval(presenceUpdateInterval);
+                    console.log("User changed/logged out, stopping presence updates.");
+                }
+            }, PRESENCE_UPDATE_INTERVAL_MS);
+            listenForOnlineAdmins();
+        } catch (error) {
+            console.error("Error registering presence:", error);
+            if (onlineUsersContainer) onlineUsersContainer.innerHTML = '<div class="loading-indicator" style="color: var(--red-error);">Error setting up presence.</div>';
+        }
+    }
+
+    async function removePresence(uid) {
+        if (!uid) return;
+        console.log(`Removing presence for UID: ${uid}`);
+        if (presenceUpdateInterval) clearInterval(presenceUpdateInterval);
+        if (onlineUsersListenerUnsubscribe) onlineUsersListenerUnsubscribe();
+        presenceUpdateInterval = null;
+        onlineUsersListenerUnsubscribe = null;
+        const userToRemove = uid; // Capture UID before clearing global
+        currentUserId = null; // Clear global ID
+
+        try {
+            await db.collection(PRESENCE_COLLECTION).doc(userToRemove).delete();
+            console.log(`Presence document deleted for ${userToRemove}`);
+        } catch (error) {
+             if (error.code !== 'not-found') { // Ignore if already deleted
+                console.error("Error removing presence document:", error);
+             }
+        }
+        if(onlineUsersContainer) onlineUsersContainer.innerHTML = '<div class="loading-indicator">Logged out.</div>';
+    }
+
+    function listenForOnlineAdmins() {
+        if (onlineUsersListenerUnsubscribe) onlineUsersListenerUnsubscribe();
+        if (!currentUserId) {
+            console.warn("Cannot listen for online admins without a currentUserId.");
+            return;
+        }
+        // Listen for real-time changes, filter client-side for timeout
+        const query = db.collection(PRESENCE_COLLECTION);
+        onlineUsersListenerUnsubscribe = query.onSnapshot((snapshot) => {
+            const now = Date.now();
+            const activeUsers = [];
+            snapshot.forEach(doc => {
+                const user = doc.data();
+                if (!user?.uid || !user.email || !user.lastSeen?.toDate) {
+                    console.warn("Skipping invalid presence document:", doc.id, user); return;
+                }
+                if (now - user.lastSeen.toDate().getTime() < PRESENCE_TIMEOUT_MS) {
+                    activeUsers.push(user);
+                }
+            });
+            renderOnlineUsers(activeUsers);
+        }, (error) => {
+            console.error("Error in presence listener:", error);
+            if(onlineUsersContainer) onlineUsersContainer.innerHTML = `<div class="loading-indicator" style="color: var(--red-error);">Error listening: ${error.message}</div>`;
+            if (onlineUsersListenerUnsubscribe) onlineUsersListenerUnsubscribe();
+            onlineUsersListenerUnsubscribe = null;
+        });
+    }
+
+    function renderOnlineUsers(users) {
+        if (!onlineUsersContainer) return;
+        onlineUsersContainer.innerHTML = '';
+
+        if (users.length === 0 || (users.length === 1 && users[0].uid === currentUserId)) {
+            onlineUsersContainer.innerHTML = '<div class="loading-indicator" style="font-size:0.9em;">No other admins currently active.</div>';
+            return;
+        }
+
+        users.sort((a, b) => (a.displayName || a.email).localeCompare(b.displayName || b.email));
+
+        users.forEach(user => {
+            if (user.uid === currentUserId) return; // Don't show self
+            const indicatorDiv = document.createElement('div');
+            indicatorDiv.classList.add('user-presence-indicator');
+            const circleDiv = document.createElement('div');
+            circleDiv.classList.add('user-presence-circle', 'live');
+            const initial = (user.displayName || user.email)?.charAt(0).toUpperCase() || '?';
+            circleDiv.textContent = initial;
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('user-presence-name');
+            let name = user.displayName ? user.displayName.split(' ')[0] : user.email.split('@')[0];
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+            nameSpan.textContent = name;
+            nameSpan.title = user.email;
+            indicatorDiv.appendChild(circleDiv);
+            indicatorDiv.appendChild(nameSpan);
+            onlineUsersContainer.appendChild(indicatorDiv);
+        });
+         // Handle case where only the current user is online (redundant check, but safe)
+         if (onlineUsersContainer.childElementCount === 0) {
+             onlineUsersContainer.innerHTML = '<div class="loading-indicator" style="font-size:0.9em;">You are the only admin online.</div>';
+         }
+    }
+
+
+    // --- showSaveStatus, clearAdminUI, enableSaveButtons, loadAdminData ---
+    // --- These functions remain the same as before ---
+     function showSaveStatus(message, isError = false) {
+        if (!saveStatus) return;
+        saveStatus.textContent = message;
+        // Apply CSS styling based on error status directly here if possible or use classes
+        saveStatus.style.color = isError ? 'var(--red-error)' : 'var(--green-live)'; // Match CSS colors
+        saveStatus.style.fontWeight = 'bold';
+        // If using background/border from CSS based on :not(:empty), adjust styles here if needed
+        if (isError) {
+            saveStatus.style.backgroundColor = 'rgba(229, 57, 53, 0.1)'; // Red background
+            saveStatus.style.borderColor = 'var(--red-error)';
+        } else {
+            saveStatus.style.backgroundColor = 'rgba(76, 175, 80, 0.1)'; // Green background
+            saveStatus.style.borderColor = 'var(--green-live)';
+        }
+        saveStatus.style.borderWidth = '1px';
+        saveStatus.style.borderStyle = 'solid';
+
+
+        clearTimeout(saveStatusTimeout);
+        saveStatusTimeout = setTimeout(() => {
+            if (saveStatus.textContent === message) {
+                 saveStatus.textContent = '';
+                 // Reset styles when cleared
+                 saveStatus.style.color = '';
+                 saveStatus.style.backgroundColor = '';
+                 saveStatus.style.borderColor = '';
+                 saveStatus.style.border = '';
+            }
+        }, isError ? 6000 : 4000);
+    }
+
+    function clearAdminUI() {
+         if (matchesList) matchesList.innerHTML = '<div class="loading-indicator">Loading matches...</div>';
+         if (leaderboardBodyAdmin) leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" class="loading-indicator">Loading leaderboard...</td></tr>`; // Colspan 9
+         if (bracketEditor) bracketEditor.innerHTML = '';
+         if (bracketLoadingIndicator) bracketLoadingIndicator.classList.add('hidden');
+         if (saveStatus) saveStatus.textContent = '';
+         if (addMatchForm) addMatchForm.classList.add('hidden');
+         if (addPlayerForm) addPlayerForm.classList.add('hidden');
+         currentBracketData = { rounds: [] };
+         currentBracketType = 'pro';
+         if (bracketSelect) bracketSelect.value = 'pro';
+         if (onlineUsersContainer) onlineUsersContainer.innerHTML = '<div class="loading-indicator">Loading presence...</div>';
+         if (presenceUpdateInterval) clearInterval(presenceUpdateInterval);
+         presenceUpdateInterval = null;
+         if (onlineUsersListenerUnsubscribe) onlineUsersListenerUnsubscribe();
+         onlineUsersListenerUnsubscribe = null;
+         console.log("Admin UI Cleared / Reset to loading states.");
+    }
+
+    function enableSaveButtons() {
+        if(saveMatchesChangesButton) saveMatchesChangesButton.disabled = false;
+        if(saveLeaderboardChangesButton) saveLeaderboardChangesButton.disabled = false;
+        if(saveBracketChangesButton) saveBracketChangesButton.disabled = false;
+    }
+
+     function loadAdminData() {
+        console.log("Loading admin data sections...");
+        showSaveStatus('');
+        // Disable buttons during load
+        if(saveMatchesChangesButton) saveMatchesChangesButton.disabled = true;
+        if(saveLeaderboardChangesButton) saveLeaderboardChangesButton.disabled = true;
+        if(saveBracketChangesButton) saveBracketChangesButton.disabled = true;
+
+        const loadPromises = [
+            loadMatchesAdmin(),
+            loadLeaderboardAdmin(),
+            loadBracketAdmin(bracketSelect ? bracketSelect.value : 'pro')
+        ];
+        Promise.allSettled(loadPromises).then((results) => {
+            console.log("Initial data load finished.");
+            const failedLoads = results.filter(result => result.status === 'rejected');
+            if (failedLoads.length > 0) {
+                 console.error("Some admin sections failed to load:", failedLoads);
+                 showSaveStatus("Error loading some admin data. Check console.", true);
+            }
+            // Enable buttons after load attempts (only if the panel is still visible)
+            if (!adminPanel.classList.contains('hidden')) {
+                enableSaveButtons();
+            }
+        });
+    }
+
+
+    // --- Auth State Change Listener ---
+    // === *** TEMPORARILY MODIFIED: Bypasses Admin Check *** ===
+    auth.onAuthStateChanged(async (user) => {
+        const trackedUserId = currentUserId; // Keep track for cleanup on sign-out
+        if (user) {
+            // --- BYPASSING ADMIN CHECK ---
+            // Instead of calling checkAdminAuthorization, we now assume *any* signed-in user is authorized for temporary access.
+            console.log("Auth state: Signed in (BYPASSING ADMIN CHECK)", { uid: user.uid, email: user.email });
+            loginError.textContent = '';
+            authCheckMessage.textContent = 'Access Granted (Admin Check Bypassed)'; // Indicate bypass
+            authCheckMessage.style.color = 'var(--green-live)'; // Use green for success indication
+
+            const isAuthorized = true; // Assume true since we are bypassing the check
+
+            if (isAuthorized) { // This will now always be true if 'user' exists
+                // console.log("Admin authorized."); // Commented out as it's not technically checking admin status
+                loginContainer.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                adminPanel.classList.add('fade-in');
+                userInfo.textContent = `Logged in as: ${user.displayName || user.email}`;
+                // Registration and data loading happens for any signed-in user now
+                await registerPresence(user);
+                loadAdminData();
+            }
+            // The 'else' block from the original checkAdminAuthorization is no longer needed here,
+            // as we are not denying access based on claims in this temporary setup.
+
+        } else {
+            // --- User is Signed Out ---
+            console.log("Auth state: Signed out.");
+            if (trackedUserId) await removePresence(trackedUserId); // Use tracked ID for cleanup
+            adminPanel.classList.add('hidden');
+            adminPanel.classList.remove('fade-in');
+            loginContainer.classList.remove('hidden');
+            userInfo.textContent = '';
+            loginError.textContent = '';
+            // Clear auth check message on manual sign out
+            authCheckMessage.textContent = '';
+            clearAdminUI();
+        }
+    });
+    // === *** END OF TEMPORARY MODIFICATION *** ===
+
+
+    // --- Login/Logout Button Listeners (No change here) ---
+    loginButton.addEventListener('click', () => {
+        loginError.textContent = ''; authCheckMessage.textContent = '';
+        auth.signInWithPopup(googleProvider).catch((error) => {
+            console.error("Google Sign-in failed:", error);
+            if (error.code === 'auth/popup-closed-by-user') {
+                 loginError.textContent = 'Login cancelled.';
+            } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-blocked') {
+                 loginError.textContent = 'Login popup blocked or cancelled. Please allow popups for this site.';
+            }
+             else {
+                 loginError.textContent = `Login failed: ${error.message}`;
+            }
+        });
+    });
+
+    logoutButton.addEventListener('click', async () => {
+        console.log("Logout button clicked.");
+        showSaveStatus('Logging out...', false);
+        try {
+            // Presence removal now handled by onAuthStateChanged using trackedUserId
+            await auth.signOut();
+        } catch (error) {
+            console.error("Sign out error:", error);
+            showSaveStatus(`Logout error: ${error.message}`, true);
+        }
+    });
+
+    // --- Matches Management ---
+    // --- loadMatchesAdmin, attachMatchDeleteListeners, saveNewMatchButton Listener, saveMatchesChangesButton Listener ---
+    // --- These functions remain the same as before ---
+    async function loadMatchesAdmin() {
+        if (!matchesList) return;
+        matchesList.innerHTML = '<div class="loading-indicator">Loading matches...</div>';
+        try {
+            const snapshot = await db.collection('matches').orderBy('date', 'desc').limit(50).get();
+            matchesList.innerHTML = '';
+            if (snapshot.empty) {
+                matchesList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No matches found.</p>';
+                return;
+            }
+            snapshot.forEach(doc => {
+                const match = { id: doc.id, ...doc.data() };
+                // Ensure date exists and is a Timestamp before converting
+                 const dateObj = match.date?.toDate ? match.date.toDate() : null;
+                 const dateForInput = dateObj ? new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
+
+                const matchDiv = document.createElement('div');
+                matchDiv.classList.add('match-editor');
+                matchDiv.dataset.id = match.id;
+                // Use nullish coalescing (??) for cleaner defaults
+                matchDiv.innerHTML = `
+                    <h4>Match: ${match.type ?? 'Unnamed'} (ID: ${match.id.substring(0,6)}...)</h4>
+                    <div> <!-- Removed inline style, using CSS grid rule -->
+                        <div><label>Date & Time:</label><input type="datetime-local" value="${dateForInput}" data-field="date"></div>
+                        <div><label>Type:</label><input type="text" value="${match.type ?? ''}" data-field="type"></div>
+                        <div><label>Team 1:</label><input type="text" value="${match.team1?.name ?? ''}" data-field="team1.name"></div>
+                        <div><label>Team 1 Logo:</label><input type="text" value="${match.team1?.logo ?? ''}" data-field="team1.logo" maxlength="3"></div>
+                        <div><label>Team 2:</label><input type="text" value="${match.team2?.name ?? ''}" data-field="team2.name"></div>
+                        <div><label>Team 2 Logo:</label><input type="text" value="${match.team2?.logo ?? ''}" data-field="team2.logo" maxlength="3"></div>
+                        <div><label>Venue:</label><input type="text" value="${match.venue ?? ''}" data-field="venue"></div>
+                        <div><label>Stream:</label><input type="text" value="${match.streamLink ?? ''}" data-field="streamLink"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="delete-match-button delete-button" data-id="${match.id}">Delete Match</button>
+                    </div>`;
+                matchesList.appendChild(matchDiv);
+            });
+            attachMatchDeleteListeners();
+        } catch (error) {
+            console.error("Error loading matches:", error);
+            matchesList.innerHTML = '<p style="color: var(--red-error); text-align: center;">Error loading matches.</p>';
+        }
+    }
+
+    function attachMatchDeleteListeners() {
+        // Use event delegation on the matchesList container for efficiency
+        matchesList.addEventListener('click', async (e) => {
+            if (e.target.matches('.delete-match-button')) {
+                 const button = e.target;
+                 const id = button.dataset.id;
+                 if (!id) return;
+
+                 const editorDiv = button.closest('.match-editor');
+                 const matchType = editorDiv?.querySelector('input[data-field="type"]')?.value || `ID: ${id}`;
+
+                 if (confirm(`DELETE match "${matchType}"? This cannot be undone.`)) {
+                     button.disabled = true; // Prevent double clicks
+                     try {
+                         await db.collection('matches').doc(id).delete();
+                         showSaveStatus('Match deleted!', false);
+                         editorDiv.remove();
+                         if (!matchesList.querySelector('.match-editor')) {
+                              matchesList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No matches found.</p>';
+                         }
+                     } catch (error) {
+                         console.error("Error deleting match:", error);
+                         showSaveStatus(`Error deleting match: ${error.message}`, true);
+                         button.disabled = false; // Re-enable button on error
+                     }
+                 }
+            }
+        });
+        // Remove old direct listeners if they exist (safer if code runs multiple times)
+        document.querySelectorAll('#matches-list .delete-match-button').forEach(button => {
+             // Optional: Could remove old listeners here if needed, but delegation is better.
+        });
+    }
+
+    addMatchButton.addEventListener('click', () => {
+        addMatchForm.classList.toggle('hidden');
+        if (!addMatchForm.classList.contains('hidden')) {
+             addMatchForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); // Use nearest
+             document.getElementById('new-match-date').focus();
+        }
+    });
+
+    saveNewMatchButton.addEventListener('click', async () => {
+        saveNewMatchButton.disabled = true;
+        const dateValue = document.getElementById('new-match-date').value;
+        let matchDateTimestamp = null;
+        try {
+            if (!dateValue) throw new Error("Date & Time is required.");
+            const localDate = new Date(dateValue);
+            if (isNaN(localDate.getTime())) throw new Error("Invalid Date & Time format.");
+            matchDateTimestamp = firebase.firestore.Timestamp.fromDate(localDate);
+        } catch (e) {
+            showSaveStatus(`Error: ${e.message || 'Invalid Date format.'}`, true);
+            saveNewMatchButton.disabled = false;
+            document.getElementById('new-match-date').focus(); return;
+        }
+
+        const newMatchData = {
+            date: matchDateTimestamp,
+            type: document.getElementById('new-match-type').value.trim(),
+            team1: { name: document.getElementById('new-match-team1-name').value.trim(), logo: document.getElementById('new-match-team1-logo').value.trim().toUpperCase() },
+            team2: { name: document.getElementById('new-match-team2-name').value.trim(), logo: document.getElementById('new-match-team2-logo').value.trim().toUpperCase() },
+            venue: document.getElementById('new-match-venue').value.trim(),
+            streamLink: document.getElementById('new-match-stream').value.trim() || null // Store null if empty
+        };
+
+        if (!newMatchData.type || !newMatchData.team1.name || !newMatchData.team2.name) {
+            showSaveStatus('Error: Type, Team 1 Name, and Team 2 Name are required.', true);
+             saveNewMatchButton.disabled = false; return;
+        }
+
+        showSaveStatus('Saving new match...', false);
+        try {
+            await db.collection('matches').add(newMatchData);
+            showSaveStatus('New match added!', false);
+            addMatchForm.classList.add('hidden');
+            // Clear form, resetting stream link to default
+            addMatchForm.querySelectorAll('input[type="text"], input[type="datetime-local"]').forEach(input => {
+                if (input.id === 'new-match-stream') {
+                    input.value = 'https://www.twitch.tv/poxelcompetitive/';
+                } else {
+                    input.value = '';
+                }
+            });
+            loadMatchesAdmin(); // Reload the list
+        } catch (error) {
+            console.error("Error adding match:", error);
+            showSaveStatus(`Error adding match: ${error.message}`, true);
+        } finally {
+             saveNewMatchButton.disabled = false;
+        }
+    });
+
+    saveMatchesChangesButton.addEventListener('click', async () => {
+        saveMatchesChangesButton.disabled = true;
+        const updates = [];
+        let errorsFound = false;
+
+        document.querySelectorAll('#matches-list .match-editor').forEach(editor => {
+            const id = editor.dataset.id;
+            if (!id) return;
+            // Reset potential error styles
+            editor.style.border = '';
+            editor.querySelectorAll('input').forEach(inp => inp.style.backgroundColor = '');
+
+            const matchData = { team1: {}, team2: {} };
+            let hasEditorError = false;
+
+            try { // Wrap potential errors for each editor
+                const dateInput = editor.querySelector('input[data-field="date"]');
+                if (dateInput) {
+                     const dateValue = dateInput.value;
+                     if (dateValue) {
+                         const localDate = new Date(dateValue);
+                         if (isNaN(localDate.getTime())) {
+                             throw new Error(`Invalid Date format in Match ID ${id.substring(0,6)}...`);
+                         }
+                         matchData.date = firebase.firestore.Timestamp.fromDate(localDate);
+                     } else {
+                         matchData.date = null; // Allow clearing date
+                     }
+                }
+
+                editor.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
+                    if (input.dataset.field === 'date') return; // Skip date input here
+                    const fieldPath = input.dataset.field;
+                    if (!fieldPath) return;
+
+                    let value = input.value.trim();
+                    if (fieldPath.endsWith('.logo')) {
+                        value = value.toUpperCase();
+                    }
+
+                    // Basic nested property setting
+                    if (fieldPath.includes('.')) {
+                        const parts = fieldPath.split('.');
+                        if (parts.length === 2) {
+                            if (!matchData[parts[0]]) matchData[parts[0]] = {}; // Initialize parent object if needed
+                            matchData[parts[0]][parts[1]] = value || null; // Store null if empty string for nested fields
+                        }
+                    } else {
+                        matchData[fieldPath] = value || null; // Store null if empty string
+                    }
+                });
+
+                // Validation
+                if (!matchData.type || !matchData.team1?.name || !matchData.team2?.name) {
+                    hasEditorError = true;
+                    console.error(`Missing required fields (Type, T1 Name, T2 Name) for Match ID ${id.substring(0,6)}...`);
+                    // Highlight specific required fields? (More complex)
+                }
+
+            } catch (e) {
+                 console.error(`Validation error for match ${id}:`, e);
+                 hasEditorError = true;
+            }
+
+            if (hasEditorError) {
+                 editor.style.border = '2px solid var(--red-error)'; // Highlight the whole editor box on error
+                 errorsFound = true;
+            } else {
+                updates.push({ id: id, data: matchData });
+            }
+        });
+
+        if (errorsFound) {
+            showSaveStatus('Errors found in highlighted matches. Please fix and save again.', true);
+            saveMatchesChangesButton.disabled = false; // Re-enable button
+            return;
+        }
+        if (updates.length === 0) {
+            showSaveStatus('No changes detected to save.', false);
+            saveMatchesChangesButton.disabled = false; // Re-enable button
+            return;
+        }
+
+        showSaveStatus(`Saving ${updates.length} match changes...`, false);
+        const batch = db.batch();
+        updates.forEach(update => {
+            const docRef = db.collection('matches').doc(update.id);
+            batch.update(docRef, update.data);
+        });
+
+        try {
+            await batch.commit();
+            showSaveStatus(`${updates.length} match(es) updated successfully!`, false);
+             // Optionally reload matches to show clean data or just reset borders
+             document.querySelectorAll('#matches-list .match-editor').forEach(editor => editor.style.border = '');
+        } catch (error) {
+            console.error("Error committing match batch:", error);
+            showSaveStatus(`Error saving match changes: ${error.message}`, true);
+        } finally {
+            saveMatchesChangesButton.disabled = false; // Re-enable button regardless of outcome
+        }
+    });
+
+    // --- Leaderboard Management ---
+    // --- loadLeaderboardAdmin, attachPlayerDeleteListeners, addPlayerButton listener, saveNewPlayerButton Listener, saveLeaderboardChangesButton Listener ---
+    // --- These functions remain the same as before (already correct) ---
+    async function loadLeaderboardAdmin() {
+        if (!leaderboardBodyAdmin) return;
+        leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" class="loading-indicator">Loading leaderboard...</td></tr>`; // Colspan="9"
+        try {
+            const snapshot = await db.collection('leaderboard').orderBy('points', 'desc').limit(100).get();
+            leaderboardBodyAdmin.innerHTML = ''; // Clear loading
+            let rank = 1;
+            if (snapshot.empty) {
+                leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No players found.</td></tr>`; // Colspan="9"
+                return;
+            }
+            snapshot.forEach(doc => {
+                const player = { id: doc.id, ...doc.data() }; // id is the UID
+                const row = document.createElement('tr');
+                row.dataset.id = player.id;
+
+                // Use nullish coalescing for defaults
+                const matches = player.matches ?? 0;
+                const wins = player.wins ?? 0;
+                const losses = player.losses ?? 0;
+                const kills = player.kills ?? 0;
+                const points = player.points ?? 0;
+                const name = player.name ?? '';
+                const avatar = player.avatar ?? '';
+
+                // Ensure required attribute is only on name field
+                row.innerHTML = `
+                    <td>${rank++}</td>
+                    <td><input type="text" value="${name}" data-field="name" required title="Player Name (Case-Sensitive)"></td>
+                    <td><input type="text" value="${avatar}" data-field="avatar" maxlength="3" title="Avatar Initials"></td>
+                    <td><input type="number" value="${matches}" data-field="matches" min="0" title="Matches Played"></td>
+                    <td><input type="number" value="${wins}" data-field="wins" min="0" title="Wins"></td>
+                    <td><input type="number" value="${losses}" data-field="losses" min="0" title="Losses"></td>
+                    <td><input type="number" value="${kills}" data-field="kills" min="0" title="Kills"></td>
+                    <td><input type="number" value="${points}" data-field="points" title="Points"></td>
+                    <td><button class="delete-player-button delete-button" data-id="${player.id}" title="Delete Player">Delete</button></td>
+                `;
+                leaderboardBodyAdmin.appendChild(row);
+            });
+            attachPlayerDeleteListeners();
+        } catch (error) {
+            console.error("Error loading leaderboard:", error);
+            leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="color:var(--red-error); text-align: center;">Error loading leaderboard.</td></tr>`; // Colspan="9"
+        }
+    }
+
+    function attachPlayerDeleteListeners() {
+         // Use event delegation on the table body
+         leaderboardBodyAdmin.addEventListener('click', async (e) => {
+            if (e.target.matches('.delete-player-button')) {
+                 const button = e.target;
+                 const id = button.dataset.id;
+                 if (!id) return;
+
+                 const row = button.closest('tr');
+                 const nameInput = row?.querySelector('input[data-field="name"]');
+                 const playerName = nameInput ? nameInput.value : `Player UID: ${id}`;
+
+                 if (confirm(`DELETE player "${playerName}" from the leaderboard? This does NOT delete their user account.`)) {
+                     button.disabled = true;
+                     try {
+                         await db.collection('leaderboard').doc(id).delete();
+                         showSaveStatus('Player deleted from leaderboard!', false);
+                         row.remove(); // Remove row from view
+                         // Re-rank if necessary (more complex, maybe just reload)
+                         if (!leaderboardBodyAdmin.querySelector('tr')) {
+                              leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No players found.</td></tr>`;
+                         } else {
+                             // Optional: Reload to ensure ranks are correct if deletion impacts order significantly
+                             // loadLeaderboardAdmin();
+                         }
+                     } catch (error) {
+                         console.error(`Error deleting player ${id}:`, error);
+                         showSaveStatus(`Error deleting player: ${error.message}`, true);
+                         button.disabled = false;
+                     }
+                 }
+            }
+        });
+        // Remove old direct listeners if they exist
+         document.querySelectorAll('#leaderboard-body-admin .delete-player-button').forEach(button => {
+             // Optional cleanup if needed
+        });
+    }
+
+    addPlayerButton.addEventListener('click', () => {
+        addPlayerForm.classList.toggle('hidden');
+         if (!addPlayerForm.classList.contains('hidden')) {
+             addPlayerForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+             document.getElementById('new-player-name').focus();
+        }
+    });
+
+    // Updated saveNewPlayerButton Listener (with Kills)
+    saveNewPlayerButton.addEventListener('click', async () => {
+        saveNewPlayerButton.disabled = true;
+        showSaveStatus('Processing new player...', false);
+
+        const nameInput = document.getElementById('new-player-name');
+        const avatarInput = document.getElementById('new-player-avatar');
+        const matchesInput = document.getElementById('new-player-matches');
+        const winsInput = document.getElementById('new-player-wins');
+        const lossesInput = document.getElementById('new-player-losses');
+        const killsInput = document.getElementById('new-player-kills'); // <<<<<< KILLS INPUT ELEMENT
+        const pointsInput = document.getElementById('new-player-points');
+
+        // Early exit if elements aren't found (robustness)
+        if (!nameInput || !avatarInput || !matchesInput || !winsInput || !lossesInput || !killsInput || !pointsInput) {
+             showSaveStatus('Error: Form elements missing in the HTML.', true);
+             saveNewPlayerButton.disabled = false; return;
+        }
+
+        const name = nameInput.value.trim();
+        const avatar = avatarInput.value.trim().toUpperCase();
+        const matches = parseInt(matchesInput.value, 10) || 0; // Base 10 radix
+        const wins = parseInt(winsInput.value, 10) || 0;
+        const losses = parseInt(lossesInput.value, 10) || 0;
+        const kills = parseInt(killsInput.value, 10) || 0;   // Base 10 radix
+        const points = parseInt(pointsInput.value, 10) || 0; // Treat non-number as 0
+
+        if (!name) {
+            showSaveStatus('Error: Player Name is required.', true);
+            nameInput.focus(); saveNewPlayerButton.disabled = false; return;
+        }
+        // Check specifically for NaN after parsing attempt, allows '0'
+        if (isNaN(matchesInput.value) || isNaN(winsInput.value) || isNaN(lossesInput.value) || isNaN(killsInput.value) || isNaN(pointsInput.value)) {
+             // Find the specific invalid input and focus it
+             let invalidInput = [matchesInput, winsInput, lossesInput, killsInput, pointsInput].find(inp => isNaN(inp.value));
+             showSaveStatus('Error: Stats must be valid numbers (or empty for 0).', true);
+             if(invalidInput) invalidInput.focus();
+             saveNewPlayerButton.disabled = false; return;
+        }
+
+        const newPlayerData = {
+            name: name, avatar: avatar,
+            matches: Math.max(0, matches), // Ensure non-negative
+            wins: Math.max(0, wins),
+            losses: Math.max(0, losses),
+            kills: Math.max(0, kills),    // Ensure non-negative
+            points: points,               // Allow negative points if desired, else Math.max(0, points)
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // Find User UID by Display Name (Ensure 'users' collection exists and has 'displayName' field)
+        let targetUID = null;
+        try {
+            showSaveStatus(`Searching for user profile "${name}"...`, false);
+            // Assuming 'users' collection stores profiles with a 'displayName' field
+            const userQuery = db.collection('users').where('displayName', '==', name).limit(2);
+            const querySnapshot = await userQuery.get();
+            if (querySnapshot.empty) {
+                throw new Error(`No user profile found with the exact display name "${name}". Please ensure the name matches the user's profile.`);
+            }
+            if (querySnapshot.size > 1) {
+                 // This indicates a data integrity issue - display names should ideally be unique or handled differently.
+                 console.warn(`Multiple profiles found for display name "${name}". Using the first one found. Consider enforcing unique display names.`);
+                 // throw new Error(`Multiple profiles found for "${name}". Ensure unique names.`);
+            }
+            targetUID = querySnapshot.docs[0].id; // Get UID from the found document
+            console.log(`User profile found! Target UID: ${targetUID}`);
+
+        } catch (error) {
+            console.error("Error querying 'users' collection:", error);
+            // Provide more specific feedback based on the error
+            if (error.message.includes("No user profile found")) {
+                 showSaveStatus(error.message, true);
+            } else {
+                 showSaveStatus(`Error searching for user profile: ${error.message}. Check console for details.`, true);
+            }
+            nameInput.focus(); // Focus name input as it's likely the issue
+            saveNewPlayerButton.disabled = false; return;
+        }
+
+        // Save to Leaderboard using the found UID
+        if (targetUID) {
+            try {
+                showSaveStatus(`Saving leaderboard data for UID ${targetUID}...`, false);
+                await db.collection('leaderboard').doc(targetUID).set(newPlayerData, { merge: true }); // Use set with merge to create or update
+                showSaveStatus('Player added/updated on leaderboard!', false);
+                addPlayerForm.classList.add('hidden');
+                // Clear form inputs
+                 addPlayerForm.querySelectorAll('input').forEach(input => input.value = (input.type === 'number' ? '0' : ''));
+                loadLeaderboardAdmin(); // Refresh the leaderboard view
+            } catch (error) {
+                console.error(`Error setting leaderboard document for UID ${targetUID}:`, error);
+                showSaveStatus(`Error saving player to leaderboard: ${error.message}`, true);
+            } finally {
+                 saveNewPlayerButton.disabled = false;
+            }
+        }
+        // If targetUID wasn't found, the error is handled in the 'catch' block above.
+    });
+
+    // Updated saveLeaderboardChangesButton Listener (with Kills non-negative check)
+    saveLeaderboardChangesButton.addEventListener('click', async () => {
+        saveLeaderboardChangesButton.disabled = true;
+        const updates = [];
+        let errorsFound = false;
+        const rows = leaderboardBodyAdmin.querySelectorAll('tr');
+
+        rows.forEach(row => {
+            const id = row.dataset.id;
+            if (!id) return; // Skip if row has no data-id (e.g., header or empty message)
+
+            // Reset styles
+            row.style.backgroundColor = '';
+            row.querySelectorAll('input').forEach(inp => inp.style.backgroundColor = '');
+
+            const playerData = {};
+            let hasRowError = false;
+
+            row.querySelectorAll('input').forEach(input => {
+                const field = input.dataset.field; if (!field) return;
+                let value = input.value.trim();
+
+                if (input.type === 'number') {
+                    const parsedValue = parseInt(value, 10); // Use radix 10
+                    if (value === '' || isNaN(parsedValue)) { // Treat empty string or NaN as potentially invalid
+                         // Allow empty strings to represent 0 for stats, but flag actual non-numeric input
+                         if (value !== '' && isNaN(parsedValue)) {
+                            console.warn(`Invalid number format for ${field}, ID ${id}. Input: "${value}"`);
+                            input.style.backgroundColor = 'rgba(229, 57, 53, 0.3)'; // Highlight error cell
+                            hasRowError = true; errorsFound = true;
+                            value = 0; // Default to 0 on error, but still flag it
+                         } else {
+                             value = 0; // Treat empty string as 0
+                         }
+                    } else {
+                        // Ensure non-negative for specific stats
+                        if (['matches', 'wins', 'losses', 'kills'].includes(field)) {
+                            value = Math.max(0, parsedValue);
+                        } else {
+                             value = parsedValue; // Allow points to be negative
+                        }
+                    }
+                } else if (field === 'name' && !value) {
+                     console.error(`Player Name cannot be empty for ID ${id}.`);
+                     input.style.backgroundColor = 'rgba(229, 57, 53, 0.3)'; // Highlight error cell
+                     hasRowError = true; errorsFound = true;
+                } else if (field === 'avatar') {
+                    value = value.toUpperCase();
+                }
+                playerData[field] = value;
+            });
+
+            if (hasRowError) {
+                 row.style.backgroundColor = 'rgba(229, 57, 53, 0.1)'; // Highlight error row slightly
+            } else {
+                playerData.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
+                updates.push({ id: id, data: playerData });
+            }
+        });
+
+        if (errorsFound) {
+            showSaveStatus('Errors in highlighted rows/cells. Please correct and save again.', true);
+            saveLeaderboardChangesButton.disabled = false; return;
+        }
+        if (updates.length === 0) {
+            showSaveStatus('No valid changes detected to save.', false);
+            saveLeaderboardChangesButton.disabled = false; return;
+        }
+
+        showSaveStatus(`Saving ${updates.length} player changes...`, false);
+        const batch = db.batch();
+        updates.forEach(update => {
+            const docRef = db.collection('leaderboard').doc(update.id);
+            batch.update(docRef, update.data); // Use update, assumes documents exist
+        });
+
+        try {
+            await batch.commit();
+            showSaveStatus(`${updates.length} player(s) updated successfully!`, false);
+            // Clear potential highlights after successful save
+             rows.forEach(row => {
+                 row.style.backgroundColor = '';
+                 row.querySelectorAll('input').forEach(inp => inp.style.backgroundColor = '');
+             });
+        } catch (error) {
+            console.error("Error committing leaderboard batch:", error);
+            showSaveStatus(`Error saving leaderboard changes: ${error.message}`, true);
+        } finally {
+            saveLeaderboardChangesButton.disabled = false;
+        }
+    });
+
+
+    // --- Bracket Management ---
+    // --- loadBracketAdmin (Corrected), renderBracketEditor, renderBracketMatchEditor, attachBracketEditorListeners, ---
+    // --- handleBracketSelectChange, handleAddRoundClick, handleSaveBracketClick, handleBracketButtonClick, handleBracketInput ---
+    // --- deleteBracketRoundFromState, addBracketMatchToState, deleteBracketMatchFromState ---
+    // --- These functions remain the same as before, but loadBracketAdmin has the fix ---
      async function loadBracketAdmin(bracketType = 'pro') {
         if (!bracketEditor || !bracketLoadingIndicator) return;
         currentBracketType = bracketType;
@@ -63,3 +1746,423 @@
             bracketLoadingIndicator.classList.add('hidden');
         }
     }
+
+    function renderBracketEditor() {
+        if (!bracketEditor) return;
+        bracketEditor.innerHTML = ''; // Clear previous content
+        bracketEditor.dataset.type = currentBracketType; // Set data attribute for reference
+        const rounds = currentBracketData.rounds || [];
+
+        if (rounds.length === 0) {
+            bracketEditor.innerHTML = '<p class="loading-indicator">No rounds defined yet. Use "Add New Round" below.</p>';
+        } else {
+            rounds.forEach((round, roundIndex) => {
+                const roundColumnDiv = document.createElement('div');
+                roundColumnDiv.classList.add('bracket-round-column');
+                roundColumnDiv.dataset.roundIndex = roundIndex;
+
+                const roundName = round.name || `Round ${roundIndex + 1}`; // Use sanitized name
+
+                const roundHeader = document.createElement('h4');
+                // Added placeholder and title for round name input
+                roundHeader.innerHTML = `
+                    <input type="text" value="${roundName}" class="round-name" placeholder="Round Name"
+                           data-round-index="${roundIndex}" data-field="name" title="Edit Round Name">
+                    <button class="delete-round-button" data-round-index="${roundIndex}" title="Delete This Round">X</button>`;
+
+                const matchesContainer = document.createElement('div');
+                matchesContainer.classList.add('matches-in-round');
+
+                const matches = round.matches || [];
+                if (matches.length > 0) {
+                    matches.forEach((match, matchIndex) => {
+                        // Pass sanitized match data to the editor renderer
+                        const matchDiv = renderBracketMatchEditor(match, roundIndex, matchIndex);
+                        if (matchDiv) matchesContainer.appendChild(matchDiv);
+                    });
+                } else {
+                    matchesContainer.innerHTML = '<p style="text-align: center; font-size: 0.9em; color: var(--text-secondary);">No matches in this round.</p>';
+                }
+
+                const addMatchBtn = document.createElement('button');
+                addMatchBtn.classList.add('add-match-to-round-button');
+                addMatchBtn.dataset.roundIndex = roundIndex;
+                addMatchBtn.title = "Add a new match to this round";
+                addMatchBtn.textContent = "Add Match";
+                addMatchBtn.style.marginTop = "15px"; // Add some space before the button
+
+                roundColumnDiv.appendChild(roundHeader);
+                roundColumnDiv.appendChild(matchesContainer);
+                roundColumnDiv.appendChild(addMatchBtn);
+                bracketEditor.appendChild(roundColumnDiv);
+            });
+        }
+        // Re-attach listeners after rendering
+        attachBracketEditorListeners();
+    }
+
+    function renderBracketMatchEditor(match, roundIndex, matchIndex) {
+        const matchDiv = document.createElement('div');
+        matchDiv.classList.add('bracket-match-editor');
+        matchDiv.dataset.roundIndex = roundIndex;
+        matchDiv.dataset.matchIndex = matchIndex;
+
+        // Use sanitized data, default empty strings for text, null for scores
+        const t1N = match.team1?.name ?? '';
+        const t1S = (match.team1?.score === null || match.team1?.score === undefined) ? '' : match.team1.score; // Keep empty string for input if null
+        const t2N = match.team2?.name ?? '';
+        const t2S = (match.team2?.score === null || match.team2?.score === undefined) ? '' : match.team2.score; // Keep empty string for input if null
+        const wN = match.winnerName ?? '';
+        const comp = match.completed ?? false; // Should be boolean from sanitization
+
+        // Added placeholders and titles for clarity
+        matchDiv.innerHTML = `
+            <h5>
+                Match ${matchIndex + 1}
+                <button class="delete-match-from-round-button" data-round-index="${roundIndex}" data-match-index="${matchIndex}" title="Delete This Match">X</button>
+            </h5>
+            <label for="t1n-${roundIndex}-${matchIndex}">Team 1:</label>
+            <input type="text" id="t1n-${roundIndex}-${matchIndex}" value="${t1N}" placeholder="Team 1 Name" data-field="team1.name">
+
+            <label for="t1s-${roundIndex}-${matchIndex}">Score 1:</label>
+            <input type="number" id="t1s-${roundIndex}-${matchIndex}" value="${t1S}" placeholder="Score" data-field="team1.score" min="0">
+
+            <label for="t2n-${roundIndex}-${matchIndex}">Team 2:</label>
+            <input type="text" id="t2n-${roundIndex}-${matchIndex}" value="${t2N}" placeholder="Team 2 Name" data-field="team2.name">
+
+            <label for="t2s-${roundIndex}-${matchIndex}">Score 2:</label>
+            <input type="number" id="t2s-${roundIndex}-${matchIndex}" value="${t2S}" placeholder="Score" data-field="team2.score" min="0">
+
+            <label for="wn-${roundIndex}-${matchIndex}">Winner Name:</label>
+            <input type="text" id="wn-${roundIndex}-${matchIndex}" value="${wN}" placeholder="Exact Winner Name" data-field="winnerName" title="Enter exact winning team name (case-sensitive)">
+
+            <label class="checkbox-label">
+                <input type="checkbox" ${comp ? 'checked' : ''} data-field="completed"> Match Completed
+            </label>`;
+        return matchDiv;
+    }
+
+    function attachBracketEditorListeners() {
+        if (!bracketEditor) return;
+
+        // Remove previous listeners to prevent duplicates (if re-rendering)
+        // Note: Event delegation is generally preferred over attaching listeners to many elements.
+        // Consider refactoring handleBracketButtonClick and handleBracketInput to use delegation.
+
+        // For simplicity, re-attaching for now:
+        bracketEditor.removeEventListener('click', handleBracketButtonClick);
+        bracketEditor.addEventListener('click', handleBracketButtonClick);
+
+        bracketEditor.removeEventListener('input', handleBracketInput);
+        bracketEditor.removeEventListener('change', handleBracketInput); // Listen to change for checkboxes
+        bracketEditor.addEventListener('input', handleBracketInput);
+        bracketEditor.addEventListener('change', handleBracketInput);
+
+        // Main control buttons outside the editor area
+        if (addRoundButton) {
+             addRoundButton.removeEventListener('click', handleAddRoundClick);
+             addRoundButton.addEventListener('click', handleAddRoundClick);
+        }
+        if (saveBracketChangesButton) {
+             saveBracketChangesButton.removeEventListener('click', handleSaveBracketClick);
+             saveBracketChangesButton.addEventListener('click', handleSaveBracketClick);
+        }
+        if (bracketSelect) {
+             bracketSelect.removeEventListener('change', handleBracketSelectChange);
+             bracketSelect.addEventListener('change', handleBracketSelectChange);
+        }
+    }
+
+    // Handles clicks within the #bracket-editor (using event delegation idea)
+    function handleBracketButtonClick(event) {
+        const target = event.target;
+
+        // Find closest relevant elements using data attributes
+        const deleteRoundButton = target.closest('.delete-round-button');
+        const addMatchButton = target.closest('.add-match-to-round-button');
+        const deleteMatchButton = target.closest('.delete-match-from-round-button');
+
+        const roundColumn = target.closest('.bracket-round-column');
+        const matchEditor = target.closest('.bracket-match-editor');
+
+        const roundIndexStr = roundColumn?.dataset.roundIndex;
+        const matchIndexStr = matchEditor?.dataset.matchIndex ?? deleteMatchButton?.dataset.matchIndex; // Get match index from button too
+
+        if (deleteRoundButton && roundIndexStr !== undefined) {
+            deleteBracketRoundFromState(parseInt(roundIndexStr));
+        } else if (addMatchButton && roundIndexStr !== undefined) {
+            addBracketMatchToState(parseInt(roundIndexStr));
+        } else if (deleteMatchButton && roundIndexStr !== undefined && matchIndexStr !== undefined) {
+            deleteBracketMatchFromState(parseInt(roundIndexStr), parseInt(matchIndexStr));
+        }
+    }
+
+    // Handles input/change events within the #bracket-editor (using event delegation idea)
+    function handleBracketInput(event) {
+        const target = event.target;
+        // Only process input/textarea/checkbox elements with a data-field attribute
+        if (!target || !(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') || !target.dataset.field) {
+            return;
+        }
+
+        const matchEditor = target.closest('.bracket-match-editor');
+        const roundColumn = target.closest('.bracket-round-column');
+
+        if (!roundColumn) return; // Must be inside a round
+
+        const rIdxStr = roundColumn.dataset.roundIndex;
+        const mIdxStr = matchEditor?.dataset.matchIndex; // Will be undefined for round name input
+
+        const field = target.dataset.field;
+        if (rIdxStr === undefined) return; // Should not happen if inside roundColumn
+
+        const rIdx = parseInt(rIdxStr);
+        const mIdx = (mIdxStr !== undefined) ? parseInt(mIdxStr) : null; // null indicates round-level input
+
+        if (isNaN(rIdx) || (mIdx !== null && isNaN(mIdx))) {
+             console.error("Invalid round/match index found:", rIdxStr, mIdxStr); return;
+        }
+
+        try {
+            // Ensure round exists
+            if (!currentBracketData?.rounds?.[rIdx]) {
+                 console.error(`Attempted to update non-existent round at index ${rIdx}`); return;
+            }
+            const round = currentBracketData.rounds[rIdx];
+
+            if (mIdx === null) { // Updating round property (e.g., name)
+                if (field === 'name') {
+                    round.name = target.value.trim();
+                } else {
+                     console.warn(`Unhandled round field update: ${field}`);
+                }
+            } else { // Updating match property
+                 // Ensure match exists
+                if (!round.matches?.[mIdx]) {
+                    console.error(`Attempted to update non-existent match at index ${mIdx} in round ${rIdx}`); return;
+                }
+                const match = round.matches[mIdx];
+                let value;
+
+                // Determine value based on input type
+                if (target.type === 'checkbox') {
+                    value = target.checked;
+                } else if (target.type === 'number') {
+                    // Store null if empty, otherwise parse as number
+                    value = (target.value === '') ? null : parseInt(target.value, 10);
+                    // Handle potential NaN after parsing empty or invalid string
+                    if (isNaN(value) && target.value !== '') {
+                         console.warn(`Invalid number input for ${field}: "${target.value}". Storing null.`);
+                         value = null; // Store null if parsing fails on non-empty string
+                         target.value = ''; // Optionally clear invalid input
+                    } else if (isNaN(value)) {
+                         value = null; // Ensure NaN from empty string becomes null
+                    }
+                } else { // text input
+                    value = target.value.trim(); // Trim text inputs
+                }
+
+                // Update nested or direct property
+                if (field.includes('.')) {
+                    const parts = field.split('.');
+                    if (parts.length === 2) {
+                        // Ensure parent object exists (e.g., team1, team2)
+                        if (!match[parts[0]]) match[parts[0]] = {};
+                        match[parts[0]][parts[1]] = value;
+                    } else {
+                         console.error(`Unsupported nested field path: ${field}`);
+                    }
+                } else {
+                    match[field] = value;
+                }
+            }
+             // Enable save button after any valid input change
+             if (saveBracketChangesButton) saveBracketChangesButton.disabled = false;
+
+        } catch (error) {
+             console.error("Error updating bracket state from input:", error);
+        }
+    }
+
+
+     function handleBracketSelectChange(e) {
+         const newBracketType = e.target.value;
+         if (newBracketType !== currentBracketType) {
+             console.log(`Switching bracket view to: ${newBracketType}`);
+             loadBracketAdmin(newBracketType); // Load data for the selected bracket
+             // Disable save button until changes are made to the new bracket
+             if (saveBracketChangesButton) saveBracketChangesButton.disabled = true;
+         }
+    }
+
+    function handleAddRoundClick() {
+        if (!currentBracketData?.rounds) {
+            console.warn("Initializing bracket data rounds array.");
+            currentBracketData = { rounds: [] };
+        }
+        const newRoundIndex = currentBracketData.rounds.length;
+        currentBracketData.rounds.push({ name: `Round ${newRoundIndex + 1}`, matches: [] });
+        renderBracketEditor(); // Re-render the editor with the new round
+        // Scroll the new round into view
+        const newRoundElement = bracketEditor.querySelector(`.bracket-round-column[data-round-index="${newRoundIndex}"]`);
+        newRoundElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
+         if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; // Enable save after adding
+    }
+
+    async function handleSaveBracketClick() {
+        if (!currentBracketType) { showSaveStatus('Error: No bracket type selected.', true); return; }
+        if (!currentBracketData?.rounds) { showSaveStatus('Error: No bracket data to save.', true); return; }
+
+        saveBracketChangesButton.disabled = true; // Disable button during save
+        let dataToSave;
+        try {
+            // Deep clone the current state to avoid modifying it during processing
+             dataToSave = JSON.parse(JSON.stringify(currentBracketData));
+        } catch (e) {
+             console.error("Cloning error before save:", e);
+             showSaveStatus('Error preparing bracket data for saving.', true);
+             saveBracketChangesButton.disabled = false; return;
+        }
+
+        let validationError = false;
+        // --- Final Data Sanitization/Processing Before Save ---
+        dataToSave.rounds.forEach((round, rIdx) => {
+            if (!round || typeof round !== 'object') { validationError = true; return; } // Should not happen after initial load sanitization
+
+            round.name = round.name?.trim() || `Round ${rIdx + 1}`; // Ensure name is trimmed
+
+            if (!Array.isArray(round.matches)) round.matches = []; // Ensure matches is array
+
+            round.matches.forEach((match, mIdx) => {
+                 if (!match || typeof match !== 'object') { validationError = true; return; } // Should not happen
+
+                 // Ensure team objects and properties exist
+                 if (!match.team1) match.team1 = {}; if (!match.team2) match.team2 = {};
+                 match.team1.name = match.team1.name?.trim() ?? '';
+                 match.team2.name = match.team2.name?.trim() ?? '';
+
+                 // Ensure scores are numbers or null
+                 match.team1.score = (match.team1.score === null || match.team1.score === undefined || match.team1.score === '' || isNaN(Number(match.team1.score))) ? null : Number(match.team1.score);
+                 match.team2.score = (match.team2.score === null || match.team2.score === undefined || match.team2.score === '' || isNaN(Number(match.team2.score))) ? null : Number(match.team2.score);
+
+                 match.completed = !!match.completed; // Ensure boolean
+                 match.winnerName = match.winnerName?.trim() ?? ''; // Trim winner name
+
+                 // Determine winner based on completed status and winnerName matching a team name (case-insensitive compare)
+                 match.winner = null; // Reset winner field
+                 if (match.completed && match.winnerName) {
+                     const winnerLower = match.winnerName.toLowerCase();
+                     const team1Lower = match.team1.name?.toLowerCase();
+                     const team2Lower = match.team2.name?.toLowerCase();
+
+                     if (team1Lower && winnerLower === team1Lower) {
+                         match.winner = match.team1.name; // Store original case name
+                     } else if (team2Lower && winnerLower === team2Lower) {
+                         match.winner = match.team2.name; // Store original case name
+                     } else {
+                          // Winner name doesn't match either team, keep winner as null
+                          console.warn(`Entered Winner Name "${match.winnerName}" does not match Team 1 ("${match.team1.name}") or Team 2 ("${match.team2.name}") in R${rIdx+1}, M${mIdx+1}. Winner field will remain null.`);
+                          // Optionally clear winnerName if mismatch is an error: match.winnerName = '';
+                     }
+                 } else if (match.completed && !match.winnerName) {
+                     console.warn(`Match R${rIdx+1}, M${mIdx+1} is marked completed, but no Winner Name was entered.`);
+                 }
+            });
+        });
+
+        if (validationError) {
+             showSaveStatus('Error: Invalid bracket data structure found during final check. Cannot save.', true);
+             saveBracketChangesButton.disabled = false; return;
+        }
+
+        showSaveStatus(`Saving ${currentBracketType} bracket changes...`, false);
+        try {
+            // Use set to overwrite the entire document with the processed data
+            await db.collection('brackets').doc(currentBracketType).set(dataToSave);
+            showSaveStatus(`${currentBracketType} bracket saved successfully!`, false);
+            currentBracketData = dataToSave; // Update local state with the successfully saved data
+            saveBracketChangesButton.disabled = true; // Disable save button again until new changes
+        } catch (error) {
+            console.error(`Error saving ${currentBracketType} bracket to Firestore:`, error);
+            showSaveStatus(`Error saving bracket: ${error.message}`, true);
+            saveBracketChangesButton.disabled = false; // Re-enable on error
+        }
+    }
+
+
+    function deleteBracketRoundFromState(roundIndex) {
+        if (!currentBracketData?.rounds?.[roundIndex]) return;
+        const roundName = currentBracketData.rounds[roundIndex]?.name || `Round ${roundIndex + 1}`;
+        if (confirm(`Are you sure you want to DELETE Round "${roundName}" and ALL of its matches? This cannot be undone.`)) {
+            currentBracketData.rounds.splice(roundIndex, 1); // Remove the round
+            renderBracketEditor(); // Re-render the UI
+             if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; // Enable save after deletion
+        }
+    }
+    function addBracketMatchToState(roundIndex) {
+        if (!currentBracketData?.rounds?.[roundIndex]) return;
+        // Ensure the matches array exists
+        if (!Array.isArray(currentBracketData.rounds[roundIndex].matches)) {
+            currentBracketData.rounds[roundIndex].matches = [];
+        }
+        // Add a new empty match object
+        currentBracketData.rounds[roundIndex].matches.push({
+            team1: { name: '', score: null },
+            team2: { name: '', score: null },
+            winnerName: '',
+            winner: null,
+            completed: false
+        });
+        renderBracketEditor(); // Re-render UI
+        // Scroll the containing round column into view
+         bracketEditor.querySelector(`.bracket-round-column[data-round-index="${roundIndex}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
+         if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; // Enable save after adding
+    }
+    function deleteBracketMatchFromState(roundIndex, matchIndex) {
+        if (!currentBracketData?.rounds?.[roundIndex]?.matches?.[matchIndex]) return;
+        const roundName = currentBracketData.rounds[roundIndex]?.name || `Round ${roundIndex + 1}`;
+        if (confirm(`Are you sure you want to delete Match ${matchIndex + 1} from "${roundName}"?`)) {
+            currentBracketData.rounds[roundIndex].matches.splice(matchIndex, 1); // Remove the match
+            renderBracketEditor(); // Re-render UI
+             if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; // Enable save after deletion
+        }
+    }
+
+    // --- Initial Load & Event Listeners (No change here) ---
+    console.log("Admin script initialized. Waiting for authentication state...");
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("DOM Content Loaded.");
+        // Disable save buttons initially until data is loaded and potentially changed
+        if(saveMatchesChangesButton) saveMatchesChangesButton.disabled = true;
+        if(saveLeaderboardChangesButton) saveLeaderboardChangesButton.disabled = true;
+        if(saveBracketChangesButton) saveBracketChangesButton.disabled = true;
+        // Initial listeners are attached within functions like loadAdminData or renderBracketEditor
+    });
+    window.addEventListener('beforeunload', (event) => {
+        // Optional: Attempt to remove presence on page close/refresh.
+        // This is often unreliable as the request might not complete.
+        if (currentUserId) {
+            try {
+                // Use navigator.sendBeacon if possible for higher success rate, but Firestore SDK doesn't directly support it.
+                // Direct delete might fail.
+                // db.collection(PRESENCE_COLLECTION).doc(currentUserId).delete();
+                 console.log("Attempting presence removal on beforeunload (might not succeed).");
+            } catch(e) {
+                 console.warn("Error attempting presence removal on beforeunload:", e);
+            }
+            // Standard way to ask user if they want to leave if there are unsaved changes
+            // Check if any save buttons are enabled
+            const hasUnsavedChanges = !saveMatchesChangesButton.disabled || !saveLeaderboardChangesButton.disabled || !saveBracketChangesButton.disabled;
+             if (hasUnsavedChanges) {
+                  // Standard confirmation dialog
+                  event.preventDefault(); // Required for Chrome
+                  event.returnValue = ''; // Required for older browsers
+                  // return 'You have unsaved changes. Are you sure you want to leave?'; // Custom message often ignored by browsers
+             }
+        }
+     });
+
+</script>
+
+</body>
+</html>
