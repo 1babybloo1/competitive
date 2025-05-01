@@ -1,5 +1,5 @@
 const firebaseConfig = {
-    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI"
+    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
     authDomain: "poxelcomp.firebaseapp.com",
     projectId: "poxelcomp",
     storageBucket: "poxelcomp.firebasestorage.app",
