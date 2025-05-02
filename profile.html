@@ -41,6 +41,13 @@
             --badge-tick-color: #ffffff;
              /* Profile Background Variable (set by JS) */
             --profile-bg-image: none;
+
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.4);
+            --border-radius-sm: 4px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -55,12 +62,12 @@
             flex-direction: column;
         }
 
-        main { flex-grow: 1; padding: 0; } /* Removed default padding */
+        main { flex-grow: 1; padding: 0; } /* Main content takes remaining height */
 
         /* ======================================== */
         /* Header & Navigation (Shared)           */
         /* ======================================== */
-        header { background-color: var(--bg-secondary); padding: 1rem 0; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); width: 100%; }
+        header { background-color: var(--bg-secondary); padding: 1rem 0; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); width: 100%; flex-shrink: 0; }
         .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
         .logo { font-size: 1.8rem; font-weight: 700; color: var(--text-light); text-decoration: none; }
         .auth-buttons button, .auth-buttons a.btn { margin-left: 0.8rem; }
@@ -68,7 +75,7 @@
         /* ======================================== */
         /* Buttons (Shared)                       */
         /* ======================================== */
-        .btn { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease; text-decoration: none; display: inline-block; text-align: center; line-height: 1.2; }
+        .btn { padding: 0.7rem 1.5rem; border: none; border-radius: var(--border-radius-md); cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.3s ease; text-decoration: none; display: inline-block; text-align: center; line-height: 1.2; }
         .btn:disabled { cursor: not-allowed; opacity: 0.6; }
         .btn:active:not(:disabled) { transform: scale(0.97); }
         .btn-primary { background-color: var(--primary-orange); color: var(--text-dark); border: 2px solid var(--primary-orange); }
@@ -112,11 +119,11 @@
         /* ======================================== */
         .profile-container {
             max-width: 800px;
-            margin: 3rem auto;
+            margin: 3rem auto; /* Center profile box, provide spacing */
             padding: 2.5rem 3rem;
             background-color: var(--bg-secondary); /* Fallback */
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
             text-align: center;
             position: relative; /* For background */
             z-index: 1;
@@ -211,17 +218,17 @@
 
         /* Container for Username, Badges, Admin Tag */
         .profile-name-container { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.2rem; }
-        #profile-username { font-size: 2.2rem; font-weight: 700; color: var(--text-light); margin: 0; word-break: break-all;}
+        #profile-username { font-size: 2.2rem; font-weight: 700; color: var(--text-light); margin: 0; word-break: break-word;}
         #profile-badges-container { display: inline-flex; align-items: center; gap: 0.4rem; line-height: 1; vertical-align: middle; flex-shrink: 0; }
         .profile-badge { display: inline-flex; align-items: center; justify-content: center; width: 1.8em; height: 1.8em; border-radius: 50%; font-size: 0.8em; font-weight: bold; color: var(--badge-tick-color); line-height: 1; vertical-align: middle; position: relative; }
         .profile-badge::before { content: '✔'; display: block; }
         .badge-verified { background-color: var(--badge-verified-bg); }
         .badge-creator { background-color: var(--badge-creator-bg); }
         .badge-moderator { background-color: var(--badge-moderator-bg); }
-        .admin-tag { display: none; background-color: var(--primary-orange); color: var(--text-dark); padding: 0.3em 0.6em; border-radius: 4px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; vertical-align: middle; line-height: 1; flex-shrink: 0; margin-left: 0.3rem; /* Add some space */ }
+        .admin-tag { display: none; background-color: var(--primary-orange); color: var(--text-dark); padding: 0.3em 0.6em; border-radius: var(--border-radius-sm); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; vertical-align: middle; line-height: 1; flex-shrink: 0; margin-left: 0.3rem; /* Add some space */ }
 
         #profile-email {
-            display: none; /* <<< Hides the email display element */
+            display: none; /* Hides the email display element */
             font-size: 1rem;
             color: var(--text-secondary);
             font-weight: 400;
@@ -230,7 +237,7 @@
         }
 
         /* Stats Sections Common Styles */
-        .profile-stats, .profile-section /* Common class for section blocks */
+        .profile-stats, .profile-section /* Common class for section blocks INSIDE profile box */
         {
             margin-top: 2.5rem;
             border-top: 1px solid var(--border-light);
@@ -246,8 +253,8 @@
 
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.8rem; text-align: left; }
         .stats-grid > p { color: var(--text-secondary); font-style: italic; grid-column: 1 / -1; text-align: center; padding: 1rem 0; } /* For loading/error messages */
-        .stat-item { background-color: var(--bg-dark); padding: 1.3rem 1.6rem; border-radius: 8px; border-left: 5px solid var(--primary-orange); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; }
-        .stat-item:hover { transform: translateY(-4px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4); }
+        .stat-item { background-color: var(--bg-dark); padding: 1.3rem 1.6rem; border-radius: var(--border-radius-md); border-left: 5px solid var(--primary-orange); box-shadow: var(--shadow-sm); transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; }
+        .stat-item:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
         .stat-item h4 { margin-bottom: 0.6rem; color: #ccc; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-item p { font-size: 1.7rem; font-weight: 700; color: var(--primary-orange); line-height: 1.2; margin: 0; word-break: break-word; }
 
@@ -263,8 +270,8 @@
             margin: 3rem auto;
             padding: 4rem 2rem;
             background-color: var(--bg-secondary);
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
             font-size: 1.2rem;
             min-height: 300px;
             display: flex;
@@ -294,92 +301,36 @@
         #profile-title.selectable-title:hover { color: var(--primary-orange-darker); text-decoration-color: var(--primary-orange-darker); }
         #profile-title.no-title-placeholder { color: var(--text-secondary); font-style: normal; }
 
-
         /* Title Selector Dropdown Styles */
-        .title-selector { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 0.5rem; min-width: 180px; max-width: 90%; background-color: var(--bg-dark); border: 1px solid var(--border-light); border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); padding: 0.5rem 0; z-index: 10; max-height: 200px; overflow-y: auto; }
+        .title-selector { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 0.5rem; min-width: 180px; max-width: 90%; background-color: var(--bg-dark); border: 1px solid var(--border-light); border-radius: var(--border-radius-md); box-shadow: var(--shadow-md); padding: 0.5rem 0; z-index: 10; max-height: 200px; overflow-y: auto; }
         .title-option { display: block; background: none; border: none; color: var(--text-light); padding: 0.6rem 1rem; text-align: left; width: 100%; cursor: pointer; font-size: 0.95rem; transition: background-color 0.2s ease; white-space: nowrap; position: relative; }
-        .title-option:hover { background-color: var(--bg-secondary); }
+        .title-option:hover:not(:disabled) { background-color: var(--bg-secondary); }
         .title-option.currently-equipped { font-weight: bold; color: var(--primary-orange); padding-left: 2.2rem; }
         .title-option.currently-equipped::before { content: '✔'; position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--primary-orange); font-size: 1em; line-height: 1; }
+        .title-option:disabled { color: var(--text-secondary); cursor: default; opacity: 0.7; } /* Style for disabled equipped title */
         .title-option-unequip { color: var(--text-secondary); font-style: italic; }
 
         /* ======================================== */
         /* Image Editing Modal Styles             */
         /* ======================================== */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
-            display: none; /* Hidden by default */
-            justify-content: center; align-items: center;
-            z-index: 1000; padding: 20px;
-        }
-
-        .modal-content {
-            background-color: var(--bg-secondary);
-            padding: 25px 30px; border-radius: 10px;
-            max-width: 600px; width: 95%; max-height: 90vh;
-            display: flex; flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-        }
-
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; border-bottom: 1px solid var(--border-light);
-            padding-bottom: 15px; flex-shrink: 0;
-        }
-
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-content { background-color: var(--bg-secondary); padding: 25px 30px; border-radius: var(--border-radius-lg); max-width: 600px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); overflow: hidden; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-light); padding-bottom: 15px; flex-shrink: 0; }
         .modal-header h3 { color: var(--primary-orange); margin: 0; font-size: 1.6rem; }
-
-        .modal-close-btn {
-            background: none; border: none; color: var(--text-secondary);
-            font-size: 1.8rem; cursor: pointer; line-height: 1; padding: 5px;
-            transition: color 0.2s ease;
-        }
+        .modal-close-btn { background: none; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; line-height: 1; padding: 5px; transition: color 0.2s ease; }
         .modal-close-btn:hover { color: var(--text-light); }
-
-        .modal-body {
-            flex-grow: 1; margin-bottom: 20px;
-            overflow: hidden; /* Important for Cropper */
-            display: flex; justify-content: center; align-items: center;
-            background-color: var(--bg-dark); border-radius: 5px;
-        }
-
-        #cropper-image-container {
-            width: 100%; height: 100%; min-height: 300px;
-            max-height: calc(90vh - 200px); position: relative;
-        }
-
-        #image-to-crop {
-            display: block; max-width: 100%; max-height: 100%;
-            opacity: 0; /* Hide until Cropper is ready */
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        /* Cropper.js specific overrides if needed */
-        .cropper-view-box,
-        .cropper-face {
-            border-radius: 50%; /* Make the crop selection area circular */
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Dim outside */
-        }
+        .modal-body { flex-grow: 1; margin-bottom: 20px; overflow: hidden; display: flex; justify-content: center; align-items: center; background-color: var(--bg-dark); border-radius: var(--border-radius-sm); }
+        #cropper-image-container { width: 100%; height: 100%; min-height: 300px; max-height: calc(90vh - 200px); position: relative; }
+        #image-to-crop { display: block; max-width: 100%; max-height: 100%; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        .cropper-view-box, .cropper-face { border-radius: 50%; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); }
         .cropper-modal { background: none; }
         .cropper-dashed { display: none; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px; border-top: 1px solid var(--border-light); flex-shrink: 0; }
 
-        .modal-footer {
-            display: flex; justify-content: flex-end; gap: 10px;
-            padding-top: 15px; border-top: 1px solid var(--border-light);
-            flex-shrink: 0;
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%; border-top-color: var(--text-dark);
-            width: 16px; height: 16px;
-            animation: spin 1s linear infinite;
-            display: inline-block; margin-left: 8px; vertical-align: middle;
-        }
+        /* ======================================== */
+        /* Loading Spinner                        */
+        /* ======================================== */
+        .spinner { border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: var(--text-dark); width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; margin-left: 8px; vertical-align: middle; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .btn .spinner { border-top-color: currentColor; } /* Inherit color for spinner on btn */
 
@@ -394,264 +345,94 @@
              gap: 0.5rem;
          }
         #friendship-controls-container button {
-             margin-right: 0; /* Reset default margin from .auth-buttons */
+             margin-right: 0; /* Reset default margin */
          }
 
         /* #friends-section inherits .profile-section styles */
-
-        #friends-section h3 {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
+        #friends-section h3 { text-align: center; margin-bottom: 1.5rem; }
         #friends-section h4 { /* Specific headers within friends section */
             color: #ccc;
             font-size: 1.1rem;
             margin-bottom: 1rem;
             border-bottom: 1px solid var(--border-light);
             padding-bottom: 0.5rem;
-             text-align: left; /* Align list headers left */
+            text-align: left;
         }
-
-        .friends-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .tab-button {
-            background: none;
-            border: 1px solid var(--border-light);
-            color: var(--text-secondary);
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .tab-button:hover {
-            background-color: var(--bg-secondary);
-            border-color: var(--text-light);
-            color: var(--text-light);
-        }
-
-        .tab-button.active {
-            background-color: var(--primary-orange);
-            border-color: var(--primary-orange);
-            color: var(--text-dark);
-        }
-
-        .tab-content {
-            display: none; /* Hide tabs by default */
-            background-color: var(--bg-dark);
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-             text-align: left; /* Ensure content within is left-aligned */
-        }
-
-        .tab-content.active {
-            display: block; /* Show active tab */
-        }
-
-        .friend-request-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 400px; /* Limit height and allow scrolling */
-            overflow-y: auto;
-        }
-
-        .friend-request-list li {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.8rem 0.5rem;
-            border-bottom: 1px solid var(--bg-secondary);
-            transition: background-color 0.2s ease;
-        }
-        .friend-request-list li:last-child {
-            border-bottom: none;
-        }
-        .friend-request-list li:not(.list-message):hover { /* Only apply hover to actual items */
-           background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .friend-item-info {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            flex-grow: 1;
-            margin-right: 1rem; /* Space before buttons */
-             min-width: 0; /* Allow shrinking */
-        }
-
-        .friend-item-pfp {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            background-color: var(--bg-secondary); /* Fallback */
-            flex-shrink: 0;
-        }
-        .friend-item-pfp-initial {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--primary-orange-darker);
-            color: var(--text-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            flex-shrink: 0;
-        }
-
-        .friend-item-name {
-            font-weight: 600;
-            color: var(--text-light);
-            word-break: break-word; /* Break long names nicely */
-            overflow: hidden; /* Prevent overflow */
-            text-overflow: ellipsis; /* Add ellipsis */
-            white-space: nowrap; /* Keep on one line */
-            min-width: 0; /* Ensure it can shrink */
-        }
-        .friend-item-name a { /* Make name clickable */
-            color: inherit;
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-        .friend-item-name a:hover {
-            color: var(--primary-orange);
-            text-decoration: underline;
-        }
-
-        .friend-item-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-shrink: 0;
-        }
+        .friends-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .tab-button { background: none; border: 1px solid var(--border-light); color: var(--text-secondary); padding: 0.5rem 1rem; border-radius: var(--border-radius-sm); cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; font-weight: 600; }
+        .tab-button:hover { background-color: var(--bg-secondary); border-color: var(--text-light); color: var(--text-light); }
+        .tab-button.active { background-color: var(--primary-orange); border-color: var(--primary-orange); color: var(--text-dark); }
+        .tab-content { display: none; background-color: var(--bg-dark); padding: 1.5rem; border-radius: var(--border-radius-md); margin-top: 1rem; text-align: left; }
+        .tab-content.active { display: block; }
+        .friend-request-list { list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto; }
+        .friend-request-list li { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 0.5rem; border-bottom: 1px solid var(--bg-secondary); transition: background-color 0.2s ease; }
+        .friend-request-list li:last-child { border-bottom: none; }
+        .friend-request-list li:not(.list-message):hover { background-color: rgba(255, 255, 255, 0.05); }
+        .friend-item-info { display: flex; align-items: center; gap: 0.8rem; flex-grow: 1; margin-right: 1rem; min-width: 0; }
+        .friend-item-pfp { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background-color: var(--bg-secondary); flex-shrink: 0; }
+        .friend-item-pfp-initial { width: 40px; height: 40px; border-radius: 50%; background-color: var(--primary-orange-darker); color: var(--text-dark); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; flex-shrink: 0; }
+        .friend-item-name { font-weight: 600; color: var(--text-light); word-break: break-word; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .friend-item-name a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
+        .friend-item-name a:hover { color: var(--primary-orange); text-decoration: underline; }
+        .friend-item-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
 
         /* ======================================== */
-        /* Achievements Section Styles (NEW)       */
+        /* Achievements Section Styles (Moved Outside) */
         /* ======================================== */
-        /* #achievements-section inherits .profile-section styles */
+        /* Wrapper for Full-Width Section */
+        .achievements-container-wrapper {
+            width: 100%;
+            background-color: var(--dark-card); /* Background for the whole achievement area */
+            padding: 3rem 1rem;
+            margin-top: 3rem; /* Space below profile box */
+            border-top: 1px solid var(--border-light); /* Separator line */
+            box-sizing: border-box;
+        }
 
+        /* Inner container to limit content width */
+        .achievements-content-limiter {
+            max-width: 900px; /* Can be wider than profile box */
+            margin: 0 auto; /* Center content */
+        }
+
+        /* Reset inherited styles for #achievements-section when inside wrapper */
+        .achievements-container-wrapper #achievements-section {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+            text-align: left;
+        }
+
+        /* Keep h3 centered within the achievement section */
         #achievements-section h3 {
             text-align: center;
             margin-bottom: 2rem;
-        }
-
-        .achievements-list {
-            display: grid;
-            grid-template-columns: 1fr; /* Single column layout */
-            gap: 1.5rem;
-             text-align: left; /* Ensure items are left-aligned */
-        }
-
-        .achievement-item {
-            background-color: var(--bg-dark);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border-left: 5px solid var(--text-secondary); /* Default border */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            transition: border-left-color 0.3s ease, opacity 0.3s ease;
-             opacity: 0.75; /* Slightly dimmed by default */
-        }
-
-        .achievement-item.achievement-unlocked {
-            border-left-color: var(--primary-orange); /* Highlight unlocked */
-            opacity: 1.0; /* Fully opaque when unlocked */
-        }
-         /* Add a completed state, distinct from unlocked */
-        .achievement-item.achievement-completed {
-            border-left-color: #28a745; /* Green border for completed */
-             opacity: 1.0;
-        }
-        /* Make completed take precedence visually */
-         .achievement-item.achievement-completed.achievement-unlocked {
-            border-left-color: #28a745; /* Ensure green wins */
-         }
-
-        .achievement-item h4 {
-            margin-top: 0;
-            margin-bottom: 0.5rem;
-            color: var(--text-light);
-            font-size: 1.1rem;
+            color: var(--primary-orange);
+            font-size: 1.7rem;
             font-weight: 600;
-             display: flex;
-             justify-content: space-between;
-             align-items: center;
-             word-break: break-word; /* Wrap long titles */
         }
 
-        /* Style for completion checkmark */
-        .achievement-item h4 .completion-icon {
-            font-size: 1.3em;
-             color: #28a745; /* Green check */
-             display: none; /* Hidden by default */
-             margin-left: 10px;
-             flex-shrink: 0; /* Prevent checkmark from shrinking */
-        }
-        .achievement-item.achievement-completed h4 .completion-icon {
-             display: inline-block; /* Show checkmark when completed */
-        }
+        /* List and item styling */
+        .achievements-list { display: grid; grid-template-columns: 1fr; gap: 1.5rem; text-align: left; }
+        .achievement-item { background-color: var(--bg-dark); padding: 1.5rem; border-radius: var(--border-radius-md); border-left: 5px solid var(--text-secondary); box-shadow: var(--shadow-md); transition: border-left-color 0.3s ease, opacity 0.3s ease; opacity: 0.85; }
+        .achievement-item.achievement-unlocked { border-left-color: var(--primary-orange); opacity: 1.0; }
+        .achievement-item.achievement-completed { border-left-color: #28a745; opacity: 1.0; }
+        .achievement-item.achievement-completed.achievement-unlocked { border-left-color: #28a745; }
+        .achievement-item h4 { margin-top: 0; margin-bottom: 0.5rem; color: var(--text-light); font-size: 1.1rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; word-break: break-word; }
+        .achievement-item h4 .completion-icon { font-size: 1.3em; color: #28a745; display: none; margin-left: 10px; flex-shrink: 0; }
+        .achievement-item.achievement-completed h4 .completion-icon { display: inline-block; }
+        .achievement-item .achievement-description { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; }
+        .achievement-progress-container { background-color: var(--bg-secondary); border-radius: var(--border-radius-sm); height: 20px; overflow: hidden; margin-bottom: 0.8rem; border: 1px solid var(--border-light); }
+        .achievement-progress-bar { height: 100%; width: 0%; background-color: var(--primary-orange); color: var(--text-dark); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; transition: width 0.5s ease-out; white-space: nowrap; overflow: hidden; }
+        .achievement-progress-bar span { padding: 0 5px; }
+        .achievement-item .achievement-rewards { font-size: 0.85rem; color: #ccc; margin-top: 1rem; border-top: 1px dashed var(--border-light); padding-top: 0.8rem; word-break: break-word; }
+        .achievement-rewards strong { color: var(--text-light); font-weight: 600; }
 
-
-        .achievement-item .achievement-description {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-
-        .achievement-progress-container {
-            background-color: var(--bg-secondary);
-            border-radius: 5px;
-            height: 20px;
-            overflow: hidden;
-            margin-bottom: 0.8rem;
-            border: 1px solid var(--border-light);
-        }
-
-        .achievement-progress-bar {
-            height: 100%;
-            width: 0%; /* Default to 0, set by JS */
-            background-color: var(--primary-orange);
-            color: var(--text-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
-            transition: width 0.5s ease-out;
-             white-space: nowrap;
-             overflow: hidden; /* Prevent text overflow */
-        }
-        .achievement-progress-bar span {
-            padding: 0 5px; /* Add some padding to text inside */
-        }
-
-        .achievement-item .achievement-rewards {
-            font-size: 0.85rem;
-            color: #ccc;
-            margin-top: 1rem;
-            border-top: 1px dashed var(--border-light);
-            padding-top: 0.8rem;
-             word-break: break-word;
-        }
-         .achievement-rewards strong {
-            color: var(--text-light);
-            font-weight: 600;
-         }
 
         /* ======================================== */
         /* Footer (Shared)                        */
         /* ======================================== */
-        footer { text-align: center; padding: 1.5rem 1rem; margin-top: auto; background-color: var(--bg-secondary); color: var(--text-secondary); font-size: 0.9rem; border-top: 1px solid var(--border-light); }
+        footer { text-align: center; padding: 1.5rem 1rem; margin-top: auto; background-color: var(--bg-secondary); color: var(--text-secondary); font-size: 0.9rem; border-top: 1px solid var(--border-light); flex-shrink: 0; }
 
         /* ======================================== */
         /* Responsive Adjustments                 */
@@ -665,6 +446,7 @@
             #edit-profile-pic-icon { width: 25px; height: 25px; font-size: 0.8rem; bottom: 3px; right: 3px; }
             #profile-username { font-size: 1.9rem; }
             .profile-stats h3, .profile-section h3 { font-size: 1.5rem; }
+            #achievements-section h3 { font-size: 1.5rem; } /* Target achievement header specifically */
             .stats-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.2rem; }
             .stat-item p { font-size: 1.5rem; }
             #loading-profile, #not-logged-in { min-height: 250px; padding: 3rem 1.5rem; }
@@ -672,26 +454,26 @@
             .modal-content { padding: 20px; }
             .modal-header h3 { font-size: 1.4rem; }
             #cropper-image-container { min-height: 250px; }
-            /* Friends section responsive */
-            #friends-section h3 { font-size: 1.5rem; }
-            /* Achievements section responsive */
-            #achievements-section h3 { font-size: 1.5rem; }
+            /* Achievement Responsive */
+            .achievements-container-wrapper { padding: 2rem 1rem; margin-top: 2rem; }
+            .achievements-content-limiter { max-width: 95%; }
         }
          @media (max-width: 480px) {
-            main { padding: 0 0.5rem; } /* Add slight horizontal padding */
+            main { padding: 0 0.5rem; } /* Slight horizontal padding for main on mobile */
             .nav-container { padding: 0 1rem; }
             .logo { font-size: 1.5rem; }
             .btn { padding: 0.6rem 1.2rem; font-size: 0.9rem; }
             .auth-buttons button, .auth-buttons a.btn { margin-left: 0.5rem; }
-            .profile-container { margin: 1.5rem auto; padding: 1.5rem 1.2rem; border-radius: 8px; width: 100%; /* Take full width */ }
+            .profile-container { margin: 1.5rem auto; padding: 1.5rem 1.2rem; border-radius: var(--border-radius-md); width: 100%; }
             .profile-header { margin-bottom: 2rem; gap: 0.8rem; }
             #profile-pic { width: 85px; height: 85px; border-width: 3px;}
             #profile-pic #profile-initials { font-size: 3rem; }
             #edit-profile-pic-icon { width: 22px; height: 22px; font-size: 0.7rem; bottom: 2px; right: 2px; }
             #profile-username { font-size: 1.6rem; }
-            #profile-email { font-size: 0.9rem; /* Style kept even though hidden */ }
+            #profile-email { font-size: 0.9rem; /* Kept for reference */ }
             .profile-stats, .profile-section { padding-top: 1.8rem; margin-top: 1.8rem; }
             .profile-stats h3, .profile-section h3 { font-size: 1.4rem; margin-bottom: 1.5rem; }
+            #achievements-section h3 { font-size: 1.4rem; margin-bottom: 1.5rem; } /* Target achievement header */
             .stats-grid { grid-template-columns: 1fr; gap: 1rem; }
             .stat-item { padding: 1rem 1.2rem; }
             .stat-item h4 { font-size: 0.85rem; }
@@ -713,37 +495,16 @@
             #cropper-image-container { min-height: 200px; max-height: calc(90vh - 160px); }
             .modal-footer { gap: 8px; padding-top: 10px; }
             .modal-footer .btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
-
-             /* Responsive adjustments for friend list */
-            .friend-request-list li:not(.list-message) { /* Only affect actual items */
-                flex-direction: column;
-                align-items: flex-start; /* Align items left */
-                gap: 0.5rem;
-            }
-             .friend-item-info {
-               margin-right: 0;
-               margin-bottom: 0.5rem; /* Space between info and buttons on small screens */
-                width: 100%; /* Take full width to contain name better */
-            }
-             .friend-item-name {
-                white-space: normal; /* Allow name wrapping on small screens */
-                 word-break: break-word;
-             }
-            .friend-item-actions {
-                width: 100%;
-                justify-content: flex-end; /* Buttons to the right */
-            }
-            .tab-button {
-                font-size: 0.8rem;
-                padding: 0.4rem 0.8rem;
-            }
-            #friends-section h4 {
-                font-size: 1rem;
-            }
-             .tab-content {
-                padding: 1rem;
-            }
-             /* Responsive Achievement adjustments */
+             /* Friend List Responsive */
+            .friend-request-list li:not(.list-message) { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+             .friend-item-info { margin-right: 0; margin-bottom: 0.5rem; width: 100%; }
+             .friend-item-name { white-space: normal; word-break: break-word; }
+            .friend-item-actions { width: 100%; justify-content: flex-end; }
+            .tab-button { font-size: 0.8rem; padding: 0.4rem 0.8rem; }
+            #friends-section h4 { font-size: 1rem; }
+             .tab-content { padding: 1rem; }
+            /* Achievements Responsive */
+            .achievements-container-wrapper { padding: 1.5rem 0.5rem; }
              .achievement-item { padding: 1rem; }
              .achievement-item h4 { font-size: 1rem; }
              .achievement-item .achievement-description { font-size: 0.85rem; }
@@ -816,40 +577,26 @@
                 </div>
             </div>
 
-             <!-- === Achievements Section (Only shown for own profile) === -->
-             <div class="profile-section" id="achievements-section" style="display: none;">
-                <h3>My Achievements</h3>
-                <div class="achievements-list" id="achievements-list-container">
-                    <p class="list-message">Loading achievements...</p>
-                    <!-- Achievement items will be added here by JS -->
-                </div>
-            </div>
-            <!-- === End of Achievements Section === -->
-
              <!-- *** FRIENDS SECTION (Only shown for own profile) *** -->
             <div class="profile-section" id="friends-section" style="display: none;">
                 <h3>Friends & Requests</h3>
-
                 <div class="friends-tabs">
                     <button class="tab-button active" data-tab="friends-list">Friends</button>
                     <button class="tab-button" data-tab="incoming-requests">Incoming (<span id="incoming-count">0</span>)</button>
                     <button class="tab-button" data-tab="outgoing-requests">Outgoing (<span id="outgoing-count">0</span>)</button>
                 </div>
-
                 <div class="tab-content active" id="friends-list-container">
                     <h4>Current Friends</h4>
                     <ul class="friend-request-list" id="friends-list">
                         <li class="list-message">Loading friends...</li>
                     </ul>
                 </div>
-
                 <div class="tab-content" id="incoming-requests-container">
                     <h4>Incoming Requests</h4>
                     <ul class="friend-request-list" id="incoming-requests-list">
                          <li class="list-message">Loading incoming requests...</li>
                     </ul>
                 </div>
-
                 <div class="tab-content" id="outgoing-requests-container">
                     <h4>Outgoing Requests</h4>
                     <ul class="friend-request-list" id="outgoing-requests-list">
@@ -857,19 +604,35 @@
                     </ul>
                 </div>
             </div>
-            <!-- *** END OF FRIENDS SECTION *** -->
+            <!-- *** End of Friends Section (inside profile box) *** -->
 
         </div> <!-- End #profile-content -->
 
         <!-- Loading Profile Message -->
-        <div id="loading-profile" style="display: flex;"> <!-- Display flex by default -->
-            <p>Loading profile...</p>
+        <div id="loading-profile" style="display: flex;">
+             <p>Loading profile...</p>
         </div>
 
         <!-- Not Logged In / Error Message -->
         <div id="not-logged-in" style="display: none;">
-            <p>You need to be logged in to view this page. Redirecting...</p> <!-- Message content may be changed by JS -->
+            <p>You need to be logged in to view this page. Redirecting...</p>
         </div>
+
+        <!-- === NEW Achievements Section Wrapper (Outside main profile box) === -->
+        <div class="achievements-container-wrapper" id="achievements-section-outer" style="display: none;">
+             <div class="achievements-content-limiter"> <!-- Inner div to control content width -->
+                 <!-- This is the MOVED achievements block -->
+                <div class="profile-section" id="achievements-section"> <!-- Use ID for internal logic -->
+                    <h3>My Achievements</h3>
+                    <div class="achievements-list" id="achievements-list-container">
+                        <p class="list-message">Loading achievements...</p>
+                        <!-- Achievement items will be added here by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- === End of Achievements Section Wrapper === -->
+
 
     </main> <!-- End main -->
 
