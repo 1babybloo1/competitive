@@ -1,5 +1,6 @@
+
 const firebaseConfig = {
-    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
+    apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Replace if necessary, keep private
     authDomain: "poxelcomp.firebaseapp.com",
     projectId: "poxelcomp",
     storageBucket: "poxelcomp.firebasestorage.app",
@@ -15,13 +16,13 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // --- Cloudinary Configuration ---
-const CLOUDINARY_CLOUD_NAME = "djttn4xvk"; // <-- REPLACE
-const CLOUDINARY_UPLOAD_PRESET = "compmanage"; // <-- REPLACE
+const CLOUDINARY_CLOUD_NAME = "djttn4xvk"; // <-- REPLACE if different
+const CLOUDINARY_UPLOAD_PRESET = "compmanage"; // <-- REPLACE if different
 
 // --- URL Parameter Parsing & Logged-in User Check ---
 const urlParams = new URLSearchParams(window.location.search);
 const profileUidFromUrl = urlParams.get('uid');
-let loggedInUser = auth.currentUser;
+let loggedInUser = null; // Initially null, set by onAuthStateChanged
 
 // --- Admin Emails ---
 const adminEmails = [
@@ -34,7 +35,7 @@ const adminEmails = [
 const badgeConfig = {
     verified: { emails: ['jackdmbell@outlook.com', 'myrrr@myrrr.myrrr', 'leezak5555@gmail.com'].map(e => e.toLowerCase()), className: 'badge-verified', title: 'Verified' },
     creator: { emails: ['jackdmbell@outlook.com'].map(e => e.toLowerCase()), className: 'badge-creator', title: 'Content Creator' },
-    moderator: { emails: ['jackdmbell@outlook.com', 'mod_team@sample.org'].map(e => e.toLowerCase()), className: 'badge-moderator', title: 'Moderator' }
+    moderator: { emails: ['jackdmbell@outlook.com', 'mod_team@sample.org'].map(e => e.toLowerCase()), className: 'badge-moderator', title: 'Moderator' } // Add actual moderator emails
 };
 
 // --- DOM Elements ---
@@ -44,12 +45,12 @@ const notLoggedInMsg = document.getElementById('not-logged-in');
 // Profile Pic Elements
 const profilePicDiv = document.getElementById('profile-pic');
 const profileImage = document.getElementById('profile-image');
-const profileInitials = document.getElementById('profile-initials'); // Span for initials/fallback
+const profileInitials = document.getElementById('profile-initials');
 const editProfilePicIcon = document.getElementById('edit-profile-pic-icon');
 const profilePicInput = document.getElementById('profile-pic-input');
 // Other Profile Elements
 const usernameDisplay = document.getElementById('profile-username');
-const emailDisplay = document.getElementById('profile-email');
+const emailDisplay = document.getElementById('profile-email'); // Kept for structure, hidden by CSS
 const competitiveStatsDisplay = document.getElementById('stats-display');
 const profileLogoutBtn = document.getElementById('profile-logout-btn');
 const adminTag = document.getElementById('admin-tag');
@@ -74,14 +75,17 @@ const incomingListUl = document.getElementById('incoming-requests-list');
 const outgoingListUl = document.getElementById('outgoing-requests-list');
 const incomingCountSpan = document.getElementById('incoming-count');
 const outgoingCountSpan = document.getElementById('outgoing-count');
-const friendsTabsContainer = document.querySelector('.friends-tabs'); // For tab switching
+const friendsTabsContainer = document.querySelector('.friends-tabs');
+// Achievement Section Elements (NEW)
+const achievementsSection = document.getElementById('achievements-section');
+const achievementsListContainer = document.getElementById('achievements-list-container');
 
 
 // --- Global/Scoped Variables ---
-let allAchievements = null;
-let viewingUserProfileData = {}; // Data of the profile being viewed
+let allAchievements = null; // Cache for achievement definitions
+let viewingUserProfileData = {}; // Data of the profile being viewed {profile: {}, stats: {}}
 let viewerProfileData = null; // Data of the logged-in user (viewer), including their friends map
-let miniProfileCache = {}; // Simple cache for friend display names/pfps { userId: { displayName, profilePictureUrl } }
+let miniProfileCache = {}; // Simple cache for friend display names/pfps { userId: { displayName, profilePictureUrl, id } }
 let isTitleSelectorOpen = false;
 let titleSelectorElement = null;
 let cropper = null; // To hold the Cropper.js instance
@@ -100,49 +104,64 @@ async function fetchPoxelStats(username) {
     }
     console.log(`Fetching Poxel.io stats for: ${username}`);
     try {
+        // Adjust URL if needed (remove /dev prefix for production?)
         const apiUrl = `https://dev-usa-1.poxel.io/api/profile/stats/${encodeURIComponent(username)}`;
         const res = await fetch(apiUrl, {
-            headers: { "Content-Type": "application/json" }
+            // Consider adding cache control or other headers if necessary
+             headers: { "Content-Type": "application/json" }
+             // mode: 'no-cors' // Remove this if API supports CORS properly
         });
 
         if (!res.ok) {
             let errorMsg = `HTTP error ${res.status}`;
-            try {
-                const errorData = await res.json();
-                errorMsg = errorData.message || errorData.error || errorMsg;
-            } catch (parseError) { /* Ignore */ }
+             if (res.status === 404) {
+                errorMsg = "User not found on Poxel.io";
+             } else {
+                try {
+                    const errorData = await res.json();
+                    errorMsg = errorData.message || errorData.error || errorMsg;
+                } catch (parseError) { /* Ignore if response isn't JSON */ }
+             }
             throw new Error(errorMsg);
         }
 
         const data = await res.json();
-        console.log("Poxel.io API Stats Received:", data);
+        // console.log("Poxel.io API Stats Received:", data);
 
         if (typeof data !== 'object' || data === null) {
             throw new Error("Invalid data format received from Poxel.io API.");
         }
         if (data.error || data.status === 'error') {
-            throw new Error(data.message || 'API returned an error status.');
+             // Handle specific error cases if API returns them structured
+            if (data.message && data.message.toLowerCase().includes('not found')) {
+                 throw new Error('User not found on Poxel.io');
+            }
+            throw new Error(data.message || 'Poxel.io API returned an error status.');
         }
         return data;
     } catch (e) {
         console.error("Error fetching Poxel.io stats:", e.message || e);
-        return null;
+        return null; // Indicate error by returning null
     }
 }
 
+
 // --- Fetch all achievement definitions ---
 async function fetchAllAchievements() {
-    if (allAchievements) return allAchievements;
+    if (allAchievements) return allAchievements; // Return cached if available
+    console.log("Fetching all achievement definitions...");
     try {
         const snapshot = await db.collection('achievements').get();
-        allAchievements = {};
+        const fetchedAchievements = {};
         snapshot.forEach(doc => {
-            allAchievements[doc.id] = { id: doc.id, ...doc.data() };
+            fetchedAchievements[doc.id] = { id: doc.id, ...doc.data() };
         });
-        console.log("Fetched achievement definitions:", allAchievements);
+        allAchievements = fetchedAchievements; // Cache the result
+        console.log(`Fetched ${Object.keys(allAchievements).length} achievement definitions.`);
         return allAchievements;
     } catch (error) {
         console.error("Error fetching achievement definitions:", error);
+        allAchievements = {}; // Set empty object on error to prevent retries
         return null;
     }
 }
@@ -151,21 +170,38 @@ async function fetchAllAchievements() {
 function areStatsDifferent(newStats, existingProfileStats) {
     const normNew = newStats || {};
     const normExisting = existingProfileStats || {};
+    // Define relevant stat keys to compare (adjust as needed)
     const statKeys = ['wins', 'points', 'kdRatio', 'matchesPlayed', 'matches', 'losses'];
     let different = false;
     for (const key of statKeys) {
-        const newValue = normNew[key] ?? null;
-        const existingValue = normExisting[key] ?? null;
+        let newValue = normNew[key];
+        let existingValue = normExisting[key];
+
+        // Handle potential 'matches'/'matchesPlayed' alias more carefully
+        if(key === 'matchesPlayed' && !normNew.hasOwnProperty('matchesPlayed') && normNew.hasOwnProperty('matches')) {
+            newValue = normNew.matches;
+        }
+        if(key === 'matchesPlayed' && !normExisting.hasOwnProperty('matchesPlayed') && normExisting.hasOwnProperty('matches')) {
+            existingValue = normExisting.matches;
+        }
+
+
+        // Coerce undefined/null to null for comparison
+        newValue = newValue ?? null;
+        existingValue = existingValue ?? null;
+
+
+        // Special comparison for floating point numbers
         if (key === 'kdRatio' && typeof newValue === 'number' && typeof existingValue === 'number') {
             if (Math.abs(newValue - existingValue) > 0.001) { different = true; break; }
         } else if (newValue !== existingValue) {
             different = true; break;
         }
     }
-    // Check if relevant keys themselves differ
+    // Also check if the *set* of relevant keys present differs
     if (!different) {
-        const newRelevantKeys = Object.keys(normNew).filter(k => statKeys.includes(k));
-        const existingRelevantKeys = Object.keys(normExisting).filter(k => statKeys.includes(k));
+        const newRelevantKeys = Object.keys(normNew).filter(k => statKeys.includes(k) || (k === 'matches' && statKeys.includes('matchesPlayed')));
+        const existingRelevantKeys = Object.keys(normExisting).filter(k => statKeys.includes(k)|| (k === 'matches' && statKeys.includes('matchesPlayed')));
         if (newRelevantKeys.length !== existingRelevantKeys.length) {
             different = true;
         } else {
@@ -173,113 +209,151 @@ function areStatsDifferent(newStats, existingProfileStats) {
             if (!existingRelevantKeys.every(key => newSet.has(key))) { different = true; }
         }
     }
+     // if (different) console.log("Detected difference in stats:", { new: normNew, existing: normExisting });
     return different;
 }
 
 // --- Helper Function: Client-Side User Profile Document Creation ---
 async function createUserProfileDocument(userId, authUser) {
+    if (!userId || !authUser) {
+        console.error("Cannot create profile: userId or authUser missing.");
+        return null;
+    }
     console.warn(`Client-side: Creating missing user profile doc for UID: ${userId}`);
     const userDocRef = db.collection("users").doc(userId);
     const displayName = authUser.displayName || `User_${userId.substring(0, 5)}`;
     const defaultProfileData = {
-        email: authUser.email || null,
+        email: authUser.email ? authUser.email.toLowerCase() : null, // Store email lowercase
         displayName: displayName,
         currentRank: "Unranked",
         equippedTitle: "",
         availableTitles: [],
-        friends: {}, // Initialize friends map
+        friends: {}, // Initialize empty friends map
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        leaderboardStats: {},
-        profilePictureUrl: authUser.photoURL || null
+        leaderboardStats: {}, // Initialize empty stats
+        profilePictureUrl: authUser.photoURL || null, // Use Google photoURL if available
+        poxelStats: {} // Placeholder for Poxel stats if needed later
     };
     try {
-        await userDocRef.set(defaultProfileData, { merge: true });
-        console.log(`Successfully created/merged user profile document for UID: ${userId} via client`);
-        return { id: userId, ...defaultProfileData };
+        await userDocRef.set(defaultProfileData, { merge: false }); // Use set without merge to create cleanly
+        console.log(`Successfully created user profile document for UID: ${userId} via client`);
+        return { id: userId, ...defaultProfileData, createdAt: new Date() }; // Return structure matching a fetched doc, use client date for createdAt initially
     } catch (error) {
         console.error(`Error creating user profile document client-side for UID ${userId}:`, error);
-        alert("Error setting up your profile details. Please check your connection or contact support.");
+        // Don't show alert, handle error in calling function
         return null;
     }
 }
 
-// --- Load Combined User Data (Profile + Stats + Poxel) ---
+// --- Load Combined User Data (Profile + Stats + Poxel + Achievements) ---
 async function loadCombinedUserData(targetUserId) {
     console.log(`Loading combined user data for TARGET UID: ${targetUserId}`);
     isOwnProfile = loggedInUser && loggedInUser.uid === targetUserId;
     console.log("Is viewing own profile:", isOwnProfile);
 
-    // Reset viewer data and cache on new load
+    // Reset viewer data and caches on new load
     viewerProfileData = null;
-    miniProfileCache = {}; // Clear cache on profile load
+    miniProfileCache = {};
+    viewingUserProfileData = {}; // Clear existing viewing data
 
     // Clear previous content and show loading indicators
-    displayPoxelStats(null, true);
-    competitiveStatsDisplay.innerHTML = '<p>Loading competitive stats...</p>';
-    updateProfileTitlesAndRank(null, false);
+    if (profileContent) profileContent.style.display = 'none'; // Hide content until load completes
+    if (notLoggedInMsg) notLoggedInMsg.style.display = 'none';
+    if (loadingIndicator) loadingIndicator.style.display = 'flex';
+
+    if (competitiveStatsDisplay) competitiveStatsDisplay.innerHTML = '<p class="list-message">Loading competitive stats...</p>';
+    if (poxelStatsSection) poxelStatsSection.style.display = 'none'; // Hide Poxel section initially
+    if (poxelStatsDisplay) poxelStatsDisplay.innerHTML = '<p class="list-message">Loading Poxel.io stats...</p>';
+    if (achievementsSection) achievementsSection.style.display = 'none'; // Hide achievements section initially
+    if (achievementsListContainer) achievementsListContainer.innerHTML = '<p class="list-message">Loading achievements...</p>';
+
+    updateProfileTitlesAndRank(null, false); // Reset rank/title display
     clearFriendshipControls(); // Clear old friend buttons
-    resetFriendsSection(); // Hide and reset friend lists
+    resetFriendsSection(); // Hide and reset friend lists/tabs
 
-    const cacheLoaded = loadCombinedDataFromCache(targetUserId); // Tries to display cached data first
+    // Try loading from cache first for faster perceived load
+    const cacheLoaded = loadCombinedDataFromCache(targetUserId);
+    // Fetch definitions needed globally (can run in parallel to user data fetch)
+    if (!allAchievements) fetchAllAchievements();
 
-    // --- Fetch Viewer's Profile Data (if logged in and not viewing own profile) ---
+
+    // --- Fetch Viewer's Profile Data (if logged in and not viewing self) ---
     if (loggedInUser && !isOwnProfile) {
         try {
             const viewerSnap = await db.collection('users').doc(loggedInUser.uid).get();
             if (viewerSnap.exists) {
                 viewerProfileData = { id: viewerSnap.id, ...viewerSnap.data() };
-                 // Ensure viewer's friends map exists
-                 if (!viewerProfileData.friends) viewerProfileData.friends = {};
-                console.log("Fetched viewing user's profile data for friend status check.");
+                 if (!viewerProfileData.friends) viewerProfileData.friends = {}; // Ensure map exists
+                console.log("Fetched viewer profile data.");
             } else {
-                 console.warn("Logged in user's profile data not found, cannot determine friendship status accurately.");
-                 // Attempt to create viewer profile if missing? Or handle gracefully?
-                 // For now, proceed; status check will return 'none'.
-                 viewerProfileData = { id: loggedInUser.uid, friends: {} }; // Assume empty map for checks
+                 console.warn("Logged-in user's profile data not found.");
+                 // Attempt to create profile if viewer's own is missing (edge case)
+                 viewerProfileData = await createUserProfileDocument(loggedInUser.uid, loggedInUser);
+                 if (!viewerProfileData) viewerProfileData = { id: loggedInUser.uid, friends: {} }; // Fallback empty map
             }
         } catch (viewerError) {
             console.error("Error fetching viewing user's profile data:", viewerError);
-            // Proceed, status check will return 'none'
+             viewerProfileData = { id: loggedInUser.uid, friends: {} }; // Assume empty map for checks
         }
+    } else if (isOwnProfile) {
+         // If viewing own profile, viewer data IS the profile data (fetched below)
+         // This section will be populated later once the profile is fetched.
     }
     // --- End Fetch Viewer's Profile Data ---
 
     const userProfileRef = db.collection('users').doc(targetUserId);
     const leaderboardStatsRef = db.collection('leaderboard').doc(targetUserId);
+    let userUnlockedAchievementIds = []; // Hold unlocked achievement IDs for owner
 
     try {
+        // *** Fetch unlocked achievements IF viewing own profile (do early) ***
+        if (isOwnProfile) {
+            userUnlockedAchievementIds = await fetchUserUnlockedAchievements(targetUserId);
+            // console.log("Initial fetch of unlocked achievements:", userUnlockedAchievementIds);
+        }
+
         // 1. Fetch Target User Profile Data
         let profileSnap = await userProfileRef.get();
         let profileData = null;
 
         if (!profileSnap || !profileSnap.exists) {
             console.warn(`User profile document does NOT exist for UID: ${targetUserId}`);
-            if (isOwnProfile && loggedInUser) { // Only create if it's the logged-in user's own profile AND they are logged in
+            if (isOwnProfile && loggedInUser) {
                 profileData = await createUserProfileDocument(targetUserId, loggedInUser);
                 if (!profileData) throw new Error(`Profile creation failed for own UID ${targetUserId}.`);
+                // No stats available for newly created profile yet
+                 viewingUserProfileData = { profile: profileData, stats: null };
             } else {
                 console.error(`Cannot find profile for user UID: ${targetUserId}`);
-                displayProfileData(null, null, false); // Display not found state
-                competitiveStatsDisplay.innerHTML = '<p>Profile not found.</p>';
-                displayPoxelStats(null);
-                clearFriendshipControls();
-                resetFriendsSection();
-                return;
+                throw new Error(`Profile not found for UID ${targetUserId}.`); // Throw specific error
             }
         } else {
             profileData = { id: profileSnap.id, ...profileSnap.data() };
             // Ensure essential fields exist for robustness
             if (profileData.leaderboardStats === undefined) profileData.leaderboardStats = {};
             if (profileData.profilePictureUrl === undefined) profileData.profilePictureUrl = null;
-            if (profileData.friends === undefined) profileData.friends = {}; // IMPORTANT: Initialize friends map
+            if (profileData.friends === undefined) profileData.friends = {};
+            if (profileData.email) profileData.email = profileData.email.toLowerCase(); // Ensure lowercase
         }
 
-        // 2. Fetch Leaderboard Stats Data (Competitive)
-        const statsSnap = await leaderboardStatsRef.get();
-        const competitiveStatsData = statsSnap.exists ? { id: statsSnap.id, ...statsSnap.data() } : null;
+        // If viewing own profile, also set viewerProfileData here
+        if (isOwnProfile) {
+            viewerProfileData = profileData;
+            if (!viewerProfileData.friends) viewerProfileData.friends = {}; // Ensure map exists
+        }
+
+
+        // 2. Fetch Leaderboard Stats Data (Competitive) - Fetch ONLY IF profile exists
+        let competitiveStatsData = null;
+        if(profileData) { // Only fetch if profile was found/created
+            const statsSnap = await leaderboardStatsRef.get();
+            competitiveStatsData = statsSnap.exists ? { id: statsSnap.id, ...statsSnap.data() } : null;
+             // console.log("Fetched competitive stats:", competitiveStatsData);
+        }
 
         // 3. Sync Competitive Stats to Profile Document if needed
         if (profileData && competitiveStatsData) {
+             // console.log("Comparing fetched stats with profile stats:", competitiveStatsData, profileData.leaderboardStats);
             if (areStatsDifferent(competitiveStatsData, profileData.leaderboardStats)) {
                 console.log(`Competitive stats for UID ${targetUserId} differ. Updating 'users' doc.`);
                 try {
@@ -287,125 +361,197 @@ async function loadCombinedUserData(targetUserId) {
                     delete statsToSave.id; // Don't save the id field itself inside the map
                     await userProfileRef.update({ leaderboardStats: statsToSave });
                     profileData.leaderboardStats = statsToSave; // Update local copy
+                    console.log("Local profileData.leaderboardStats updated after sync.");
                 } catch (updateError) {
                     console.error(`Error updating competitive stats in 'users' doc for UID ${targetUserId}:`, updateError);
+                     // Continue with potentially stale stats in profileData.leaderboardStats if update fails
                 }
             }
         }
+
 
         // 4. Update Global State for the viewed profile
         viewingUserProfileData = {
             profile: profileData,
-            stats: competitiveStatsData
+            stats: competitiveStatsData // Store stats from leaderboard, or null if not found
         };
-        console.log("Final Profile Data being viewed:", viewingUserProfileData.profile);
-        // (viewerProfileData was updated earlier if applicable)
+        // console.log("Final Profile Data set in viewingUserProfileData:", viewingUserProfileData);
+
 
         // 5. Display Core Profile & Competitive Stats, Cache
         displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats, isOwnProfile);
-        saveCombinedDataToCache(targetUserId, viewingUserProfileData);
+        saveCombinedDataToCache(targetUserId, viewingUserProfileData); // Cache fetched data
+
 
         // --- Display Friendship Controls or Friends Section ---
-        if (loggedInUser) { // Only show friend UI elements if a user is logged in
+        if (loggedInUser) {
             if (isOwnProfile) {
-                displayFriendsSection(profileData); // Show friends section on own profile
-            } else {
-                // Determine status based on the *viewer's* data
-                const status = determineFriendshipStatus(loggedInUser.uid, targetUserId);
-                displayFriendshipControls(status, targetUserId); // Show relevant buttons on other's profile
+                // Use the just fetched profileData (which is also viewerProfileData now)
+                 displayFriendsSection(profileData); // Show friends section on own profile
+            } else if (viewerProfileData){ // Ensure viewer data is available before determining status
+                 const status = determineFriendshipStatus(loggedInUser.uid, targetUserId);
+                 displayFriendshipControls(status, targetUserId);
             }
         }
-        // --- End Display Friendship ---
+
 
         // 6. Fetch and Display Poxel.io Stats (asynchronously)
         if (profileData && profileData.displayName) {
-            fetchPoxelStats(profileData.displayName)
-                .then(poxelStatsData => displayPoxelStats(poxelStatsData))
+             if(poxelStatsSection) poxelStatsSection.style.display = 'block'; // Show section before fetch starts
+             fetchPoxelStats(profileData.displayName)
+                .then(poxelStatsData => {
+                    displayPoxelStats(poxelStatsData);
+                    // Optional: Save Poxel stats to user profile? Requires write permission/function.
+                     // if (isOwnProfile && poxelStatsData) {
+                    //     userProfileRef.update({ poxelStats: poxelStatsData }).catch(err => console.error("Failed to save Poxel stats", err));
+                    // }
+                })
                 .catch(poxelError => {
                     console.error("Caught error during Poxel.io fetch chain:", poxelError);
-                    displayPoxelStats(null); // Display error state
+                    displayPoxelStats(null, poxelError.message || 'Error loading stats.'); // Pass error message
                 });
         } else {
-             console.warn("No displayName found, cannot fetch Poxel.io stats.");
-             displayPoxelStats(null); // Display unavailable state
+             console.warn("No displayName found in profile, cannot fetch Poxel.io stats.");
+             displayPoxelStats(null, 'Poxel username not found.'); // Display unavailable state
         }
 
-        // 7. Check Achievements (if viewing own profile with stats)
+
+        // --- Display Achievements Section (IF owner) ---
+        if (isOwnProfile) {
+            // Ensure definitions are loaded before display
+             if (!allAchievements) await fetchAllAchievements();
+            // Display achievements based on the fetched competitive stats and initially fetched unlocked IDs
+             await displayAchievementsSection(viewingUserProfileData.stats, userUnlockedAchievementIds);
+        }
+
+
+        // 7. Check and Grant Achievements (only if owner and has competitive stats)
         if (isOwnProfile && viewingUserProfileData.stats) {
+            // Ensure definitions are loaded
             if (!allAchievements) await fetchAllAchievements();
+
             if (allAchievements) {
+                // Pass the LATEST profile data (including potentially synced stats)
                 const potentiallyUpdatedProfile = await checkAndGrantAchievements(
                     targetUserId,
-                    viewingUserProfileData.profile, // Pass the current profile data
+                    viewingUserProfileData.profile,
                     viewingUserProfileData.stats
                 );
+
                 if (potentiallyUpdatedProfile) {
-                    // Profile was updated (e.g., new title added/equipped)
-                    viewingUserProfileData.profile = potentiallyUpdatedProfile; // Update global state
-                    displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats, isOwnProfile); // Re-render profile sections
-                    saveCombinedDataToCache(targetUserId, viewingUserProfileData); // Update cache with new profile data
-                    console.log("UI/Cache updated post-achievement grant.");
-                    // If friend section is visible, potentially refresh it too if ranks/titles affect it somehow
-                    if(isOwnProfile) displayFriendsSection(viewingUserProfileData.profile);
+                    console.log("Profile potentially updated by achievement grant.");
+                    // Update global state with the returned updated profile
+                    viewingUserProfileData.profile = potentiallyUpdatedProfile;
+                    // If viewing own profile, update viewer data too
+                     viewerProfileData = viewingUserProfileData.profile;
+
+                    // Re-render affected UI components
+                    displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats, isOwnProfile); // Reflect title/rank changes
+                    saveCombinedDataToCache(targetUserId, viewingUserProfileData); // Update cache
+
+                    // Re-fetch unlocked achievements AFTER granting, and re-display section
+                    console.log("Refreshing achievement display after grant check...");
+                    const latestUnlockedIds = await fetchUserUnlockedAchievements(targetUserId);
+                    await displayAchievementsSection(viewingUserProfileData.stats, latestUnlockedIds); // Refresh achievement display
+
+                    // Optionally refresh friends section if rank changed?
+                    displayFriendsSection(viewingUserProfileData.profile); // Refresh friends section
+                    console.log("UI/Cache updated post-achievement check.");
                 }
             }
         }
 
+
     } catch (error) {
         console.error(`Error in loadCombinedUserData for TARGET UID ${targetUserId}:`, error);
-        if (error.stack) console.error("DEBUG: Full error stack:", error.stack);
-        if (!cacheLoaded) { // Only show full error if nothing loaded from cache
-            profileContent.style.display = 'none';
-            notLoggedInMsg.textContent = 'Error loading profile data. Please try again later.';
-            notLoggedInMsg.style.display = 'flex';
-            loadingIndicator.style.display = 'none';
-            competitiveStatsDisplay.innerHTML = '<p>Error loading data.</p>';
-            updateProfileTitlesAndRank(null, false);
-            displayPoxelStats(null);
-            updateProfileBackground(null); // Ensure background is cleared
-            clearFriendshipControls();
-            resetFriendsSection();
+        // Determine error message
+        let errorMessage = 'Error loading profile data. Please try again later.';
+        if (error.message && error.message.includes('Profile not found')) {
+            errorMessage = 'Profile not found.';
+             viewingUserProfileData.profile = null; // Explicitly mark profile as not found
         } else {
-            console.warn("Error fetching fresh data, displaying potentially stale cached view.");
-            // Optionally try fetching Poxel stats even if main load failed, using cached name
-            if (viewingUserProfileData.profile?.displayName) {
-                 fetchPoxelStats(viewingUserProfileData.profile.displayName)
-                    .then(poxelStatsData => displayPoxelStats(poxelStatsData))
-                    .catch(e => displayPoxelStats(null));
+            // Keep potentially cached data visible if it was loaded
+            if (cacheLoaded) {
+                 errorMessage = 'Error fetching latest data. Displaying cached version.';
+                 console.warn("Error fetching fresh data, displaying potentially stale cached view.");
+                 // Attempt Poxel fetch based on cache if available
+                  if (viewingUserProfileData.profile?.displayName) {
+                     if(poxelStatsSection) poxelStatsSection.style.display = 'block';
+                     fetchPoxelStats(viewingUserProfileData.profile.displayName)
+                         .then(poxelStatsData => displayPoxelStats(poxelStatsData))
+                         .catch(e => displayPoxelStats(null, e.message || 'Error loading stats.'));
+                  } else {
+                       displayPoxelStats(null, 'Poxel username not found.');
+                  }
+                   // Optionally show achievements based on cache (may be stale)
+                 if(isOwnProfile && achievementsSection) {
+                      achievementsSection.style.display = 'block';
+                      if(achievementsListContainer) achievementsListContainer.innerHTML = '<p class="list-message">Error refreshing achievements. Displaying cached data.</p>';
+                       // Optionally: displayAchievementsSection(viewingUserProfileData.stats, userUnlockedAchievementIds) // using possibly stale unlocked IDs
+                 }
+
+                 // Do not clear main display, keep cached view shown.
+                 // But do update the error message area.
+                 if (notLoggedInMsg) {
+                      notLoggedInMsg.textContent = errorMessage;
+                      notLoggedInMsg.style.display = 'block'; // Show temporary error above cached content? Or have a dedicated banner?
+                      // Maybe just log it, let user interact with stale data.
+                      console.warn(errorMessage);
+                      notLoggedInMsg.style.display = 'none'; // Keep it hidden if cache is shown
+                 }
+
             } else {
-                 displayPoxelStats(null);
+                 // No cache loaded and error occurred - Clear everything and show main error
+                 if (profileContent) profileContent.style.display = 'none';
+                 if (notLoggedInMsg) notLoggedInMsg.textContent = errorMessage;
+                 if (notLoggedInMsg) notLoggedInMsg.style.display = 'flex';
+                 updateProfileTitlesAndRank(null, false);
+                 if (competitiveStatsDisplay) competitiveStatsDisplay.innerHTML = '<p class="list-message">Error loading stats.</p>';
+                 if (poxelStatsSection) poxelStatsSection.style.display = 'none';
+                 if (achievementsSection) achievementsSection.style.display = 'none';
+                 updateProfileBackground(null);
+                 clearFriendshipControls();
+                 resetFriendsSection();
             }
-            // Friend controls might be wrong if based on stale cache - potentially clear them
-            // clearFriendshipControls();
-             // resetFriendsSection(); // Or keep stale friend section?
         }
+    } finally {
+         // Ensure loading indicator is always hidden at the end
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+         // Show profile content ONLY if profile data was successfully loaded/found
+         if (viewingUserProfileData.profile) {
+             if (profileContent) profileContent.style.display = 'block';
+         } else if(!cacheLoaded) { // If profile not found AND no cache was shown
+             if (profileContent) profileContent.style.display = 'none';
+             // The error message display is handled within the catch block logic above
+         }
     }
-}
+} // --- End loadCombinedUserData ---
 
 
-// --- Display Core Profile Data ---
+// --- Display Core Profile Data (Username, PFP, Badges, Rank, Title, Comp Stats) ---
 function displayProfileData(profileData, competitiveStatsData, isOwner) {
-    if (!profileData) {
-        // Reset state for "User Not Found" or error
-        profileImage.style.display = 'none';
-        profileImage.src = '';
-        profileInitials.style.display = 'flex';
-        profileInitials.textContent = "?";
-        editProfilePicIcon.style.display = 'none';
-        updateProfileBackground(null);
+     // Check if the profile-content container is ready
+     if (!profileContent) {
+         console.error("Profile content container not found in DOM.");
+         return;
+     }
+    profileContent.style.display = 'block'; // Ensure main container is visible if data exists
 
-        usernameDisplay.textContent = "User Not Found";
-        emailDisplay.textContent = "";
-        adminTag.style.display = 'none';
-        profileBadgesContainer.innerHTML = '';
-        updateProfileTitlesAndRank(null, false);
-        displayCompetitiveStats(null);
-        // Note: Friend section/controls cleared in loadCombinedUserData start/error
+    if (!profileData) {
+        // Reset state for "User Not Found" or error after initial load failure
+        // This case is mostly handled by loadCombinedUserData error handling now.
+        console.error("displayProfileData called with null profileData.");
+        profileContent.style.display = 'none'; // Hide container if no data
+         if (notLoggedInMsg) {
+            notLoggedInMsg.textContent = 'Profile data unavailable.';
+             notLoggedInMsg.style.display = 'flex';
+         }
         return;
     }
 
     const displayName = profileData.displayName || 'Anonymous User';
-    const email = profileData.email || 'No email provided';
+    // const email = profileData.email || 'No email provided'; // Email kept hidden by CSS
+
     usernameDisplay.textContent = displayName;
     // emailDisplay.textContent = email; // Keep email hidden based on CSS
 
@@ -417,15 +563,17 @@ function displayProfileData(profileData, competitiveStatsData, isOwner) {
         profileImage.onerror = () => { // Fallback if image load fails
             console.error("Failed to load profile image:", profileData.profilePictureUrl);
             profileImage.style.display = 'none';
-            profileInitials.textContent = displayName.charAt(0).toUpperCase() || '?';
+            profileInitials.textContent = displayName?.charAt(0)?.toUpperCase() || '?';
             profileInitials.style.display = 'flex';
             updateProfileBackground(null); // Clear background on error
         };
-        updateProfileBackground(profileData.profilePictureUrl); // Set background
+        profileImage.onload = () => { // Ensure background updates *after* image loads
+             updateProfileBackground(profileData.profilePictureUrl); // Set background
+        }
     } else {
         profileImage.style.display = 'none';
         profileImage.src = '';
-        profileInitials.textContent = displayName.charAt(0).toUpperCase() || '?';
+        profileInitials.textContent = displayName?.charAt(0)?.toUpperCase() || '?';
         profileInitials.style.display = 'flex';
         updateProfileBackground(null); // No background
     }
@@ -437,123 +585,125 @@ function displayProfileData(profileData, competitiveStatsData, isOwner) {
     displayUserBadges(profileData);
     updateProfileTitlesAndRank(profileData, isOwner); // Pass owner status for interaction
     displayCompetitiveStats(competitiveStatsData); // Pass competitive stats
+
+     // Setup editing listener IF owner, AFTER the elements are displayed
+    if (isOwner) {
+        setupProfilePicEditing();
+    }
+
 }
 
 // --- Update Profile Background ---
 function updateProfileBackground(imageUrl) {
     // Use the main profile container 'profile-content'
-    const container = profileContent; // Use the existing reference
-    if (!container) return;
+    if (!profileContent) return;
 
     if (imageUrl) {
-        container.style.setProperty('--profile-bg-image', `url('${imageUrl}')`);
-        container.classList.add('has-background');
+        profileContent.style.setProperty('--profile-bg-image', `url('${imageUrl}')`);
+        profileContent.classList.add('has-background');
     } else {
-        container.style.removeProperty('--profile-bg-image');
-        container.classList.remove('has-background');
+        profileContent.style.removeProperty('--profile-bg-image');
+        profileContent.classList.remove('has-background');
     }
 }
 
 // --- Display COMPETITIVE Stats Grid ---
 function displayCompetitiveStats(statsData) {
+    if (!competitiveStatsDisplay) return;
     competitiveStatsDisplay.innerHTML = ''; // Clear previous
 
     if (!statsData || typeof statsData !== 'object' || Object.keys(statsData).length === 0) {
-        competitiveStatsDisplay.innerHTML = '<p>Competitive stats unavailable for this user.</p>';
+        competitiveStatsDisplay.innerHTML = '<p class="list-message">Competitive stats unavailable.</p>';
         return;
     }
 
-    const statsMap = { wins: 'Wins', points: 'Points', kdRatio: 'K/D Ratio', matchesPlayed: 'Matches Played', matches: 'Matches Played', losses: 'Losses' };
+    // More robust handling of potential stats structure
+    const statsMap = {
+        wins: 'Wins',
+        points: 'Points',
+        kdRatio: 'K/D Ratio',
+        matchesPlayed: 'Matches Played', // Primary key
+        losses: 'Losses'
+    };
+    // Use alias if primary is missing
+    if (!statsData.hasOwnProperty('matchesPlayed') && statsData.hasOwnProperty('matches')) {
+        statsMap.matches = 'Matches Played'; // Use 'matches' as the source
+        delete statsMap.matchesPlayed; // Remove the primary expectation
+    }
+
     let statsAdded = 0;
-    const addedKeys = new Set(); // To handle alias 'matchesPlayed'/'matches'
     for (const key in statsMap) {
-        let value;
-        let actualKeyUsed = key;
-        // Handle alias logic
-        if (key === 'matchesPlayed') {
-            if (statsData.hasOwnProperty('matchesPlayed') && !addedKeys.has('matchesPlayed')) {
-                 value = statsData.matchesPlayed;
-                 actualKeyUsed = 'matchesPlayed';
-            } else if (statsData.hasOwnProperty('matches') && !addedKeys.has('matches')) {
-                 value = statsData.matches;
-                 actualKeyUsed = 'matches';
-            }
-        } else {
-             value = statsData[key];
+        if (statsData.hasOwnProperty(key)) {
+            let value = statsData[key];
+             let displayValue = value;
+
+            // Format specific stats if needed
+            if (key === 'kdRatio' && typeof value === 'number') {
+                 displayValue = value.toFixed(2);
+             } else if (value === null || value === undefined){
+                 displayValue = '-'; // Show dash for null/undefined stats
+             }
+
+             // Append the item
+            competitiveStatsDisplay.appendChild(createStatItem(statsMap[key], displayValue));
+            statsAdded++;
         }
-
-
-        // Skip if value is undefined/null or if the key (or its alias) was already added
-        if (value === undefined || value === null || addedKeys.has(actualKeyUsed)) {
-             continue;
-        }
-
-
-        let displayValue = value;
-        if (key === 'kdRatio' && typeof value === 'number') { displayValue = value.toFixed(2); }
-
-        competitiveStatsDisplay.appendChild(createStatItem(statsMap[key], displayValue));
-        addedKeys.add(actualKeyUsed); // Mark this key (or the alias used) as added
-        statsAdded++;
     }
 
     if (statsAdded === 0) {
-        competitiveStatsDisplay.innerHTML = '<p>No specific competitive stats found.</p>';
+        competitiveStatsDisplay.innerHTML = '<p class="list-message">No specific competitive stats found.</p>';
     }
 }
 
 
 // --- Display Poxel.io Stats Grid ---
-function displayPoxelStats(poxelData, loading = false) {
+function displayPoxelStats(poxelData, message = null) { // Allow passing a message
     if (!poxelStatsDisplay || !poxelStatsSection) return;
 
     poxelStatsDisplay.innerHTML = ''; // Clear previous content
-    poxelStatsSection.style.display = 'block'; // Always show the section container
+    poxelStatsSection.style.display = 'block'; // Always ensure the section is potentially visible
 
-    if (loading) {
-        poxelStatsDisplay.innerHTML = '<p>Loading Poxel.io stats...</p>';
-        return;
-    }
+    if (message) { // If an explicit message is passed (e.g., error or loading)
+         poxelStatsDisplay.innerHTML = `<p class="list-message">${message}</p>`;
+         return;
+     }
 
-    if (!poxelData) {
-         poxelStatsDisplay.innerHTML = '<p>Could not load Poxel.io stats for this user.</p>';
+    if (!poxelData || typeof poxelData !== 'object' || Object.keys(poxelData).length === 0) {
+         poxelStatsDisplay.innerHTML = '<p class="list-message">Poxel.io stats unavailable.</p>'; // Generic message if no data and no error message
          return;
     }
 
-    // Adjust keys based on actual API response from fetchPoxelStats console log
+    // Map API fields to display names (adjust keys based on ACTUAL API response)
     const statsMap = {
          kills: 'Kills', deaths: 'Deaths', wins: 'Wins', losses: 'Losses',
          level: 'Level', playtimeHours: 'Playtime (Hours)', gamesPlayed: 'Games Played'
-         // Add/remove fields as necessary based on API response
+         // Add/remove/rename fields based on the API structure confirmed via console logs
     };
     let statsAdded = 0;
 
     // Display mapped stats
     for (const key in statsMap) {
          if (poxelData.hasOwnProperty(key) && poxelData[key] !== null && poxelData[key] !== undefined) {
-             poxelStatsDisplay.appendChild(createStatItem(statsMap[key], poxelData[key]));
+             let value = poxelData[key];
+             // Simple formatting example
+             if (key === 'playtimeHours' && typeof value === 'number') value = value.toFixed(1);
+
+             poxelStatsDisplay.appendChild(createStatItem(statsMap[key], value));
              statsAdded++;
          }
     }
 
-    // Calculate and add K/D specifically
-    if (poxelData.hasOwnProperty('kills') && poxelData.hasOwnProperty('deaths')) {
+    // Calculate and add K/D specifically (only if kills/deaths exist)
+    if (poxelData.hasOwnProperty('kills') && poxelData.hasOwnProperty('deaths') && poxelData.deaths !== null && poxelData.kills !== null) {
          const kills = Number(poxelData.kills) || 0;
          const deaths = Number(poxelData.deaths) || 0;
          const kd = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2); // Handle division by zero
-         poxelStatsDisplay.appendChild(createStatItem('K/D Ratio', kd));
+         poxelStatsDisplay.appendChild(createStatItem('Poxel K/D', kd));
          statsAdded++;
     }
 
-    // Add any other direct fields from poxelData you want to display
-    // Example: if API returns 'elo_rating' directly
-    // if (poxelData.hasOwnProperty('elo_rating')) {
-    //     poxelStatsDisplay.appendChild(createStatItem('ELO Rating', poxelData.elo_rating));
-    //     statsAdded++;
-    // }
-
     if (statsAdded === 0) {
-        poxelStatsDisplay.innerHTML = '<p>No relevant Poxel.io stats found or available.</p>';
+        poxelStatsDisplay.innerHTML = '<p class="list-message">No relevant Poxel.io stats found.</p>';
     }
 }
 
@@ -564,108 +714,397 @@ function createStatItem(title, value) {
     const titleH4 = document.createElement('h4');
     titleH4.textContent = title;
     const valueP = document.createElement('p');
+    // Display a dash '-' if value is explicitly null or undefined
     valueP.textContent = (value !== null && value !== undefined) ? value : '-';
     itemDiv.appendChild(titleH4);
     itemDiv.appendChild(valueP);
     return itemDiv;
 }
 
-// --- Check and Grant Achievements ---
-async function checkAndGrantAchievements(userId, currentUserProfile, competitiveStats) {
-    if (!allAchievements || !userId || !currentUserProfile || !competitiveStats) {
-        console.log("Skipping achievement check due to missing data.");
-        return null; // Indicate no profile update occurred
-    }
-    console.log(`Checking achievements for UID ${userId} using stats:`, competitiveStats);
+
+// --- Helper: Fetch User's Unlocked Achievements (Corrected) ---
+async function fetchUserUnlockedAchievements(userId) {
+    if (!userId) return []; // Return empty if no user ID
+    // console.log(`Fetching unlocked achievements for ${userId}`); // Optional logging
     try {
         const userAchievementsRef = db.collection('userAchievements').doc(userId);
-        const userAchievementsDoc = await userAchievementsRef.get();
-        const unlockedIds = userAchievementsDoc.exists ? (userAchievementsDoc.data()?.unlocked || []) : [];
+        const doc = await userAchievementsRef.get(); // Corrected ref and use .get()
+        if (doc.exists) {
+            const unlockedIds = doc.data()?.unlocked || [];
+            // console.log(`Found unlocked achievements for ${userId}:`, unlockedIds); // Optional logging
+            return unlockedIds; // Return the array of unlocked IDs
+        } else {
+             // console.log(`No userAchievements doc found for ${userId}, assuming none unlocked.`); // Optional logging
+            return []; // No document means no achievements unlocked yet
+        }
+    } catch (error) {
+        console.error(`Error fetching unlocked achievements for UID ${userId}:`, error);
+        return []; // Return empty on error
+    }
+}
 
-        let newAchievementsUnlocked = [];
-        let rewardsToApply = { titles: [], rank: null };
-        let needsDbUpdate = false;
-        let updatedLocalProfile = { ...currentUserProfile }; // Create a mutable copy to track potential changes
+// --- Helper: Calculate Achievement Progress Percentage ---
+function calculateAchievementProgress(achievement, userStats) {
+     // Provide default target/value of 0 for calculation safety
+     const criteria = achievement?.criteria || {};
+     const targetValue = criteria.value || 0;
+     const operator = criteria.operator || '>='; // Default operator
+     const statKey = criteria.stat;
 
-        // Ensure fields exist in the local profile copy before processing
-        if (!updatedLocalProfile.availableTitles) updatedLocalProfile.availableTitles = [];
-        if (updatedLocalProfile.equippedTitle === undefined) updatedLocalProfile.equippedTitle = "";
-        if (updatedLocalProfile.currentRank === undefined) updatedLocalProfile.currentRank = "Unranked";
+     // Handle case where user has no stats (e.g., new profile)
+    if (userStats === null || userStats === undefined || !statKey) {
+        // If target is 0 and operator is '>=', consider 0 progress (or 100 if you want "reach 0")
+         const meetsCriteria = operator === '>=' && (0 >= targetValue);
+         return { progress: 0, currentValue: 0, targetValue, meetsCriteria };
+     }
+
+    let currentValue = userStats[statKey];
+
+     // Handle potential alias matches/matchesPlayed if using competitive stats
+     if(statKey === 'matchesPlayed' && !userStats.hasOwnProperty('matchesPlayed') && userStats.hasOwnProperty('matches')) {
+         currentValue = userStats.matches;
+     }
+
+     // Ensure current value is treated as a number, default to 0 if missing or not number
+     currentValue = Number(currentValue) || 0;
+
+     // Specific formatting/parsing for floats like K/D if needed
+     if (statKey === 'kdRatio' && typeof currentValue === 'number') {
+        currentValue = parseFloat(currentValue.toFixed(2)); // Match potential display format
+     }
+
+
+    if (targetValue <= 0) {
+         // For non-positive targets, check if condition is met (e.g., currentValue >= 0)
+        const meetsCriteria = operator === '>=' ? currentValue >= targetValue : operator === '==' ? currentValue == targetValue : false; // Add other operators
+        return { progress: (meetsCriteria ? 100 : 0), currentValue, targetValue, meetsCriteria };
+    }
+
+    // Calculate progress based on operator for positive targets
+    let progressPercent = 0;
+    let meetsCriteria = false;
+
+    switch (operator) {
+         case '>=':
+            meetsCriteria = currentValue >= targetValue;
+             // Ensure division by zero doesn't happen, already handled by targetValue > 0 check
+             progressPercent = (currentValue / targetValue) * 100;
+            break;
+         case '==':
+            meetsCriteria = currentValue == targetValue; // Loose comparison intentional? Or use === ?
+            progressPercent = meetsCriteria ? 100 : 0; // Binary progress
+            break;
+        // Add other operators ('<=', '<', '>', '!=') if needed, defining criteria and progress logic
+         default:
+            console.warn(`Unsupported achievement operator: ${operator} for achievement ${achievement?.id}`);
+            meetsCriteria = false;
+            progressPercent = 0;
+            break;
+    }
+
+    // Clamp progress between 0 and 100
+    progressPercent = Math.max(0, Math.min(100, progressPercent));
+
+    return {
+        progress: Math.floor(progressPercent), // Return whole number percentage
+        currentValue,
+        targetValue,
+        meetsCriteria // Include whether the criteria condition itself is strictly met
+    };
+}
+
+
+// --- Display Achievements Section ---
+async function displayAchievementsSection(competitiveStats, unlockedAchievementIds) {
+    if (!achievementsSection || !achievementsListContainer) {
+         console.error("Achievement section elements not found in DOM.");
+         return;
+     }
+
+    // Ensure this section only appears for the profile owner
+    if (!isOwnProfile) {
+        achievementsSection.style.display = 'none';
+        return;
+    }
+
+    // Ensure achievement definitions are loaded
+    if (!allAchievements) {
+        console.log("Achievement definitions not loaded yet, attempting fetch...");
+        await fetchAllAchievements(); // Ensure definitions are available
+        if (!allAchievements) { // Check again after attempting fetch
+             console.error("Failed to load achievement definitions after attempting fetch.");
+             achievementsListContainer.innerHTML = '<p class="list-message">Could not load achievement definitions.</p>';
+            achievementsSection.style.display = 'block'; // Show section with error
+            return;
+        }
+    }
+
+    achievementsListContainer.innerHTML = ''; // Clear loading/previous content
+    achievementsSection.style.display = 'block'; // Show the section for the owner
+
+    const achievementIds = Object.keys(allAchievements || {}); // Handle null case
+
+    if (achievementIds.length === 0) {
+        achievementsListContainer.innerHTML = '<p class="list-message">No achievements defined yet.</p>';
+        return;
+    }
+
+    console.log(`Displaying ${achievementIds.length} achievements.`);
+    // Create and append items for each achievement
+    achievementIds.forEach(achievementId => {
+        const achievement = allAchievements[achievementId];
+        if (!achievement || !achievement.name || !achievement.criteria) {
+             console.warn(`Skipping invalid achievement data for ID: ${achievementId}`, achievement);
+             return; // Skip if achievement data is invalid/incomplete
+        }
+
+        const isUnlocked = unlockedAchievementIds?.includes(achievementId) || false; // Handle null/undefined unlocked IDs
+        // Pass the potentially null competitiveStats safely
+         const progressInfo = calculateAchievementProgress(achievement, competitiveStats);
+
+        // Criteria met flag from calculation
+        const meetsCriteriaDirectly = progressInfo.meetsCriteria;
+        // Considered "Completed" for display purposes if unlocked OR meets criteria
+        const isDisplayCompleted = isUnlocked || meetsCriteriaDirectly;
+
+
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('achievement-item');
+         // Add classes based on *both* unlock status and completion status
+        if (isUnlocked) itemDiv.classList.add('achievement-unlocked');
+        if (isDisplayCompleted) itemDiv.classList.add('achievement-completed');
+
+
+        // Format rewards string
+        let rewardsHtml = '';
+        if (achievement.rewards) {
+            const rewardsParts = [];
+            if (achievement.rewards.title) rewardsParts.push(`Title: <strong>${achievement.rewards.title}</strong>`);
+            if (achievement.rewards.rank) rewardsParts.push(`Rank: <strong>${achievement.rewards.rank}</strong>`);
+            // Add other reward types here (e.g., XP, items)
+            // if (achievement.rewards.xp) rewardsParts.push(`XP: <strong>${achievement.rewards.xp}</strong>`);
+            if (rewardsParts.length > 0) {
+                rewardsHtml = `<div class="achievement-rewards">Reward${rewardsParts.length > 1 ? 's': ''}: ${rewardsParts.join(', ')}</div>`;
+            }
+        }
+
+        // Determine progress bar text
+         let progressText = `${progressInfo.progress}%`;
+         let progressBarTitle = ''; // Tooltip for progress bar
+
+         // Check if criteria is numeric and progressive (like >=)
+         const isNumericProgressive = achievement.criteria.stat && typeof achievement.criteria.value === 'number' && achievement.criteria.value > 0 && achievement.criteria.operator === '>=';
+
+         if (isDisplayCompleted) {
+             progressText = "Completed";
+              if(isNumericProgressive){
+                   progressBarTitle = `${achievement.criteria.stat}: ${progressInfo.currentValue} / ${progressInfo.targetValue} (Completed)`;
+              } else {
+                   progressBarTitle = "Completed";
+              }
+         } else if (isNumericProgressive) {
+             // Show numeric progress for non-completed, progressive achievements
+            progressText = `${progressInfo.currentValue} / ${progressInfo.targetValue} (${progressInfo.progress}%)`;
+             progressBarTitle = `${achievement.criteria.stat}: ${progressInfo.currentValue} / ${progressInfo.targetValue}`;
+         } else {
+             // For non-numeric or non-progressive (like '==') that aren't completed, just show percentage
+            progressText = `${progressInfo.progress}%`;
+            progressBarTitle = achievement.criteria.stat ? `${achievement.criteria.stat} Progress` : 'Progress';
+        }
+
+         // Final HTML structure for the item
+         itemDiv.innerHTML = `
+            <h4>
+                 <span>${achievement.name}</span>
+                 ${isDisplayCompleted ? '<span class="completion-icon" title="Completed!">✔</span>' : ''}
+             </h4>
+            <p class="achievement-description">${achievement.description || 'No description available.'}</p>
+             ${achievement.criteria.stat && achievement.criteria.value !== undefined ? `
+                 <div class="achievement-progress-container" title="${progressBarTitle}">
+                    <div class="achievement-progress-bar" style="width: ${progressInfo.progress}%;">
+                        <span>${progressText}</span>
+                    </div>
+                </div>
+             ` : '<div style="height: 5px;"></div>' /* Add small spacer if no progress bar */ }
+            ${rewardsHtml}
+        `;
+        achievementsListContainer.appendChild(itemDiv);
+    });
+
+    // If after loop, container is still empty (e.g., allAchievements were invalid)
+    if (achievementsListContainer.childElementCount === 0 && achievementIds.length > 0) {
+         console.warn("Achievement list is empty after processing valid definition IDs.");
+        achievementsListContainer.innerHTML = '<p class="list-message">Could not display achievements.</p>';
+    } else if (achievementIds.length === 0) {
+         // Handled earlier, but double-check
+         achievementsListContainer.innerHTML = '<p class="list-message">No achievements defined yet.</p>';
+     }
+}
+
+
+// --- Check and Grant Achievements ---
+async function checkAndGrantAchievements(userId, currentUserProfile, competitiveStats) {
+     // Essential data checks
+     if (!allAchievements || !userId || !currentUserProfile || !competitiveStats || typeof competitiveStats !== 'object') {
+        console.log("Skipping achievement check: Missing definitions, user data, or stats.");
+        return null; // Indicate no profile update needed/possible
+    }
+    console.log(`Checking achievements for UID ${userId}...`);
+    // Make sure we have the necessary structure in the profile
+     let profileToUpdate = {
+         ...currentUserProfile,
+         availableTitles: currentUserProfile.availableTitles || [],
+         equippedTitle: currentUserProfile.equippedTitle !== undefined ? currentUserProfile.equippedTitle : "", // Ensure empty string if null/undefined
+         currentRank: currentUserProfile.currentRank || "Unranked",
+         friends: currentUserProfile.friends || {}, // Ensure friends map exists
+         leaderboardStats: currentUserProfile.leaderboardStats || {}, // Ensure stats map exists
+     };
+
+
+    try {
+        const userAchievementsRef = db.collection('userAchievements').doc(userId);
+        let unlockedIds = []; // Fetch current unlocked achievements
+        try {
+            const userAchievementsDoc = await userAchievementsRef.get();
+            if (userAchievementsDoc.exists) {
+                unlockedIds = userAchievementsDoc.data()?.unlocked || [];
+            }
+        } catch(fetchError) {
+             console.error("Error fetching existing unlocked achievements, assuming none:", fetchError);
+             // Proceed, but might grant duplicates if fetch failed
+             unlockedIds = [];
+        }
+
+
+        let newAchievementsUnlocked = []; // Track newly unlocked in this run
+        let needsProfileUpdate = false; // Flag if user doc needs update
+        let needsUserAchievementsUpdate = false; // Flag if userAchievements doc needs update
+
+         // Determine highest rank potentially awarded in this check
+         let bestRankReward = null;
+         const rankOrder = ["Unranked", "Bronze", "Silver", "Gold", "Platinum", "Veteran", "Legend"]; // Define rank progression
 
 
         for (const achievementId in allAchievements) {
-            if (unlockedIds.includes(achievementId)) continue; // Skip already unlocked
+             // Skip if already explicitly unlocked in userAchievements doc
+            if (unlockedIds.includes(achievementId)) continue;
 
             const achievement = allAchievements[achievementId];
-            let criteriaMet = false;
+            if (!achievement?.criteria) continue; // Skip if no criteria defined
 
-            // Example Criteria Check (adapt based on your achievement structure)
-            if (achievement.criteria?.stat && competitiveStats[achievement.criteria.stat] !== undefined) {
-                const statValue = competitiveStats[achievement.criteria.stat];
-                const targetValue = achievement.criteria.value;
-                switch (achievement.criteria.operator) {
-                    case '>=': criteriaMet = statValue >= targetValue; break;
-                    case '==': criteriaMet = statValue == targetValue; break; // Use == for flexible type comparison if needed, === for strict
-                    // Add more operators as needed
-                    default: console.warn(`Unsupported achievement operator: ${achievement.criteria.operator} for ${achievementId}`);
-                }
-            } // Add more criteria types here (e.g., based on profile fields, multiple stats)
+            // Calculate progress and whether criteria are met *now*
+             const progressInfo = calculateAchievementProgress(achievement, competitiveStats);
 
-            if (criteriaMet) {
+
+            if (progressInfo.meetsCriteria) { // Use the calculated flag
                 console.log(`Criteria MET for achievement: ${achievement.name || achievementId}`);
-                newAchievementsUnlocked.push(achievementId);
-                needsDbUpdate = true;
-
-                // Accumulate rewards and update the LOCAL profile copy
-                if (achievement.rewards?.title && !updatedLocalProfile.availableTitles.includes(achievement.rewards.title)) {
-                    rewardsToApply.titles.push(achievement.rewards.title);
-                    updatedLocalProfile.availableTitles.push(achievement.rewards.title); // Update local copy
-                    // Auto-equip first new title if none is equipped
-                    if (!updatedLocalProfile.equippedTitle) {
-                         updatedLocalProfile.equippedTitle = achievement.rewards.title;
-                    }
+                if (!newAchievementsUnlocked.includes(achievementId)) { // Avoid duplicates within this run
+                     newAchievementsUnlocked.push(achievementId);
+                     needsUserAchievementsUpdate = true; // Mark for userAchievements update
                 }
-                if (achievement.rewards?.rank) { // Consider logic for choosing the "best" rank if multiple apply
-                     rewardsToApply.rank = achievement.rewards.rank; // For now, last one met wins
-                     updatedLocalProfile.currentRank = achievement.rewards.rank; // Update local copy
+
+
+                // Process rewards and update the LOCAL profile copy immediately
+                if (achievement.rewards) {
+                    // Title reward
+                    if (achievement.rewards.title) {
+                         if (!profileToUpdate.availableTitles.includes(achievement.rewards.title)) {
+                            profileToUpdate.availableTitles.push(achievement.rewards.title);
+                            needsProfileUpdate = true; // Mark user doc for update
+                            console.log(`- Added title: ${achievement.rewards.title}`);
+                            // Auto-equip first *ever* earned title if none is currently equipped
+                             if (profileToUpdate.equippedTitle === "") {
+                                profileToUpdate.equippedTitle = achievement.rewards.title;
+                                console.log(`- Auto-equipped title: ${achievement.rewards.title}`);
+                             }
+                        }
+                     }
+                    // Rank reward - determine if it's better than current best reward or profile rank
+                    if (achievement.rewards.rank) {
+                        const currentRankIndex = rankOrder.indexOf(profileToUpdate.currentRank);
+                        const newRankIndex = rankOrder.indexOf(achievement.rewards.rank);
+                        const bestRewardRankIndex = bestRankReward ? rankOrder.indexOf(bestRankReward) : -1;
+
+                        if (newRankIndex > Math.max(currentRankIndex, bestRewardRankIndex)) {
+                             bestRankReward = achievement.rewards.rank;
+                            console.log(`- New best rank reward candidate: ${bestRankReward}`);
+                            needsProfileUpdate = true; // Potential rank update needed
+                         }
+                    }
+                    // Add other rewards here (e.g., XP) and set needsProfileUpdate = true
                 }
             }
         }
 
-        if (needsDbUpdate && newAchievementsUnlocked.length > 0) {
-            console.log(`Unlocking ${newAchievementsUnlocked.length} new achievement(s):`, newAchievementsUnlocked);
-            console.log("Applying rewards (titles, rank):", rewardsToApply.titles, rewardsToApply.rank);
 
+        // Apply the best rank reward found (if any) to the local profile copy
+        if (bestRankReward) {
+            const currentRankIndex = rankOrder.indexOf(profileToUpdate.currentRank);
+             const bestRewardRankIndex = rankOrder.indexOf(bestRankReward);
+             // Update only if the reward rank is strictly better than the current rank
+            if (bestRewardRankIndex > currentRankIndex) {
+                 profileToUpdate.currentRank = bestRankReward;
+                 console.log(`Updating profile rank to highest awarded: ${bestRankReward}`);
+                 // needsProfileUpdate is already true if bestRankReward is set
+             }
+        }
+
+
+        // --- Perform Firestore Updates (if needed) ---
+        if (needsProfileUpdate || needsUserAchievementsUpdate) {
+            console.log(`Needs Firestore update. Profile: ${needsProfileUpdate}, UserAchievements: ${needsUserAchievementsUpdate}`);
             const batch = db.batch();
             const userProfileRef = db.collection('users').doc(userId);
 
-            // Update unlocked achievements list
-            batch.set(userAchievementsRef, { unlocked: firebase.firestore.FieldValue.arrayUnion(...newAchievementsUnlocked) }, { merge: true });
 
-            // Prepare profile updates based on the *final* state of updatedLocalProfile
-            const profileUpdateData = {};
-            if (rewardsToApply.titles.length > 0) {
-                 profileUpdateData.availableTitles = firebase.firestore.FieldValue.arrayUnion(...rewardsToApply.titles);
-                 // Check if equipped title needs update (because it was empty before)
-                 if(currentUserProfile.equippedTitle === "" && updatedLocalProfile.equippedTitle !== "") {
-                    profileUpdateData.equippedTitle = updatedLocalProfile.equippedTitle;
+            // 1. Update userAchievements doc with newly unlocked achievements
+            if (needsUserAchievementsUpdate && newAchievementsUnlocked.length > 0) {
+                 console.log("Updating userAchievements doc:", newAchievementsUnlocked);
+                batch.set(userAchievementsRef, { unlocked: firebase.firestore.FieldValue.arrayUnion(...newAchievementsUnlocked) }, { merge: true });
+            }
+
+            // 2. Update user profile doc with changes (titles, rank etc.)
+             if (needsProfileUpdate) {
+                 const profileUpdateData = {};
+                 // Check if titles actually changed from original profile
+                if (JSON.stringify(profileToUpdate.availableTitles) !== JSON.stringify(currentUserProfile.availableTitles || [])) {
+                    profileUpdateData.availableTitles = profileToUpdate.availableTitles;
                  }
-            }
-            if (rewardsToApply.rank) { // Apply rank update if one was determined
-                 profileUpdateData.currentRank = updatedLocalProfile.currentRank;
-            }
+                 // Check if equipped title changed
+                if (profileToUpdate.equippedTitle !== (currentUserProfile.equippedTitle !== undefined ? currentUserProfile.equippedTitle : "")) {
+                     profileUpdateData.equippedTitle = profileToUpdate.equippedTitle;
+                 }
+                 // Check if rank changed
+                if (profileToUpdate.currentRank !== (currentUserProfile.currentRank || "Unranked")) {
+                    profileUpdateData.currentRank = profileToUpdate.currentRank;
+                 }
+                 // Add other changed fields here...
 
-            if (Object.keys(profileUpdateData).length > 0) {
-                batch.update(userProfileRef, profileUpdateData);
-            }
+                 if (Object.keys(profileUpdateData).length > 0) {
+                     console.log("Updating 'users' doc with:", profileUpdateData);
+                    batch.update(userProfileRef, profileUpdateData);
+                } else {
+                    console.log("Profile update needed flag was set, but no actual changes detected comparing to original.");
+                     needsProfileUpdate = false; // Reset flag if no data is actually changing
+                 }
 
-            await batch.commit();
-            console.log(`Achievement Firestore batch committed successfully for UID ${userId}.`);
-            return updatedLocalProfile; // Return the locally updated profile object reflecting all changes
+             }
+
+
+             // Commit only if there's something to commit
+             if (needsProfileUpdate || needsUserAchievementsUpdate) {
+                 await batch.commit();
+                 console.log(`Achievement Firestore batch committed successfully for UID ${userId}.`);
+                 // Return the MODIFIED profile object reflecting updates
+                 return profileToUpdate;
+             } else {
+                  console.log("Update flags were set, but no operations added to batch. No commit needed.");
+                  return null; // No actual update performed
+             }
 
         } else {
-            console.log(`No new achievements unlocked for UID ${userId}.`);
-            return null; // No changes made to the profile
+            // console.log(`No new achievements or profile updates needed for UID ${userId}.`);
+            return null; // No changes made
         }
     } catch (error) {
         console.error(`Error checking/granting achievements for UID ${userId}:`, error);
@@ -678,24 +1117,30 @@ async function checkAndGrantAchievements(userId, currentUserProfile, competitive
 // --- UI Display Helpers (Badges, Rank/Title Selector) ---
 // =============================================================================
 function displayUserBadges(profileData) {
+    if (!profileBadgesContainer) return;
     profileBadgesContainer.innerHTML = ''; // Clear previous badges
-    const userEmail = profileData?.email;
+     if (!adminTag) return;
+    adminTag.style.display = 'none'; // Hide admin tag by default
+
+
+    const userEmail = profileData?.email; // Already lowercased in profileData if exists
     if (!userEmail) {
-        adminTag.style.display = 'none';
-        return;
+        return; // No email, no badges/admin tag
     }
-    const emailLower = userEmail.toLowerCase();
+
 
     // Display Admin Tag
-    adminTag.style.display = adminEmails.includes(emailLower) ? 'inline-block' : 'none';
+    if (adminEmails.includes(userEmail)) {
+        adminTag.style.display = 'inline-block';
+    }
 
     // Display Configured Badges
     for (const badgeType in badgeConfig) {
         const config = badgeConfig[badgeType];
-        if (config.emails.includes(emailLower)) {
+        if (config.emails.includes(userEmail)) {
             const badgeSpan = document.createElement('span');
             badgeSpan.classList.add('profile-badge', config.className);
-            badgeSpan.setAttribute('title', config.title);
+            badgeSpan.setAttribute('title', config.title); // Tooltip for badge type
             profileBadgesContainer.appendChild(badgeSpan);
         }
     }
@@ -709,34 +1154,44 @@ function updateProfileTitlesAndRank(profileData, allowInteraction) {
     titleDisplay.removeEventListener('click', handleTitleClick);
     closeTitleSelector(); // Ensure selector is closed
 
+
     if (profileData && typeof profileData === 'object') {
         const rank = profileData.currentRank || 'Unranked';
-        const title = profileData.equippedTitle || '';
-        const available = profileData.availableTitles || [];
+        const equippedTitle = profileData.equippedTitle || ''; // Use equipped title
+        const availableTitles = profileData.availableTitles || [];
 
         // Update Rank Display
         rankDisplay.textContent = rank;
-        rankDisplay.className = `profile-rank-display rank-${rank.toLowerCase().replace(/\s+/g, '-')}`;
+         // Ensure class reflects rank, handle potential spaces or case issues
+         rankDisplay.className = `profile-rank-display rank-${rank.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`; // Sanitize class name
+
 
         // Update Title Display and Interaction
-        if (title) { // Has an equipped title
-            titleDisplay.textContent = title;
-            titleDisplay.style.display = 'inline-block';
-            if (allowInteraction && available.length > 0) {
-                titleDisplay.classList.add('selectable-title');
-                titleDisplay.addEventListener('click', handleTitleClick);
-            }
-        } else { // No equipped title
-            if (allowInteraction && available.length > 0) { // Has available titles to choose from
-                titleDisplay.textContent = '[Choose Title]';
+         if (allowInteraction && availableTitles.length > 0) {
+             // If owner and has titles, make it interactive
+            titleDisplay.classList.add('selectable-title');
+            titleDisplay.addEventListener('click', handleTitleClick);
+             if (equippedTitle) { // Has an equipped title
+                titleDisplay.textContent = equippedTitle;
+                titleDisplay.classList.remove('no-title-placeholder');
                 titleDisplay.style.display = 'inline-block';
-                titleDisplay.classList.add('selectable-title', 'no-title-placeholder');
-                titleDisplay.addEventListener('click', handleTitleClick);
-            } else { // No titles available or no interaction allowed
-                titleDisplay.textContent = '';
-                titleDisplay.style.display = 'none';
+            } else { // No equipped title, but has available ones
+                titleDisplay.textContent = '[Choose Title]';
+                 titleDisplay.classList.add('no-title-placeholder');
+                 titleDisplay.style.display = 'inline-block';
+             }
+        } else { // Not owner or no available titles
+             if (equippedTitle) { // Still display equipped title if exists
+                titleDisplay.textContent = equippedTitle;
+                 titleDisplay.classList.remove('no-title-placeholder');
+                 titleDisplay.style.display = 'inline-block';
+             } else { // No equipped, not owner or none available -> hide
+                 titleDisplay.textContent = '';
+                 titleDisplay.style.display = 'none';
             }
         }
+
+
     } else {
         // Default/Loading State
         rankDisplay.textContent = '...';
@@ -746,31 +1201,41 @@ function updateProfileTitlesAndRank(profileData, allowInteraction) {
     }
 }
 
+
 function handleTitleClick(event) {
     event.stopPropagation(); // Prevent triggering outside click listener immediately
-    if (!isOwnProfile || !viewingUserProfileData.profile) return; // Only allow on own profile
+    // Double check conditions: must be own profile, must have profile data and available titles
+     if (!isOwnProfile || !viewingUserProfileData.profile || !(viewingUserProfileData.profile.availableTitles?.length > 0)) {
+        console.log("Title interaction blocked: Not owner or no titles available.");
+         return;
+     }
+
 
     if (isTitleSelectorOpen) {
         closeTitleSelector();
-    } else if (viewingUserProfileData.profile?.availableTitles?.length > 0) {
-        openTitleSelector();
     } else {
-        console.log("No available titles to select.");
+        openTitleSelector();
     }
 }
 
+
 function openTitleSelector() {
-    if (isTitleSelectorOpen || !profileIdentifiersDiv || !viewingUserProfileData.profile?.availableTitles?.length > 0) return;
+     // Guard conditions
+     if (isTitleSelectorOpen || !profileIdentifiersDiv || !isOwnProfile || !viewingUserProfileData.profile?.availableTitles?.length > 0) return;
+
 
     const availableTitles = viewingUserProfileData.profile.availableTitles;
     const currentEquippedTitle = viewingUserProfileData.profile.equippedTitle || '';
 
-    if (!titleSelectorElement) { // Create selector div if it doesn't exist
+
+    // Create selector div if it doesn't exist or append if removed
+    if (!titleSelectorElement || !profileIdentifiersDiv.contains(titleSelectorElement)) {
         titleSelectorElement = document.createElement('div');
         titleSelectorElement.className = 'title-selector';
-        profileIdentifiersDiv.appendChild(titleSelectorElement);
+        profileIdentifiersDiv.appendChild(titleSelectorElement); // Append inside identifiers div
     }
     titleSelectorElement.innerHTML = ''; // Clear previous options
+
 
     // Add "Remove Title" option if a title is currently equipped
     if (currentEquippedTitle) {
@@ -779,7 +1244,7 @@ function openTitleSelector() {
         unequipOption.dataset.title = ""; // Use empty string for unequip
         unequipOption.type = 'button';
         unequipOption.textContent = '[Remove Title]';
-        unequipOption.addEventListener('click', handleTitleOptionClick);
+        unequipOption.onclick = handleTitleOptionClick; // Attach listener directly
         titleSelectorElement.appendChild(unequipOption);
     }
 
@@ -791,77 +1256,82 @@ function openTitleSelector() {
         optionElement.type = 'button';
         optionElement.textContent = titleOptionText;
 
+
         if (titleOptionText === currentEquippedTitle) {
             optionElement.classList.add('currently-equipped');
-            optionElement.setAttribute('aria-pressed', 'true');
-        } else {
-            optionElement.setAttribute('aria-pressed', 'false');
+             optionElement.disabled = true; // Disable clicking the currently equipped one
+            // optionElement.setAttribute('aria-pressed', 'true'); // Indicate current selection
         }
-        optionElement.addEventListener('click', handleTitleOptionClick);
+         optionElement.onclick = handleTitleOptionClick; // Attach listener
         titleSelectorElement.appendChild(optionElement);
     });
 
     titleSelectorElement.style.display = 'block';
     isTitleSelectorOpen = true;
 
+
     // Add listener to close when clicking outside
-    setTimeout(() => { // Use timeout to prevent immediate closing due to event propagation
+    setTimeout(() => { // Use timeout to prevent immediate closing
         document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true });
     }, 0);
 }
+
 
 function closeTitleSelector() {
     if (!isTitleSelectorOpen || !titleSelectorElement) return;
     titleSelectorElement.style.display = 'none';
     isTitleSelectorOpen = false;
-    // Clean up the outside click listener if it hasn't fired yet
     document.removeEventListener('click', handleClickOutsideTitleSelector, { capture: true });
 }
 
 function handleClickOutsideTitleSelector(event) {
-    // This listener is added with { once: true }, so it auto-removes after firing.
-    if (!isTitleSelectorOpen) return; // Should not happen with 'once', but good practice
+    if (!isTitleSelectorOpen) return;
 
-    // Check if the click was inside the selector or on the title display itself
-    const clickedInsideSelector = titleSelectorElement && titleSelectorElement.contains(event.target);
-    const clickedOnTitleDisplay = titleDisplay && titleDisplay.contains(event.target);
+    const isClickInsideSelector = titleSelectorElement && titleSelectorElement.contains(event.target);
+    const isClickOnTitle = titleDisplay && titleDisplay.contains(event.target);
 
-    // If clicked outside both, close the selector
-    if (!clickedInsideSelector && !clickedOnTitleDisplay) {
+    if (!isClickInsideSelector && !isClickOnTitle) {
         closeTitleSelector();
     } else {
-        // If click was inside, re-attach the listener for the *next* outside click
-        // This handles cases where user clicks within the dropdown (e.g., scrollbar)
-         document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true });
+         // Re-attach listener if click was inside (e.g. scrollbar) to catch the *next* outside click
+         // Use timeout to ensure it's not the same click event re-triggering
+         setTimeout(() => {
+              document.addEventListener('click', handleClickOutsideTitleSelector, { capture: true, once: true });
+         }, 0);
     }
 }
 
 async function handleTitleOptionClick(event) {
-    event.stopPropagation(); // Prevent outside click listener
-    const selectedTitle = event.currentTarget.dataset.title; // Can be "" for unequip
+    event.stopPropagation(); // Prevent outside click handler
+    const buttonElement = event.currentTarget;
+    const selectedTitle = buttonElement.dataset.title; // Can be "" for unequip
     const currentUserId = loggedInUser?.uid;
-    const currentlyViewedProfile = viewingUserProfileData.profile;
 
-    if (!currentUserId || !currentlyViewedProfile || currentUserId !== currentlyViewedProfile.id) {
-        console.error("Attempted to change title for wrong user or not logged in.");
+
+    // More robust check: viewingUserProfileData should exist and match the logged-in user
+    if (!currentUserId || !viewingUserProfileData.profile || viewingUserProfileData.profile.id !== currentUserId) {
+        console.error("Attempted title change validation failed:", { currentUserId, viewingProfileId: viewingUserProfileData.profile?.id });
         closeTitleSelector();
         return;
     }
 
-    const currentEquipped = currentlyViewedProfile.equippedTitle || '';
+    const currentlyEquippedTitle = viewingUserProfileData.profile.equippedTitle || '';
 
-    // Don't do anything if clicking the already equipped title
-    if (selectedTitle === currentEquipped) {
-        closeTitleSelector();
+
+    // Check if selection is different from current equipped title
+    if (selectedTitle === currentlyEquippedTitle) {
+        console.log("Clicked already equipped title. No change needed.");
+        closeTitleSelector(); // Close selector, do nothing else
         return;
     }
 
-    closeTitleSelector(); // Close immediately
 
-    // Optimistic UI update (or show "Updating...")
-    titleDisplay.textContent = "Updating...";
+    closeTitleSelector(); // Close selector immediately
+
+    // Disable title display interaction temporarily
     titleDisplay.classList.remove('selectable-title', 'no-title-placeholder');
-    titleDisplay.removeEventListener('click', handleTitleClick); // Prevent clicking while updating
+    titleDisplay.removeEventListener('click', handleTitleClick);
+    titleDisplay.textContent = "Updating...";
 
 
     try {
@@ -870,8 +1340,11 @@ async function handleTitleOptionClick(event) {
 
         console.log(`Firestore 'users' doc updated title to "${selectedTitle || 'None'}" for UID ${currentUserId}`);
 
-        // Update local state and cache
+        // Update local state AND cache
         viewingUserProfileData.profile.equippedTitle = selectedTitle;
+        // Also update viewer data if viewing own profile
+         if(isOwnProfile && viewerProfileData) viewerProfileData.equippedTitle = selectedTitle;
+
         saveCombinedDataToCache(currentUserId, viewingUserProfileData);
 
         // Re-render the title/rank section with interaction enabled
@@ -880,119 +1353,175 @@ async function handleTitleOptionClick(event) {
     } catch (error) {
         console.error("Error updating equipped title in Firestore 'users':", error);
         alert("Failed to update title. Please try again.");
-        // Revert optimistic UI update on error
-        if (viewingUserProfileData.profile) {
-            // Restore previous state before re-rendering
-             viewingUserProfileData.profile.equippedTitle = currentEquipped;
-        }
-        // Re-render with previous state and interaction
-        updateProfileTitlesAndRank(viewingUserProfileData.profile, true);
+         // Revert UI state ONLY IF profile data is available
+        if(viewingUserProfileData.profile) {
+           // Restore previous equipped title to the local data before re-rendering
+            viewingUserProfileData.profile.equippedTitle = currentlyEquippedTitle;
+            updateProfileTitlesAndRank(viewingUserProfileData.profile, true); // Re-render with previous state
+         } else {
+            updateProfileTitlesAndRank(null, false); // Reset if data got lost
+         }
+
     }
 }
-
 
 // =============================================================================
 // --- Profile Picture Editing Functions ---
 // =============================================================================
 
-// --- Initialize Edit Listeners (Call this when owner status is confirmed) ---
+// --- Initialize Edit Listeners (Call this when owner status is confirmed & elements ready) ---
 function setupProfilePicEditing() {
-    // Ensure we are targeting the correct, potentially cloned, elements
-    const currentEditIcon = document.getElementById('edit-profile-pic-icon');
-    const currentFileInput = document.getElementById('profile-pic-input');
+    if (!isOwnProfile || !editProfilePicIcon || !profilePicInput) {
+         // console.log("Skipping PFP edit setup: Not owner or elements missing.");
+        if(editProfilePicIcon) editProfilePicIcon.style.display = 'none'; // Ensure hidden if not owner
+        return;
+     }
 
-    if (!isOwnProfile || !currentEditIcon || !currentFileInput) return; // Guard clause
 
-    console.log("Setting up profile pic editing listeners.");
-    currentEditIcon.style.display = 'flex'; // Ensure it's visible
+    editProfilePicIcon.style.display = 'flex'; // Ensure it's visible
 
-    // Re-attach listeners to ensure they are on the current DOM nodes
-    currentEditIcon.onclick = () => {
-         // Ensure the current file input is targeted
-        document.getElementById('profile-pic-input').click();
+
+    // Remove previous listeners before adding new ones (prevent duplicates)
+    editProfilePicIcon.onclick = null;
+    profilePicInput.onchange = null;
+
+    // Attach listeners
+    editProfilePicIcon.onclick = () => {
+        profilePicInput.click(); // Trigger hidden file input
     };
 
-    currentFileInput.onchange = (event) => {
+
+    profilePicInput.onchange = (event) => {
         handleFileSelect(event);
     };
+     // console.log("Profile pic editing listeners attached.");
 }
+
 
 // --- Handle File Selection ---
 function handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (!file || !file.type.startsWith('image/')) {
+    const file = event.target?.files?.[0]; // Safely access file
+    if (!file) {
+         console.log("No file selected.");
+         event.target.value = null; // Reset input
+        return;
+     }
+     if (!file.type.startsWith('image/')) {
         alert('Please select a valid image file (PNG, JPG, GIF).');
         event.target.value = null; // Reset input
         return;
     }
 
+
+    // Optional: Check file size (e.g., max 5MB)
+     const maxSizeMB = 5;
+     if (file.size > maxSizeMB * 1024 * 1024) {
+         alert(`File size exceeds ${maxSizeMB}MB limit.`);
+         event.target.value = null;
+         return;
+     }
+
     const reader = new FileReader();
     reader.onload = (e) => {
-        modalImage.src = e.target.result;
-        openEditModal(); // Open modal AFTER image source is set
+         if (e.target?.result) {
+            modalImage.src = e.target.result;
+             openEditModal(); // Open modal AFTER image source is set
+         } else {
+             alert("Error reading file data.");
+         }
     };
     reader.onerror = (err) => {
         console.error("FileReader error:", err);
         alert("Error reading the selected file.");
     };
     reader.readAsDataURL(file);
-    event.target.value = null; // Reset input to allow selecting the same file again
+    event.target.value = null; // Reset input AFTER starting read, allowing re-selection
 }
+
 
 // --- Open Image Editing Modal ---
 function openEditModal() {
-    if (!editModal || !modalImage) return;
-    editModal.style.display = 'flex';
-    modalImage.style.opacity = 0; // Hide image initially
+    if (!editModal || !modalImage || !modalImage.src || modalImage.src.startsWith('blob:')) {
+         // Check if src is already a blob URL from a previous attempt or if it's missing
+         console.warn("Modal image source invalid or missing, cannot open cropper.", modalImage.src);
+          // Re-read if needed, or clear source and alert
+          // For simplicity, just alert and don't open
+          // alert("Image data missing. Please select the file again.");
+         // return; // Prevent opening if src isn't a valid data URL
+     }
 
-    // Ensure button state is reset initially
+     editModal.style.display = 'flex';
+     modalImage.style.opacity = 0; // Hide image initially
+
+
+    // Reset button state
      modalApplyBtn.disabled = false;
      modalSpinner.style.display = 'none';
      const applyTextNode = Array.from(modalApplyBtn.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
      if (applyTextNode) applyTextNode.textContent = 'Apply ';
 
 
-    // Use setTimeout to allow the browser to render the modal & image dimensions
-    setTimeout(() => {
-        if (cropper) { // Destroy previous instance if exists
-            try { cropper.destroy(); } catch(e) { console.warn("Minor error destroying previous cropper", e)}
-            cropper = null;
-        }
+    // Destroy previous Cropper instance if it exists
+     if (cropper) {
+        try { cropper.destroy(); } catch(e) { console.warn("Minor error destroying previous cropper", e)}
+        cropper = null;
+     }
+
+     // Delay Cropper initialization slightly
+     setTimeout(() => {
         try {
              cropper = new Cropper(modalImage, {
-                aspectRatio: 1 / 1,       // Force square aspect ratio
-                viewMode: 1,              // Restrict crop box to canvas bounds
-                dragMode: 'move',         // Default drag mode
-                background: false,        // Transparent background for cropper container
-                autoCropArea: 0.85,       // Initial crop area size relative to image
-                responsive: true,         // Recalculate on window resize
-                modal: true,              // Dark overlay behind image
-                guides: true,             // Crop area guides
-                center: true,             // Center indicator
-                highlight: false,         // Don't highlight crop area
-                cropBoxMovable: true,    // Allow moving cropbox
-                cropBoxResizable: true,   // Allow resizing cropbox
-                toggleDragModeOnDblclick: false, // Disable this behavior
+                aspectRatio: 1 / 1,
+                viewMode: 1,
+                dragMode: 'move',
+                background: false, // Show checkerboard behind transparency
+                autoCropArea: 0.9, // Start with a slightly larger crop area
+                responsive: true,
+                modal: true, // Dark overlay *around* the cropper container
+                guides: true,
+                center: true,
+                highlight: false, // Don't highlight the crop box itself
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
                 ready: () => {
-                     modalImage.style.opacity = 1; // Show image once Cropper is ready
+                     modalImage.style.opacity = 1; // Fade in image once Cropper is ready
                      console.log("Cropper is ready.");
+                },
+                cropmove: () => {
+                     // Optional: actions during crop move
+                 },
+                zoom: () => {
+                    // Optional: actions during zoom
                 }
             });
         } catch (cropperError) {
             console.error("Error initializing Cropper:", cropperError);
-            alert("Could not initialize image editor. Please try reloading.");
-            closeEditModal(); // Close if initialization failed
+            alert("Could not initialize image editor. The image might be corrupted or unsupported. Please try a different image or reload the page.");
+            closeEditModal();
         }
-    }, 150); // Adjust delay if needed
+     }, 50); // Shorter delay
 
-    // Attach listeners to the *current* modal buttons
-    modalCloseBtn.onclick = closeEditModal;
-    modalCancelBtn.onclick = closeEditModal;
-    modalApplyBtn.onclick = handleApplyCrop; // Assign the handler directly
 
-    // Close modal if clicking outside the content area
-    editModal.onclick = (event) => {
-        if (event.target === editModal) { // Check if click was on the overlay itself
+    // --- Attach listeners for modal controls ---
+     // Ensure listeners are added ONLY ONCE or remove previous ones
+    modalCloseBtn.onclick = null; // Clear previous before assigning
+     modalCloseBtn.onclick = closeEditModal;
+
+
+     modalCancelBtn.onclick = null; // Clear previous
+     modalCancelBtn.onclick = closeEditModal;
+
+
+     modalApplyBtn.onclick = null; // Clear previous
+     modalApplyBtn.onclick = handleApplyCrop;
+
+
+     // Click outside to close (added listener to the overlay)
+     editModal.onclick = null; // Clear previous
+     editModal.onclick = (event) => {
+        // Only close if the click is directly on the overlay, not the content inside
+         if (event.target === editModal) {
             closeEditModal();
         }
     };
@@ -1003,23 +1532,22 @@ function openEditModal() {
 function closeEditModal() {
     if (!editModal) return;
     if (cropper) {
-        try {
-            cropper.destroy();
-        } catch (e) { console.warn("Error destroying cropper:", e); }
-        cropper = null;
+        try { cropper.destroy(); } catch (e) { console.warn("Minor error destroying cropper on close:", e); }
+        cropper = null; // Ensure cropper instance is released
     }
     editModal.style.display = 'none';
-    modalImage.src = ''; // Clear image source to free memory
+    modalImage.src = ''; // Clear image source
+    modalImage.removeAttribute('src'); // Fully remove attribute
 
-    // Reset button state
+
+    // Reset button state reliably
     modalApplyBtn.disabled = false;
     modalSpinner.style.display = 'none';
-    // Find the text node and restore it if needed (safer than innerHTML)
-    const textNode = Array.from(modalApplyBtn.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
-    if (textNode) textNode.textContent = 'Apply '; // Restore original text
+     const textNode = Array.from(modalApplyBtn.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+    if (textNode) textNode.textContent = 'Apply ';
 
 
-    // Remove specific listeners to prevent memory leaks
+    // Remove specific listeners on close
     modalCloseBtn.onclick = null;
     modalCancelBtn.onclick = null;
     modalApplyBtn.onclick = null;
@@ -1029,123 +1557,143 @@ function closeEditModal() {
 // --- Handle Apply Crop and Upload ---
 async function handleApplyCrop() {
     if (!cropper || !loggedInUser) {
-        console.error("Cropper not initialized or user not logged in.");
-        alert("Cannot apply crop. Please try again or re-login.");
+        console.error("Cropper not ready or user not logged in.");
+        alert("Cannot apply crop. Please wait or re-login.");
         return;
     }
+
+    // Prevent multiple clicks
+     if (modalApplyBtn.disabled) return;
+
 
     // Show loading state
     modalApplyBtn.disabled = true;
     modalSpinner.style.display = 'inline-block';
-    // Modify text content carefully
      const textNode = Array.from(modalApplyBtn.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
      if (textNode) textNode.textContent = 'Applying ';
 
 
     try {
-        // Get cropped canvas data as a Blob for efficient upload
+         // Get cropped canvas - specify desired output size
         const canvas = cropper.getCroppedCanvas({
-            width: 512, // Standardized output width
-            height: 512, // Standardized output height
+            width: 512, // Request a 512x512 output canvas
+            height: 512,
             imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
+            imageSmoothingQuality: 'high', // Use 'high' quality smoothing
         });
 
-        canvas.toBlob(async (blob) => {
-            if (!blob) {
-                throw new Error("Failed to create blob from canvas. Image might be too complex or browser issue.");
-            }
 
-            console.log("Blob created, size:", (blob.size / 1024).toFixed(2), "KB");
+         if (!canvas) {
+            throw new Error("Failed to get cropped canvas. Cropper might not be ready or image invalid.");
+         }
 
-            try {
-                // Upload to Cloudinary
-                const imageUrl = await uploadToCloudinary(blob);
-                console.log("Uploaded to Cloudinary:", imageUrl);
 
-                // Save URL to Firestore
-                await saveProfilePictureUrl(loggedInUser.uid, imageUrl);
-                console.log("Saved URL to Firestore.");
-
-                // Update UI immediately
-                profileImage.src = imageUrl; // Update displayed image
-                profileImage.style.display = 'block';
-                profileInitials.style.display = 'none';
-                updateProfileBackground(imageUrl); // Update background
-
-                // Update local cache
-                if (viewingUserProfileData && viewingUserProfileData.profile && viewingUserProfileData.profile.id === loggedInUser.uid) {
-                    viewingUserProfileData.profile.profilePictureUrl = imageUrl;
-                    saveCombinedDataToCache(loggedInUser.uid, viewingUserProfileData);
+         // Use Promise for blob conversion for cleaner async handling
+         const blob = await new Promise((resolve, reject) => {
+             canvas.toBlob((blobResult) => {
+                 if (blobResult) {
+                     resolve(blobResult);
+                 } else {
+                    reject(new Error("Canvas to Blob conversion failed."));
                 }
+             }, 'image/jpeg', 0.90); // Use JPEG format with high quality (adjust 0.90 if needed)
+         });
 
-                closeEditModal(); // Close modal on complete success
 
-            } catch (uploadOrSaveError) {
-                console.error("Upload or Save Error:", uploadOrSaveError);
-                alert(`Failed to update profile picture: ${uploadOrSaveError.message || 'Unknown error during upload/save.'}`);
-                // Reset button state on error within blob callback
-                modalApplyBtn.disabled = false;
-                modalSpinner.style.display = 'none';
-                if (textNode) textNode.textContent = 'Apply ';
+        console.log("Blob created, size:", (blob.size / 1024).toFixed(2), "KB", "Type:", blob.type);
+
+
+         // Upload to Cloudinary
+        const imageUrl = await uploadToCloudinary(blob);
+         console.log("Uploaded to Cloudinary, URL:", imageUrl);
+
+
+        // Save URL to Firestore
+        await saveProfilePictureUrl(loggedInUser.uid, imageUrl);
+         console.log("Saved URL to Firestore.");
+
+
+        // Update UI immediately
+         profileImage.src = `${imageUrl}?timestamp=${Date.now()}`; // Add timestamp to bust cache
+        profileImage.style.display = 'block';
+        profileInitials.style.display = 'none';
+         profileImage.onload = () => { updateProfileBackground(imageUrl); } // Update background *after* image loads
+
+
+        // Update local cache (ensure data exists first)
+        if (viewingUserProfileData?.profile?.id === loggedInUser.uid) {
+            viewingUserProfileData.profile.profilePictureUrl = imageUrl;
+            // Update viewer data cache as well
+             if (viewerProfileData?.id === loggedInUser.uid) {
+                viewerProfileData.profilePictureUrl = imageUrl;
             }
+             saveCombinedDataToCache(loggedInUser.uid, viewingUserProfileData);
+         }
 
-        }, 'image/jpeg', 0.9); // Specify format (jpeg is good for photos) and quality (0.9 is high)
 
-    } catch (cropError) {
-        console.error("Cropping error:", cropError);
-        alert("Failed to crop the image. Please try again or use a different image.");
-        // Reset button state on cropping error
-        modalApplyBtn.disabled = false;
-        modalSpinner.style.display = 'none';
+        closeEditModal(); // Close modal on complete success
+
+
+    } catch (error) {
+        console.error("Error during crop/upload/save:", error);
+         alert(`Failed to update profile picture: ${error.message || 'Unknown error during processing.'}`);
+         // Reset button state on ANY error in the process
+         modalApplyBtn.disabled = false;
+         modalSpinner.style.display = 'none';
          if (textNode) textNode.textContent = 'Apply ';
-    }
+     }
 }
 
 // --- Upload Blob to Cloudinary (using Fetch API for unsigned uploads) ---
 async function uploadToCloudinary(blob) {
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-         throw new Error("Cloudinary configuration missing (cloud name or upload preset). Cannot upload.");
+         throw new Error("Cloudinary config missing (cloud name or upload preset).");
     }
     const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
     const formData = new FormData();
-    formData.append('file', blob, `profile_${loggedInUser?.uid || 'unknown'}_${Date.now()}.jpg`); // Provide a filename
+    formData.append('file', blob, `pfp_${loggedInUser?.uid || 'anon'}.jpg`); // Sensible filename
     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    // Optional: Add context, tags, folder etc. based on preset config or here
-    // formData.append('folder', 'user_profiles');
-    // formData.append('tags', 'profile_picture, poxelcomp');
+    // Add folder if your preset requires or for organization
+    // formData.append('folder', 'user_profile_pictures');
 
-    console.log(`Uploading to Cloudinary preset: ${CLOUDINARY_UPLOAD_PRESET}`);
+
+    console.log(`Uploading to Cloudinary (${CLOUDINARY_CLOUD_NAME}, preset: ${CLOUDINARY_UPLOAD_PRESET})`);
+
 
     try {
         const response = await fetch(url, {
             method: 'POST',
             body: formData
+            // No 'Content-Type' header needed; browser sets it for FormData
         });
 
-        const data = await response.json();
+        const data = await response.json(); // Attempt to parse response JSON
 
-        if (!response.ok || data.error) {
-            console.error("Cloudinary Upload Error Response:", data);
-            throw new Error(data.error?.message || `Cloudinary upload failed with status ${response.status}.`);
+        if (!response.ok) {
+             console.error("Cloudinary Upload Error Response:", data); // Log error details
+            throw new Error(data.error?.message || `Cloudinary upload failed. Status: ${response.status}`);
         }
 
-        console.log("Cloudinary Upload Success Response:", data);
+
+        // console.log("Cloudinary Upload Success:", data);
         if (!data.secure_url) {
-            throw new Error("Cloudinary response missing 'secure_url'.");
+            console.error("Cloudinary response OK, but missing 'secure_url':", data);
+            throw new Error("Upload succeeded but did not return a secure URL.");
         }
-        return data.secure_url; // Return the secure URL
+        return data.secure_url; // Return the https URL
+
 
     } catch (networkError) {
         console.error("Network error during Cloudinary upload:", networkError);
-        throw new Error(`Network error during upload: ${networkError.message}`);
+        // Rethrow with a more user-friendly message if possible
+        throw new Error(`Network error during image upload. Please check your connection.`);
     }
 }
 
 // --- Save Profile Picture URL to Firestore ---
 async function saveProfilePictureUrl(userId, imageUrl) {
-    if (!userId || typeof imageUrl !== 'string' || !imageUrl.startsWith('https://')) {
-        throw new Error("Invalid userId or imageUrl provided for saving.");
+    if (!userId || !imageUrl) {
+        throw new Error("Missing userId or imageUrl for saving PFP.");
     }
     const userDocRef = db.collection("users").doc(userId);
     try {
@@ -1155,10 +1703,10 @@ async function saveProfilePictureUrl(userId, imageUrl) {
         console.log(`Successfully updated profilePictureUrl for user ${userId}`);
     } catch (error) {
         console.error(`Error updating Firestore profile picture URL for ${userId}:`, error);
-        throw new Error("Database error: Failed to save profile picture link.");
+         // Handle specific Firestore errors if needed (e.g., permissions)
+        throw new Error("Database error saving profile picture link.");
     }
 }
-
 
 // =============================================================================
 // --- Friend System Functions ---
@@ -1166,244 +1714,319 @@ async function saveProfilePictureUrl(userId, imageUrl) {
 
 // --- Helper: Fetch Minimal User Profile for Lists ---
 async function fetchUserMiniProfile(userId) {
-    if (miniProfileCache[userId]) {
-        // console.log(`Using cached mini profile for ${userId}`);
+    if (!userId) return null;
+     // Return cached data if available and seems valid
+    if (miniProfileCache[userId] && miniProfileCache[userId].displayName) {
+         // console.log(`Using cached mini profile for ${userId}`);
         return miniProfileCache[userId];
     }
-    // console.log(`Fetching mini profile for ${userId}`);
+
+    // console.log(`Fetching mini profile for ${userId}...`);
     try {
         const userSnap = await db.collection('users').doc(userId).get();
         if (userSnap.exists) {
             const data = userSnap.data();
             const miniProfile = {
-                id: userId, // Include id for linking
-                displayName: data.displayName || `User_${userId.substring(0, 5)}`,
+                id: userId, // Always include ID
+                displayName: data.displayName || `User...`, // Use fallback name
                 profilePictureUrl: data.profilePictureUrl || null,
+                // Optionally include rank/title if needed in lists
+                // currentRank: data.currentRank || 'Unranked',
             };
-            miniProfileCache[userId] = miniProfile; // Cache the result
+            miniProfileCache[userId] = miniProfile; // Cache the fetched result
             return miniProfile;
         } else {
-            console.warn(`Mini profile not found for user ${userId}`);
-            // Return a fallback but don't cache it as 'not found' can be temporary
-            return { id: userId, displayName: "Unknown User", profilePictureUrl: null };
+            console.warn(`Mini profile not found in Firestore for user ${userId}`);
+            // Return a placeholder, but maybe DON'T cache "not found" state?
+             // Cache a 'not found' representation to avoid repeated fetches for non-existent users?
+             miniProfileCache[userId] = { id: userId, displayName: "User Not Found", profilePictureUrl: null }; // Cache not found state
+             return miniProfileCache[userId]; // Return the not found state
         }
     } catch (error) {
         console.error(`Error fetching mini profile for ${userId}:`, error);
-         // Return error state, don't cache
-        return { id: userId, displayName: "Error Loading", profilePictureUrl: null };
+         // Return error state, don't cache to allow retry?
+         // Or cache error state to prevent hammering? Depends on expected error frequency.
+         return { id: userId, displayName: "Error Loading User", profilePictureUrl: null }; // Error representation, not cached?
     }
 }
 
 
 // --- Determine Friendship Status between Viewer and Profile Owner ---
 function determineFriendshipStatus(viewerUid, profileOwnerUid) {
-    // Status is determined from the *viewer's* perspective (their entry for the profile owner)
-    if (!viewerProfileData || !viewerProfileData.friends || !viewerUid || !profileOwnerUid || viewerUid === profileOwnerUid) {
-        return 'none'; // Not logged in, viewer data missing, or viewing own profile
+    // Status relies on the VIEWING user's `friends` map entry for the profile owner.
+    if (!viewerUid || !profileOwnerUid || viewerUid === profileOwnerUid || !viewerProfileData || !viewerProfileData.friends) {
+        // console.log("Determined status: 'none' (pre-check failed)");
+        return 'none'; // Cannot determine: Not logged in, missing data, or viewing self.
     }
-    return viewerProfileData.friends[profileOwnerUid] || 'none'; // Returns 'friend', 'incoming', 'outgoing', or 'none'
+    const status = viewerProfileData.friends[profileOwnerUid];
+    // console.log(`Determined status between ${viewerUid} and ${profileOwnerUid} from viewer data: ${status || 'none'}`);
+    return status || 'none'; // Return the status ('friend', 'incoming', 'outgoing') or 'none' if no entry
 }
 
 // --- Clear Friendship Control Buttons ---
 function clearFriendshipControls() {
     if (friendshipControlsContainer) {
         friendshipControlsContainer.innerHTML = '';
+        // Optionally reset min-height if layout issues occur
+        // friendshipControlsContainer.style.minHeight = '0';
     }
 }
 
 // --- Reset and Hide Friends Section ---
 function resetFriendsSection() {
     if (friendsSection) friendsSection.style.display = 'none';
-    if (friendsListUl) friendsListUl.innerHTML = '<li class="list-message">Loading friends...</li>';
-    if (incomingListUl) incomingListUl.innerHTML = '<li class="list-message">Loading incoming requests...</li>';
-    if (outgoingListUl) outgoingListUl.innerHTML = '<li class="list-message">Loading outgoing requests...</li>';
-    if (incomingCountSpan) incomingCountSpan.textContent = '0';
-    if (outgoingCountSpan) outgoingCountSpan.textContent = '0';
-    // Reset tabs to default
+
+    // Reset Tab states visually
     const buttons = friendsTabsContainer?.querySelectorAll('.tab-button');
     const contents = friendsSection?.querySelectorAll('.tab-content');
-    buttons?.forEach((btn, index) => {
-        btn.classList.toggle('active', index === 0); // First tab active
+     buttons?.forEach((btn, index) => {
+        btn.classList.toggle('active', index === 0); // First tab active by default
+         // Reset counts in tabs
+        if(btn.dataset.tab === 'incoming-requests' && incomingCountSpan) incomingCountSpan.textContent = '0';
+         if(btn.dataset.tab === 'outgoing-requests' && outgoingCountSpan) outgoingCountSpan.textContent = '0';
     });
     contents?.forEach((content, index) => {
-         content.classList.toggle('active', index === 0); // First content active
-    });
+         content.classList.toggle('active', index === 0); // First content active by default
+        // Clear list content and add default message
+         const list = content.querySelector('ul.friend-request-list');
+         if (list) {
+             list.innerHTML = `<li class="list-message">Loading...</li>`;
+        }
+     });
+
+    // Ensure listener isn't added multiple times
+    // friendsTabsContainer.dataset.listenerAttached = 'false'; // Reset flag if needed
 }
 
 
 // --- Display Friendship Control Buttons (Add, Cancel, Accept/Decline, Remove) ---
 function displayFriendshipControls(status, profileOwnerUid) {
-    clearFriendshipControls(); // Clear previous buttons
-    if (!loggedInUser || isOwnProfile || !friendshipControlsContainer) return; // Don't show on own profile or if not logged in
+    clearFriendshipControls(); // Always clear previous buttons first
+    // Ensure container exists and user is logged in and *not* viewing own profile
+    if (!friendshipControlsContainer || !loggedInUser || isOwnProfile) {
+        return;
+    }
+
+    // Set a min-height to prevent layout jumps when buttons appear
+    friendshipControlsContainer.style.minHeight = '40px'; // Adjust value as needed
+
 
     let button = null;
     let button2 = null; // For Accept/Decline pair
 
+
     switch (status) {
-        case 'none':
+        case 'none': // Not friends, no pending requests
             button = document.createElement('button');
             button.textContent = 'Add Friend';
-            button.className = 'btn btn-primary'; // Use existing button styles
-            button.onclick = (e) => handleFriendAction(e.target, 'sendRequest', profileOwnerUid);
+            button.className = 'btn btn-primary'; // Main action style
+             button.title = `Send a friend request to this user`;
+            button.onclick = (e) => handleFriendAction(e.currentTarget, 'sendRequest', profileOwnerUid);
             break;
-        case 'outgoing':
+        case 'outgoing': // Viewer sent request to profile owner
             button = document.createElement('button');
             button.textContent = 'Cancel Request';
-            button.className = 'btn btn-secondary btn-cancel'; // Style as secondary/cancel
-             button.onclick = (e) => handleFriendAction(e.target, 'cancelRequest', profileOwnerUid);
+            button.className = 'btn btn-secondary btn-cancel'; // Secondary/cancel style
+            button.title = `Cancel the friend request sent to this user`;
+             button.onclick = (e) => handleFriendAction(e.currentTarget, 'cancelRequest', profileOwnerUid);
             break;
-        case 'incoming':
+        case 'incoming': // Profile owner sent request to viewer
             button = document.createElement('button');
             button.textContent = 'Accept';
             button.className = 'btn btn-primary btn-accept btn-small'; // Smaller accept button
-            button.onclick = (e) => handleFriendAction(e.target, 'acceptRequest', profileOwnerUid);
+            button.title = `Accept the friend request from this user`;
+             button.onclick = (e) => handleFriendAction(e.currentTarget, 'acceptRequest', profileOwnerUid);
 
             button2 = document.createElement('button');
             button2.textContent = 'Decline';
             button2.className = 'btn btn-secondary btn-decline btn-small'; // Smaller decline button
-            button2.onclick = (e) => handleFriendAction(e.target, 'declineRequest', profileOwnerUid);
+             button2.title = `Decline the friend request from this user`;
+            button2.onclick = (e) => handleFriendAction(e.currentTarget, 'declineRequest', profileOwnerUid);
             break;
-        case 'friend':
+        case 'friend': // Already friends
             button = document.createElement('button');
             button.textContent = 'Remove Friend';
-            button.className = 'btn btn-secondary btn-remove'; // Style as secondary/remove
-            button.onclick = (e) => handleFriendAction(e.target, 'removeFriend', profileOwnerUid);
+            button.className = 'btn btn-secondary btn-remove'; // Secondary/remove style
+            button.title = `Remove this user from your friends list`;
+             button.onclick = (e) => handleFriendAction(e.currentTarget, 'removeFriend', profileOwnerUid);
             break;
+         default:
+            console.warn("Unknown friendship status encountered:", status);
+            break; // Don't show any buttons for unknown status
     }
 
+    // Append buttons if created
     if (button) friendshipControlsContainer.appendChild(button);
     if (button2) friendshipControlsContainer.appendChild(button2); // Add second button if exists
 }
 
 // --- Display the Entire Friends Section (for Own Profile) ---
 async function displayFriendsSection(profileData) {
-    if (!isOwnProfile || !friendsSection || !profileData || !profileData.friends) {
-         resetFriendsSection(); // Hide if not applicable
+    // Guard clause: Only run if viewing own profile AND required elements/data exist
+    if (!isOwnProfile || !friendsSection || !profileData || typeof profileData.friends !== 'object') {
+         // Ensure section is hidden if not applicable
+         resetFriendsSection(); // Calls hide internally
         return;
     }
 
-    console.log("Displaying friends section for own profile");
-    friendsSection.style.display = 'block'; // Show the section
 
-    const friendsMap = profileData.friends || {};
+    // Ensure sections and lists exist before proceeding
+     if (!friendsListUl || !incomingListUl || !outgoingListUl || !incomingCountSpan || !outgoingCountSpan || !friendsTabsContainer) {
+         console.error("Required friend section elements are missing from the DOM.");
+         resetFriendsSection(); // Hide section if elements are missing
+         return;
+     }
+
+
+    console.log("Displaying friends section for own profile...");
+    friendsSection.style.display = 'block'; // Show the section container
+
+
+    const friendsMap = profileData.friends || {}; // Use empty map as fallback
     const friendIds = [];
     const incomingIds = [];
     const outgoingIds = [];
 
-    // Categorize users based on status in *own* profile data
+
+    // Categorize users based on status in own profile's friends map
     for (const userId in friendsMap) {
-        switch (friendsMap[userId]) {
-            case 'friend': friendIds.push(userId); break;
-            case 'incoming': incomingIds.push(userId); break; // They sent request TO ME
-            case 'outgoing': outgoingIds.push(userId); break; // I sent request TO THEM
+         if (friendsMap.hasOwnProperty(userId)) { // Ensure it's own property
+             switch (friendsMap[userId]) {
+                 case 'friend': friendIds.push(userId); break;
+                case 'incoming': incomingIds.push(userId); break; // Request received FROM them
+                case 'outgoing': outgoingIds.push(userId); break; // Request sent TO them
+            }
         }
     }
+
 
     // Update counts displayed in tabs
     incomingCountSpan.textContent = incomingIds.length;
     outgoingCountSpan.textContent = outgoingIds.length;
 
-    // Populate lists (fetch mini profiles as needed)
-    populateFriendList(friendsListUl, friendIds, 'friend');
-    populateFriendList(incomingListUl, incomingIds, 'incoming');
-    populateFriendList(outgoingListUl, outgoingIds, 'outgoing');
+
+    // Populate lists (these functions handle fetching mini profiles)
+    // Using Promise.all to fetch and populate concurrently for better performance
+    try {
+        await Promise.all([
+             populateFriendList(friendsListUl, friendIds, 'friend', 'You have no friends yet.'),
+             populateFriendList(incomingListUl, incomingIds, 'incoming', 'No incoming friend requests.'),
+             populateFriendList(outgoingListUl, outgoingIds, 'outgoing', 'No outgoing friend requests.')
+         ]);
+    } catch(listError) {
+        console.error("Error populating one or more friend lists:", listError);
+         // Handle partial failure? Show error in failed lists?
+    }
 
      // Setup Tab Switching Listener (only needs to be attached once)
-    if (!friendsTabsContainer.dataset.listenerAttached) {
+    // Check if listener already attached using a data attribute flag
+    if (friendsTabsContainer && !friendsTabsContainer.dataset.listenerAttached) {
          friendsTabsContainer.addEventListener('click', (event) => {
-            if (event.target.classList.contains('tab-button')) {
-                const targetTabId = event.target.dataset.tab;
-                if (!targetTabId) return;
+            const clickedButton = event.target.closest('.tab-button'); // Find button even if icon inside is clicked
+            if (clickedButton) {
+                const targetTabId = clickedButton.dataset.tab;
+                if (!targetTabId) {
+                    console.warn("Tab button clicked but missing 'data-tab' attribute.");
+                     return;
+                }
 
-                // Remove active class from all buttons and content panes
-                friendsTabsContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                friendsSection.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                // Get all tab buttons and content panes within the specific #friends-section
+                const currentTabButtons = friendsTabsContainer.querySelectorAll('.tab-button');
+                 const currentTabContents = friendsSection.querySelectorAll('.tab-content');
 
-                // Add active class to the clicked button and corresponding content pane
-                event.target.classList.add('active');
-                const targetContent = document.getElementById(`${targetTabId}-container`);
-                if (targetContent) {
-                    targetContent.classList.add('active');
-                } else {
-                    console.error(`Could not find tab content for ID: ${targetTabId}-container`);
+
+                 // Remove active class from all buttons and content panes
+                 currentTabButtons.forEach(btn => btn.classList.remove('active'));
+                 currentTabContents.forEach(content => content.classList.remove('active'));
+
+
+                // Add active class to the clicked button
+                 clickedButton.classList.add('active');
+
+
+                 // Find and activate the corresponding content pane
+                 const targetContent = friendsSection.querySelector(`#${targetTabId}-container`);
+                 if (targetContent) {
+                     targetContent.classList.add('active');
+                 } else {
+                    console.error(`Could not find tab content for ID: #${targetTabId}-container`);
                 }
             }
         });
-        friendsTabsContainer.dataset.listenerAttached = 'true'; // Mark listener as attached
-    }
+         friendsTabsContainer.dataset.listenerAttached = 'true'; // Set flag
+     }
 }
 
 // --- Populate a specific friend/request list ---
-async function populateFriendList(ulElement, userIds, type) {
-    ulElement.innerHTML = ''; // Clear previous items
+async function populateFriendList(ulElement, userIds, type, emptyMessage) {
+    if (!ulElement) return; // Safety check
+    ulElement.innerHTML = ''; // Clear previous items (including loading messages)
 
-    if (userIds.length === 0) {
-        let message = 'No users found.';
-        if (type === 'friend') message = 'You have no friends yet.';
-        if (type === 'incoming') message = 'No incoming friend requests.';
-        if (type === 'outgoing') message = 'No outgoing friend requests.';
-        ulElement.innerHTML = `<li class="list-message">${message}</li>`;
+    if (!userIds || userIds.length === 0) {
+        ulElement.innerHTML = `<li class="list-message">${emptyMessage}</li>`;
         return;
     }
 
+    // Show a temporary loading message while fetching profiles
+     ulElement.innerHTML = `<li class="list-message">Loading user details...</li>`;
+
     // Fetch mini profiles for all users in parallel
-    ulElement.innerHTML = `<li class="list-message">Loading user details...</li>`; // Show loading message while fetching
-    const profilePromises = userIds.map(id => fetchUserMiniProfile(id));
+    const profilePromises = userIds.map(id => fetchUserMiniProfile(id).catch(err => {
+         // Handle individual fetch errors gracefully within map
+         console.error(`Error fetching mini profile for ${id} in list ${type}:`, err);
+         return { id: id, displayName: "Error Loading", profilePictureUrl: null }; // Return error placeholder
+     }));
     const profiles = await Promise.all(profilePromises);
 
-    ulElement.innerHTML = ''; // Clear loading message
+     // Filter out potential null results from fetch errors handled above
+    const validProfiles = profiles.filter(p => p !== null);
 
-    // Create and append list items for successfully fetched profiles
-    profiles.forEach(miniProfile => {
-        if (miniProfile && miniProfile.displayName !== "Error Loading") { // Check if fetch was successful and not an error fallback
-             ulElement.appendChild(createFriendListItem(miniProfile, type));
-        } else {
-             console.warn(`Skipping list item for ${miniProfile?.id || 'unknown ID'} due to fetch error or missing data.`);
-             // Optionally add a placeholder for failed loads
-             // const errorLi = document.createElement('li');
-             // errorLi.className = 'list-message';
-             // errorLi.textContent = `Could not load user ${miniProfile?.id || ''}`;
-             // ulElement.appendChild(errorLi);
+
+     ulElement.innerHTML = ''; // Clear loading message after fetching
+
+
+    // Create and append list items
+    let itemsAdded = 0;
+     validProfiles.forEach(miniProfile => {
+        // Ensure miniProfile has essential data, otherwise skip or show placeholder
+         if (miniProfile && miniProfile.id && miniProfile.displayName) {
+             if (miniProfile.displayName === "Error Loading User" || miniProfile.displayName === "User Not Found") {
+                 // Optionally display a different kind of item for error/not found
+                ulElement.appendChild(createFriendListItemError(miniProfile.id, miniProfile.displayName));
+            } else {
+                 // Create standard item
+                 ulElement.appendChild(createFriendListItem(miniProfile, type));
+                 itemsAdded++;
+             }
+         } else {
+            console.warn(`Skipping invalid miniProfile object for list ${type}:`, miniProfile);
         }
     });
 
-    // If after fetching, the list is STILL empty (e.g., all fetches failed)
-    if (ulElement.childElementCount === 0) {
+    // If after fetching and filtering, the list is empty (e.g., all fetches failed or resulted in placeholders)
+     if (itemsAdded === 0 && validProfiles.length > 0) { // Check if there were IDs but nothing valid to display
+         // Maybe keep the placeholder items visible or show a general error?
          ulElement.innerHTML = `<li class="list-message">Could not load user details.</li>`;
-    }
+    } else if (ulElement.childElementCount === 0) { // Should only happen if userIds was initially empty
+         ulElement.innerHTML = `<li class="list-message">${emptyMessage}</li>`;
+     }
 }
 
 // --- Create HTML for a single list item ---
 function createFriendListItem(miniProfile, type) {
     const li = document.createElement('li');
-    li.classList.add('friend-item');
+    li.className = 'friend-item'; // Use class for styling group
     li.dataset.userId = miniProfile.id; // Store user ID for actions
+
 
     // Info Part (PFP + Name)
     const infoDiv = document.createElement('div');
     infoDiv.className = 'friend-item-info';
 
-    // Profile Picture or Initials
-    const pfpContainer = document.createElement('div'); // Container to handle replacement easily
-    if (miniProfile.profilePictureUrl) {
-        const img = document.createElement('img');
-        img.src = miniProfile.profilePictureUrl;
-        img.alt = `${miniProfile.displayName}'s profile picture`;
-        img.className = 'friend-item-pfp';
-        img.onerror = (e) => { // Fallback to initials on error
-            const initialDiv = document.createElement('div');
-            initialDiv.className = 'friend-item-pfp-initial';
-            initialDiv.textContent = miniProfile.displayName?.charAt(0)?.toUpperCase() || '?';
-            e.target.parentElement.replaceWith(initialDiv); // Replace container content
-        }
-        pfpContainer.appendChild(img);
-    } else {
-        const initialDiv = document.createElement('div');
-        initialDiv.className = 'friend-item-pfp-initial';
-        initialDiv.textContent = miniProfile.displayName?.charAt(0)?.toUpperCase() || '?';
-        pfpContainer.appendChild(initialDiv);
-    }
-    infoDiv.appendChild(pfpContainer);
+
+    // Profile Picture or Initials Element
+    const pfpElement = createFriendPfpElement(miniProfile);
+    infoDiv.appendChild(pfpElement);
 
 
     // Name (clickable link)
@@ -1412,73 +2035,140 @@ function createFriendListItem(miniProfile, type) {
     const nameLink = document.createElement('a');
     nameLink.href = `profile.html?uid=${miniProfile.id}`; // Link to their profile
     nameLink.textContent = miniProfile.displayName;
+     nameLink.title = `View ${miniProfile.displayName}'s profile`;
     nameSpan.appendChild(nameLink);
     infoDiv.appendChild(nameSpan);
 
+
     li.appendChild(infoDiv);
+
 
     // Actions Part (Buttons)
     const actionsDiv = document.createElement('div');
     actionsDiv.className = 'friend-item-actions';
 
-    if (type === 'friend') {
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = 'Remove';
-        removeBtn.className = 'btn btn-secondary btn-remove btn-small';
-        removeBtn.onclick = (e) => handleFriendAction(e.target, 'removeFriend', miniProfile.id, li); // Pass li to remove later
-        actionsDiv.appendChild(removeBtn);
-    } else if (type === 'incoming') {
-        const acceptBtn = document.createElement('button');
-        acceptBtn.textContent = 'Accept';
-        acceptBtn.className = 'btn btn-primary btn-accept btn-small';
-        acceptBtn.onclick = (e) => handleFriendAction(e.target, 'acceptRequest', miniProfile.id, li);
 
-        const declineBtn = document.createElement('button');
-        declineBtn.textContent = 'Decline';
-        declineBtn.className = 'btn btn-secondary btn-decline btn-small';
-        declineBtn.onclick = (e) => handleFriendAction(e.target, 'declineRequest', miniProfile.id, li);
+    let button1 = null;
+     let button2 = null;
 
-        actionsDiv.appendChild(acceptBtn);
-        actionsDiv.appendChild(declineBtn);
-    } else if (type === 'outgoing') {
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'btn btn-secondary btn-cancel btn-small';
-        cancelBtn.onclick = (e) => handleFriendAction(e.target, 'cancelRequest', miniProfile.id, li);
-        actionsDiv.appendChild(cancelBtn);
+
+     switch(type) {
+        case 'friend':
+            button1 = createFriendActionButton('Remove', 'remove', 'secondary', miniProfile.id, li);
+             break;
+         case 'incoming':
+             button1 = createFriendActionButton('Accept', 'accept', 'primary', miniProfile.id, li);
+             button2 = createFriendActionButton('Decline', 'decline', 'secondary', miniProfile.id, li);
+             break;
+         case 'outgoing':
+             button1 = createFriendActionButton('Cancel', 'cancel', 'secondary', miniProfile.id, li);
+            break;
     }
 
+    if(button1) actionsDiv.appendChild(button1);
+    if(button2) actionsDiv.appendChild(button2);
+
+
     li.appendChild(actionsDiv);
+
 
     return li;
 }
 
+// Helper to create PFP element with fallback
+function createFriendPfpElement(miniProfile) {
+    const container = document.createElement('div'); // Use div for easier replacement
+    container.style.width = '40px'; // Match CSS size
+    container.style.height = '40px';
+    container.style.flexShrink = '0'; // Prevent shrinking
+
+    const initialDiv = document.createElement('div');
+    initialDiv.className = 'friend-item-pfp-initial';
+    initialDiv.textContent = miniProfile.displayName?.charAt(0)?.toUpperCase() || '?';
+    initialDiv.style.display = 'flex'; // Ensure initials are visible by default
+
+    container.appendChild(initialDiv); // Add initials first
+
+    if (miniProfile.profilePictureUrl) {
+        const img = document.createElement('img');
+        img.src = miniProfile.profilePictureUrl;
+        img.alt = `${miniProfile.displayName || 'User'}'s profile picture`;
+        img.className = 'friend-item-pfp';
+        img.style.display = 'none'; // Hide image initially
+
+        img.onload = () => {
+            initialDiv.style.display = 'none'; // Hide initials
+             img.style.display = 'block'; // Show image
+        };
+        img.onerror = () => { // If image fails to load
+             console.warn(`Failed to load PFP image for ${miniProfile.id}`);
+            img.style.display = 'none'; // Ensure failed image is hidden
+             initialDiv.style.display = 'flex'; // Ensure initials are shown
+        };
+        container.appendChild(img); // Append image (might replace initial on load)
+    }
+
+    return container;
+}
+
+
+// Helper to create Action Buttons
+function createFriendActionButton(text, type, style, userId, listItem) {
+    const btn = document.createElement('button');
+     btn.textContent = text;
+    btn.className = `btn btn-${style} btn-${type} btn-small`; // Combine base, style, type, and size classes
+     // Map internal type to action string for handler
+     const actionMap = { remove: 'removeFriend', accept: 'acceptRequest', decline: 'declineRequest', cancel: 'cancelRequest' };
+    btn.onclick = (e) => handleFriendAction(e.currentTarget, actionMap[type], userId, listItem);
+     btn.title = `${text} friend request/friendship`; // Add tooltip
+     return btn;
+ }
+
+// Helper to create error/placeholder list item
+ function createFriendListItemError(userId, message) {
+    const li = document.createElement('li');
+    li.className = 'friend-item list-message'; // Style as a message within the list
+    li.dataset.userId = userId; // Store ID if available
+     li.innerHTML = `
+         <div class="friend-item-info" style="opacity: 0.6;">
+            <div class="friend-item-pfp-initial" style="background-color: var(--text-secondary);">?</div>
+            <span class="friend-item-name">${message} (ID: ${userId ? userId.substring(0,8) + '...' : 'N/A'})</span>
+        </div>
+         <div class="friend-item-actions"></div> <!-- Empty actions -->
+     `;
+     return li;
+ }
 
 // --- Master Handler for Friend Actions (using Batch Writes) ---
 async function handleFriendAction(buttonElement, action, otherUserId, listItemToRemove = null) {
     if (!loggedInUser || !otherUserId) {
-        console.error("Friend action cannot proceed: Not logged in or otherUserId missing.");
+        console.error("Friend action validation failed: Not logged in or target user ID missing.");
+        alert("Could not perform action. Please ensure you are logged in.");
         return;
     }
+    if (!buttonElement) {
+        console.error("Friend action validation failed: Button element missing.");
+        return; // Should not happen if called from onclick
+    }
+
 
     const currentUserUid = loggedInUser.uid;
 
-    // --- Disable Button(s) and Show Loading ---
+
+    // Prevent multi-clicks, show loading state
     buttonElement.disabled = true;
     const originalText = buttonElement.textContent; // Store original text
-    buttonElement.textContent = '...';
+     buttonElement.textContent = '...';
 
-    // Find sibling buttons if they exist (e.g., Accept/Decline pair in a list item)
+
+    // Disable sibling buttons (e.g., Accept/Decline in the same list item)
     const actionContainer = buttonElement.closest('.friend-item-actions') || friendshipControlsContainer;
-    const siblingButtons = actionContainer.querySelectorAll('button');
-    const originalSiblingTexts = {}; // Store original text for siblings
+    const siblingButtons = actionContainer ? Array.from(actionContainer.querySelectorAll('button')) : [];
     siblingButtons.forEach(btn => {
         if (btn !== buttonElement) {
-            originalSiblingTexts[btn.textContent] = btn.textContent; // Simple key based on current text
              btn.disabled = true;
         }
     });
-    // --- End Disable Buttons ---
 
 
     const userDocRef = db.collection('users').doc(currentUserUid);
@@ -1488,359 +2178,371 @@ async function handleFriendAction(buttonElement, action, otherUserId, listItemTo
     try {
         console.log(`Performing friend action: ${action} between ${currentUserUid} and ${otherUserId}`);
 
-        // Prepare batch operations based on action
+
+         // Use FieldValue.delete() for removal actions
+         const deleteField = firebase.firestore.FieldValue.delete();
+
+
+         // Define batch operations based on the action
         switch (action) {
             case 'sendRequest':
-                // My status for them: outgoing
+                // My doc: status for them becomes 'outgoing'
                 batch.update(userDocRef, { [`friends.${otherUserId}`]: 'outgoing' });
-                // Their status for me: incoming
+                // Their doc: status for me becomes 'incoming'
                 batch.update(otherUserDocRef, { [`friends.${currentUserUid}`]: 'incoming' });
                 break;
             case 'cancelRequest': // I cancel my outgoing request
-                // Remove entry from my map
-                batch.update(userDocRef, { [`friends.${otherUserId}`]: firebase.firestore.FieldValue.delete() });
-                // Remove entry from their map
-                batch.update(otherUserDocRef, { [`friends.${currentUserUid}`]: firebase.firestore.FieldValue.delete() });
+                batch.update(userDocRef, { [`friends.${otherUserId}`]: deleteField });
+                batch.update(otherUserDocRef, { [`friends.${currentUserUid}`]: deleteField });
                 break;
             case 'declineRequest': // I decline their incoming request
-                 // Remove entry from my map
-                batch.update(userDocRef, { [`friends.${otherUserId}`]: firebase.firestore.FieldValue.delete() });
-                // Remove entry from their map
-                batch.update(otherUserDocRef, { [`friends.${currentUserUid}`]: firebase.firestore.FieldValue.delete() });
+                 batch.update(userDocRef, { [`friends.${otherUserId}`]: deleteField });
+                batch.update(otherUserDocRef, { [`friends.${currentUserUid}`]: deleteField });
                 break;
             case 'removeFriend': // Either user removes the friend
-                // Remove entry from my map
-                batch.update(userDocRef, { [`friends.${otherUserId}`]: firebase.firestore.FieldValue.delete() });
-                // Remove entry from their map
-                batch.update(otherUserDocRef, { [`friends.${currentUserUid}`]: firebase.firestore.FieldValue.delete() });
+                batch.update(userDocRef, { [`friends.${otherUserId}`]: deleteField });
+                batch.update(otherUserDocRef, { [`friends.${currentUserUid}`]: deleteField });
                 break;
             case 'acceptRequest': // I accept their incoming request
-                // My status for them: friend
                 batch.update(userDocRef, { [`friends.${otherUserId}`]: 'friend' });
-                // Their status for me: friend
                 batch.update(otherUserDocRef, { [`friends.${currentUserUid}`]: 'friend' });
                 break;
             default:
-                throw new Error("Invalid friend action specified.");
+                throw new Error(`Invalid friend action: ${action}`);
         }
 
         // Commit the batch
         await batch.commit();
-        console.log("Friend action batch commit successful.");
+        console.log("Friend action batch committed successfully.");
 
-        // --- Update UI Immediately After Success ---
+        // --- Update Local State and UI Post-Success ---
 
-        // 1. Update viewer's local data (important for subsequent status checks)
-        try {
-            const viewerSnap = await db.collection('users').doc(currentUserUid).get();
+        // Clear relevant mini-profile cache entries immediately
+        delete miniProfileCache[currentUserUid]; // Clear own cache entry (in case rank/etc changed somehow)
+        delete miniProfileCache[otherUserId];
+
+        // 1. Refresh the *viewer's* profile data from Firestore to get the latest `friends` map
+         try {
+            const viewerSnap = await userDocRef.get();
             if (viewerSnap.exists) {
-                viewerProfileData = { id: viewerSnap.id, ...viewerSnap.data() };
-                if (!viewerProfileData.friends) viewerProfileData.friends = {}; // Ensure map exists
+                 const latestViewerData = { id: viewerSnap.id, ...viewerSnap.data() };
+                if (!latestViewerData.friends) latestViewerData.friends = {};
+                 viewerProfileData = latestViewerData; // Update global viewer data
+                // If viewing own profile, also update viewingUserProfileData
+                 if (isOwnProfile) {
+                    viewingUserProfileData.profile = viewerProfileData; // Keep viewed profile data in sync
+                    viewingUserProfileData.stats = viewingUserProfileData.stats || null; // Preserve existing stats
+                     saveCombinedDataToCache(currentUserUid, viewingUserProfileData); // Re-cache own profile
+                 }
                 console.log("Refreshed viewerProfileData after action.");
             } else {
-                console.error("Could not refetch viewer profile after action! UI state might be inconsistent.");
-                // Attempt to update local viewerProfileData based on action? Risky.
-                 // For now, log error and proceed with potentially stale viewer data for UI updates.
+                console.error("Failed to refetch viewer profile after action! Local state may be inconsistent.");
+                // Attempt to manually update local viewerProfileData based on action (risky fallback)
+                // UpdateFriendsMapLocally(currentUserUid, otherUserId, action);
             }
-        } catch (fetchError) {
+         } catch (fetchError) {
              console.error("Error refetching viewer profile after action:", fetchError);
-             // Proceed with potentially stale viewer data.
-        }
+             // Proceed with possibly stale viewerProfileData, UI updates might be incorrect
+         }
 
-
-        // 2. If viewing the other user's profile, update the control buttons
-        if (!isOwnProfile && viewingUserProfileData.profile?.id === otherUserId) {
+        // 2. Update UI based on context (viewing other vs. own profile)
+        if (isOwnProfile) {
+            // Update the entire friend section using the refreshed viewer/profile data
+             console.log("Refreshing friends section on own profile after action.");
+            displayFriendsSection(viewerProfileData); // Pass the UPDATED data
+        } else if (viewingUserProfileData.profile?.id === otherUserId) {
+             // If viewing the affected user's profile, recalculate and display controls
+             console.log("Refreshing friendship controls on other user's profile after action.");
              const newStatus = determineFriendshipStatus(currentUserUid, otherUserId);
-             displayFriendshipControls(newStatus, otherUserId); // Re-display buttons based on new status
-        }
-        // 3. If viewing own profile, update the lists more directly
-        else if (isOwnProfile) {
-            if (listItemToRemove) {
-                 listItemToRemove.remove(); // Remove the item acted upon
-
-                 // If accepting, fetch profile and add to 'Friends' list
-                 if (action === 'acceptRequest') {
-                     const acceptedProfile = await fetchUserMiniProfile(otherUserId);
-                     if (acceptedProfile && acceptedProfile.displayName !== "Error Loading") {
-                         // Avoid adding duplicates if already there somehow
-                         if (!friendsListUl.querySelector(`li[data-user-id="${otherUserId}"]`)) {
-                            friendsListUl.appendChild(createFriendListItem(acceptedProfile, 'friend'));
-                            // Remove 'no friends' message if it exists
-                            const emptyMsg = friendsListUl.querySelector('.list-message');
-                            if(emptyMsg) emptyMsg.remove();
-                         }
-                     } else {
-                         console.warn("Could not fetch profile to add to friends list after accepting.");
-                         // Maybe add a temporary item indicating success but missing details?
-                     }
-                 }
-                 // Update counts and check for empty lists after removal/addition
-                 updateListCountsAndMessages();
-            } else {
-                // If action was triggered from profile page buttons (shouldn't happen on own profile)
-                // but potentially refresh the whole section if needed.
-                console.warn("Friend action handled on own profile without list item reference.");
-                // Refresh the whole section as a fallback
-                 displayFriendsSection(viewerProfileData); // Use updated viewer data (which is own data here)
-            }
-        }
-
-        // Clear mini-profile cache for the other user as their relationship changed
-        delete miniProfileCache[otherUserId];
+             displayFriendshipControls(newStatus, otherUserId);
+         }
+        // No need to explicitly remove listItemToRemove, displayFriendsSection handles full refresh
 
     } catch (error) {
         console.error(`Error performing friend action '${action}':`, error);
-        alert(`An error occurred: ${error.message}. Please try again.`);
-         // --- Re-enable Button(s) on Error ---
+        alert(`An error occurred: ${error.message || 'Failed to perform friend action.'}. Please try again.`);
+         // Re-enable Button(s) on Error
          buttonElement.disabled = false;
          buttonElement.textContent = originalText; // Restore original text
-
          siblingButtons.forEach(btn => {
-              if (btn !== buttonElement) {
-                 btn.disabled = false;
-                 // Find original text - this simple key lookup might fail if text changed
-                 // A more robust way would be storing text in a data attribute
-                 const originalSiblingText = Object.keys(originalSiblingTexts).find(key => originalSiblingTexts[key] === btn.textContent) || 'Action';
-                 btn.textContent = originalSiblingText;
-              }
-         });
-         // --- End Re-enable Buttons ---
+            if (btn !== buttonElement) btn.disabled = false; // Re-enable siblings too
+        });
     }
-    // Note: Buttons are intentionally *not* re-enabled on success,
-    // because the UI should change (button disappears or changes, or list item removed).
-}
-
-// Helper to update list counts and show/hide empty messages after actions
-function updateListCountsAndMessages() {
-    if (!isOwnProfile) return; // Only run on own profile
-
-    const lists = [
-        { ul: friendsListUl, type: 'friend' },
-        { ul: incomingListUl, type: 'incoming', countSpan: incomingCountSpan },
-        { ul: outgoingListUl, type: 'outgoing', countSpan: outgoingCountSpan }
-    ];
-
-    lists.forEach(listInfo => {
-        if (!listInfo.ul) return; // Skip if element doesn't exist
-
-        const items = listInfo.ul.querySelectorAll('li.friend-item'); // Select only actual friend items
-        const count = items.length;
-
-        // Update count in tab
-        if (listInfo.countSpan) {
-            listInfo.countSpan.textContent = count;
-        }
-
-        // Add or remove the empty message
-        const messageElement = listInfo.ul.querySelector('.list-message');
-        if (count === 0 && !messageElement) {
-             let messageText = 'No users found.';
-            if (listInfo.type === 'friend') messageText = 'You have no friends yet.';
-            if (listInfo.type === 'incoming') messageText = 'No incoming friend requests.';
-            if (listInfo.type === 'outgoing') messageText = 'No outgoing friend requests.';
-            // Create and prepend message
-            const msgLi = document.createElement('li');
-            msgLi.className = 'list-message';
-            msgLi.textContent = messageText;
-            listInfo.ul.prepend(msgLi); // Prepend to show at top
-        } else if (count > 0 && messageElement) {
-            messageElement.remove(); // Remove message if items exist
-        }
-    });
 }
 
 
 // =============================================================================
 // --- Authentication and Initialization ---
 // =============================================================================
-auth.onAuthStateChanged(user => {
-    loggedInUser = user; // Update global loggedInUser state
-    const targetUid = profileUidFromUrl || loggedInUser?.uid; // Determine whose profile to load
-    console.log(`Auth state changed. User: ${user ? user.uid : 'null'}, Target UID: ${targetUid}`);
 
-    // Determine if viewing own profile AFTER auth state is confirmed
-    isOwnProfile = loggedInUser && targetUid === loggedInUser.uid;
-    viewerProfileData = null; // Reset viewer data cache on auth change
-    miniProfileCache = {}; // Reset mini profile cache
+// --- Auth State Change Handler ---
+auth.onAuthStateChanged(async (user) => { // Make async to allow awaiting setup steps
+    console.log(`Auth state changed. User: ${user ? user.uid : 'None'}`);
+    loggedInUser = user; // Update global loggedInUser state immediately
+    const targetUid = profileUidFromUrl || loggedInUser?.uid; // Determine whose profile to load
+
+
+    // Clear potentially stale data from previous user/state
+    viewerProfileData = null;
+    viewingUserProfileData = {};
+    miniProfileCache = {}; // Reset mini-profile cache on auth change
+    isOwnProfile = loggedInUser && targetUid === loggedInUser.uid; // Determine ownership
+
 
     if (targetUid) {
-        // User is logged in or a UID is provided in URL
-        loadingIndicator.style.display = 'flex'; // Show loading initially
-        notLoggedInMsg.style.display = 'none';
-        profileContent.style.display = 'none'; // Hide content until loaded
-
-        // Fetch necessary global data if not already fetched
-        if (!allAchievements) fetchAllAchievements(); // Can run in parallel
-
-        // Load the combined user data
-        loadCombinedUserData(targetUid).then(() => {
-             // AFTER data is loaded and displayed, hide loading, show content
-             console.log("loadCombinedUserData finished. Displaying content.");
-             loadingIndicator.style.display = 'none';
-             // Only show content if profile was actually found (check inside loadCombinedUserData?)
-             // Assuming loadCombinedUserData handles the "not found" case by not showing #profile-content
-             if (viewingUserProfileData.profile) { // Check if profile data exists after load
-                  profileContent.style.display = 'block'; // Show main profile container
-             }
+        // User is logged in OR a UID is provided in URL
+         console.log(`Targeting profile UID: ${targetUid}`);
 
 
-             // Setup interaction listeners AFTER content is displayed
-             if (isOwnProfile) {
-                 // Ensure listeners are attached to potentially new/cloned nodes
-                 const currentEditIcon = document.getElementById('edit-profile-pic-icon');
-                 const currentFileInput = document.getElementById('profile-pic-input');
-                 if (currentEditIcon) currentEditIcon.replaceWith(currentEditIcon.cloneNode(true));
-                 if (currentFileInput) currentFileInput.replaceWith(currentFileInput.cloneNode(true));
+        // Show loading, hide content/errors initially
+        if (loadingIndicator) loadingIndicator.style.display = 'flex';
+        if (notLoggedInMsg) notLoggedInMsg.style.display = 'none';
+        if (profileContent) profileContent.style.display = 'none';
+         if (achievementsSection) achievementsSection.style.display = 'none'; // Ensure hidden
+         if (friendsSection) friendsSection.style.display = 'none'; // Ensure hidden
 
-                 setupProfilePicEditing(); // Setup pic edit listeners for the owner
-                 // Friend section tab listener setup is handled within displayFriendsSection
+        // --- Load Data ---
+        try {
+             // Pre-fetch definitions (can happen while loading main data)
+            if (!allAchievements) fetchAllAchievements();
+
+            // Call the main data loading function
+             await loadCombinedUserData(targetUid);
+
+            // loadCombinedUserData now handles hiding loader and showing content/errors internally
+             console.log("Initial data load process completed.");
+
+
+             // Final UI setup based on loaded data and ownership
+             if (viewingUserProfileData.profile) { // Check if profile was loaded successfully
+                // Setup interactions specific to profile owner AFTER data is loaded/displayed
+                if (isOwnProfile) {
+                    setupProfilePicEditing(); // Attach PFP edit listener
+                    // Friend section interaction setup is inside displayFriendsSection
+                    // Title interaction setup is inside updateProfileTitlesAndRank
+                } else {
+                     if(editProfilePicIcon) editProfilePicIcon.style.display = 'none'; // Ensure non-owners cannot edit PFP
+                }
+                // Ensure logout button visibility is correct
+                profileLogoutBtn.style.display = isOwnProfile ? 'inline-block' : 'none';
              } else {
-                // Ensure edit icon is hidden if not the owner
-                const currentEditIcon = document.getElementById('edit-profile-pic-icon');
-                if(currentEditIcon) currentEditIcon.style.display = 'none';
-                 // Friendship controls are displayed within loadCombinedUserData
-             }
-             // Title selector setup is handled within updateProfileTitlesAndRank called by displayProfileData
-        }).catch(err => {
-            console.error("Critical error during loadCombinedUserData execution:", err);
-            // Ensure loading is hidden and error message is shown
-            loadingIndicator.style.display = 'none';
-            profileContent.style.display = 'none';
-            notLoggedInMsg.textContent = 'Failed to load profile. Please try again.';
-            notLoggedInMsg.style.display = 'flex';
-             clearFriendshipControls();
-             resetFriendsSection();
-        });
+                // If profile wasn't loaded, ensure logout btn is hidden etc.
+                 profileLogoutBtn.style.display = 'none';
+                // Error message should be displayed by loadCombinedUserData
+            }
 
-        // Show/Hide Logout Button based on whether viewer is owner of target profile
-        profileLogoutBtn.style.display = isOwnProfile ? 'inline-block' : 'none';
+        } catch (err) {
+            console.error("Critical error during initial profile load sequence:", err);
+            // Show generic error message if loadCombinedUserData failed catastrophically
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            if (profileContent) profileContent.style.display = 'none';
+             if (notLoggedInMsg) {
+                notLoggedInMsg.textContent = 'Failed to load profile. An unexpected error occurred.';
+                notLoggedInMsg.style.display = 'flex';
+            }
+             // Ensure dependent sections are also hidden
+            if (achievementsSection) achievementsSection.style.display = 'none';
+            if (friendsSection) friendsSection.style.display = 'none';
+            profileLogoutBtn.style.display = 'none'; // Hide logout on critical failure
+            clearFriendshipControls();
+             resetFriendsSection();
+        }
 
     } else {
-        // No user logged in AND no UID in URL -> Show "Not Logged In" message
+        // --- No User Logged In AND No UID in URL ---
         console.log('No user logged in and no profile UID in URL.');
-        loadingIndicator.style.display = 'none';
-        profileContent.style.display = 'none'; // Hide profile content
-        notLoggedInMsg.style.display = 'flex'; // Show message container
-        notLoggedInMsg.textContent = 'Please log in to view your profile, or provide a user ID in the URL (e.g., ?uid=USER_ID).';
 
-        // Reset UI elements (including new friend elements)
-        adminTag.style.display = 'none';
-        profileBadgesContainer.innerHTML = '';
-        profileLogoutBtn.style.display = 'none';
-        editProfilePicIcon.style.display = 'none'; // Hide edit icon
-        updateProfileTitlesAndRank(null, false); // Reset rank/title
-        competitiveStatsDisplay.innerHTML = ''; // Clear stats
-        displayPoxelStats(null); // Clear poxel stats
-        updateProfileBackground(null); // Clear background
-        viewingUserProfileData = {}; // Clear global data
-        viewerProfileData = null; // Clear viewer data
-        miniProfileCache = {}; // Clear mini profile cache
-        closeTitleSelector(); // Ensure title selector is closed
-        closeEditModal(); // Ensure edit modal is closed
-        clearFriendshipControls(); // Clear friend buttons
-        resetFriendsSection();    // Reset friend section visibility and content
+
+        // Display "Not Logged In" message and hide profile content/loading
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        if (profileContent) profileContent.style.display = 'none';
+        if (notLoggedInMsg) {
+            notLoggedInMsg.style.display = 'flex';
+             // More informative message:
+            notLoggedInMsg.innerHTML = 'Please <a href="index.html#login-section" style="color: var(--primary-orange); margin: 0 5px;">log in</a> to view your profile, or provide a user ID in the URL.';
+             // Assuming your index.html has an element with id="login-section" for login form. Adjust link if needed.
+        }
+
+
+        // Reset UI elements fully
+        if (adminTag) adminTag.style.display = 'none';
+        if (profileBadgesContainer) profileBadgesContainer.innerHTML = '';
+        if (profileLogoutBtn) profileLogoutBtn.style.display = 'none';
+        if (editProfilePicIcon) editProfilePicIcon.style.display = 'none';
+        updateProfileTitlesAndRank(null, false);
+        if (competitiveStatsDisplay) competitiveStatsDisplay.innerHTML = '';
+        if (poxelStatsSection) poxelStatsSection.style.display = 'none';
+        updateProfileBackground(null);
+        closeTitleSelector();
+        closeEditModal();
+        clearFriendshipControls();
+        resetFriendsSection();
+         if (achievementsSection) achievementsSection.style.display = 'none'; // Reset achievements section
+
+
+        // Clear global data state
+         viewingUserProfileData = {};
+         viewerProfileData = null;
+        miniProfileCache = {};
     }
 });
 
 // --- Logout Button Event Listener ---
 profileLogoutBtn.addEventListener('click', () => {
-    const userId = loggedInUser?.uid;
-    console.log('Logout button clicked.');
-
-    // Clean up UI elements and state before signing out
-    if (titleDisplay) titleDisplay.removeEventListener('click', handleTitleClick);
-    closeTitleSelector();
-    closeEditModal();
-    clearFriendshipControls(); // Clear friend buttons if any were shown
-    resetFriendsSection();    // Hide friend section
-    miniProfileCache = {}; // Clear mini profile cache
-    viewingUserProfileData = {}; // Clear viewed profile data
-    viewerProfileData = null; // Clear logged-in user data
+    const userId = loggedInUser?.uid; // Get UID before potential logout completes
+    console.log(`Logout button clicked by user: ${userId || 'N/A'}`);
 
 
-    // Sign out
-    auth.signOut().then(() => {
+    // Clean up UI elements and listeners associated with the logged-in state
+     if (titleDisplay) titleDisplay.removeEventListener('click', handleTitleClick);
+     closeTitleSelector(); // Close any open dropdowns
+     closeEditModal(); // Close any open modals
+
+
+    // Clear sensitive / user-specific content immediately
+     clearFriendshipControls();
+     resetFriendsSection();
+    if (achievementsSection) achievementsSection.style.display = 'none';
+    // Reset PFP editor functionality
+     if (editProfilePicIcon) editProfilePicIcon.onclick = null;
+    if (profilePicInput) profilePicInput.onchange = null;
+
+
+     // Sign out from Firebase
+     auth.signOut().then(() => {
         console.log('User signed out successfully.');
+         // Clear cached data for the logged-out user
         if (userId) {
-            // Clear cache for the logged-out user
             localStorage.removeItem(`poxelProfileCombinedData_${userId}`);
-            console.log(`Cleared cache for UID: ${userId}`);
-        }
-        // State already cleared above
+            console.log(`Cleared cached profile data for UID: ${userId}`);
+         }
+
+
+        // Clear global variables
+        loggedInUser = null;
+        viewerProfileData = null;
+         viewingUserProfileData = {}; // Clear viewed data too
+         miniProfileCache = {};
+        isOwnProfile = false;
+
+
+        // Redirect or let onAuthStateChanged handle the UI reset
+        // onAuthStateChanged *will* trigger with user=null, handling the UI reset.
+        // Redirect explicitly if desired:
         window.location.href = 'index.html'; // Redirect to home or login page
+
+
     }).catch((error) => {
         console.error('Sign out error:', error);
         alert('Error signing out. Please try again.');
-        // Re-enable UI? Or assume redirect will happen anyway?
+         // Re-enable UI? Generally better to let state change handler manage UI.
     });
 });
-
 
 // =============================================================================
 // --- Local Storage Caching ---
 // =============================================================================
+
 function loadCombinedDataFromCache(viewedUserId) {
     if (!viewedUserId) return false;
     const cacheKey = `poxelProfileCombinedData_${viewedUserId}`;
-    const cachedDataString = localStorage.getItem(cacheKey);
-    if (!cachedDataString) {
-        console.log(`No cache found for UID: ${viewedUserId}`);
-        return false;
-    }
+
+
     try {
+        const cachedDataString = localStorage.getItem(cacheKey);
+        if (!cachedDataString) {
+             // console.log(`No cache found for UID: ${viewedUserId}`);
+            return false;
+        }
+
+
         const cachedData = JSON.parse(cachedDataString);
-        // Basic validation: ensure profile object exists
-        if (cachedData && cachedData.profile) {
-            // Ensure friends map exists in cached data
-             if (!cachedData.profile.friends) cachedData.profile.friends = {};
 
-            viewingUserProfileData = cachedData; // Load data into global state
-            console.log("Loaded combined data from cache for VIEWED UID:", viewedUserId);
 
-            // Determine if the cached view is for the currently logged-in user
-            // Use auth.currentUser directly as loggedInUser might not be set yet
-            const viewingOwnCachedProfile = auth.currentUser && auth.currentUser.uid === viewedUserId;
+        // Basic validation: ensure profile object and its id exist
+         if (cachedData && cachedData.profile && cachedData.profile.id === viewedUserId) {
 
-            // Display data from cache
+
+             // Ensure crucial nested structures exist in cached data (add defaults if missing)
+             cachedData.profile.friends = cachedData.profile.friends || {};
+             cachedData.profile.leaderboardStats = cachedData.profile.leaderboardStats || {};
+             cachedData.profile.availableTitles = cachedData.profile.availableTitles || [];
+             cachedData.profile.equippedTitle = cachedData.profile.equippedTitle !== undefined ? cachedData.profile.equippedTitle : "";
+             cachedData.profile.currentRank = cachedData.profile.currentRank || "Unranked";
+             cachedData.stats = cachedData.stats || null; // Cache might just have profile
+
+
+             viewingUserProfileData = cachedData; // Load data into global state
+             console.log("Loaded combined data from cache for VIEWED UID:", viewedUserId);
+
+
+             // Determine if the cached view is for the currently logged-in user
+             // (Check against auth.currentUser which should be available if needed)
+             const viewingOwnCachedProfile = loggedInUser && loggedInUser.uid === viewedUserId;
+
+
+             // --- Display data from cache IMMEDIATELY ---
             displayProfileData(viewingUserProfileData.profile, viewingUserProfileData.stats, viewingOwnCachedProfile);
-            // Note: Poxel stats are not cached here, they will be fetched live later.
-            // Friend controls/section will be displayed later in loadCombinedUserData after viewer data is fetched.
+             // Note: Poxel stats are NOT cached here, fetched live later.
+             // Note: Friends/Achievement sections are populated later after live fetches/checks.
 
-            return true; // Indicate cache was successfully loaded and displayed
-        } else {
-            console.warn(`Invalid cache structure for UID: ${viewedUserId}. Removing.`);
+
+             return true; // Indicate cache was successfully loaded and displayed
+         } else {
+            console.warn(`Invalid or mismatched cache data for UID: ${viewedUserId}. Removing.`);
             localStorage.removeItem(cacheKey);
             return false;
         }
     } catch (error) {
-        console.error("Error parsing cached data:", error);
-        localStorage.removeItem(cacheKey); // Remove corrupted cache
+        console.error("Error loading or parsing cached profile data:", error);
+        try { localStorage.removeItem(cacheKey); } catch(removeError) {} // Remove potentially corrupted cache
         return false;
     }
 }
 
+
 function saveCombinedDataToCache(viewedUserId, combinedData) {
-    if (!viewedUserId || !combinedData || !combinedData.profile) {
-        console.warn("Attempted to save invalid data to cache. Aborting.");
+    if (!viewedUserId || !combinedData || !combinedData.profile || !combinedData.profile.id) {
+        console.warn("Attempted to save invalid data to cache (missing profile/id). Aborting.", { viewedUserId, combinedData });
         return;
     }
-    const cacheKey = `poxelProfileCombinedData_${viewedUserId}`;
-    try {
-        // Ensure friends map exists before saving
-        if (!combinedData.profile.friends) combinedData.profile.friends = {};
+    // Ensure data integrity (especially ensuring ID matches)
+     if(viewedUserId !== combinedData.profile.id) {
+         console.error(`Cache save mismatch: Key UID ${viewedUserId} does not match profile data UID ${combinedData.profile.id}. Aborting.`);
+         return;
+     }
 
-        // Consider stringifying only necessary parts if data becomes very large
-        // For now, stringify the whole combined object (profile + stats)
-        localStorage.setItem(cacheKey, JSON.stringify(combinedData));
+    const cacheKey = `poxelProfileCombinedData_${viewedUserId}`;
+
+
+    try {
+        // Ensure nested objects exist before stringifying to avoid saving `undefined`
+         const dataToSave = {
+             profile: {
+                 ...combinedData.profile,
+                 friends: combinedData.profile.friends || {},
+                 availableTitles: combinedData.profile.availableTitles || [],
+                 equippedTitle: combinedData.profile.equippedTitle !== undefined ? combinedData.profile.equippedTitle : "",
+                 currentRank: combinedData.profile.currentRank || "Unranked",
+                 leaderboardStats: combinedData.profile.leaderboardStats || {}
+                 // Explicitly exclude potentially large/sensitive fields if needed:
+                 // poxelStats: undefined, // Example: Don't cache poxel stats
+            },
+             stats: combinedData.stats || null // Save comp stats if available
+         };
+
+
+        localStorage.setItem(cacheKey, JSON.stringify(dataToSave));
         // console.log(`Saved combined data to cache for UID: ${viewedUserId}`);
     } catch(error) {
-        console.error("Error saving data to cache:", error);
-        if (error.name === 'QuotaExceededError') {
-            console.warn('Browser storage quota exceeded. Cannot cache profile data. Consider clearing old data or reducing cache size.');
-            // Implement more sophisticated cache cleanup if needed (e.g., LRU cache)
-        }
-    }
+        console.error(`Error saving profile data to cache for UID ${viewedUserId}:`, error);
+        if (error.name === 'QuotaExceededError' || (error.message && error.message.toLowerCase().includes('quota'))) {
+             console.warn('LocalStorage quota exceeded. Cannot cache profile data. Consider clearing storage.');
+             // Implement cache eviction strategy here if needed (e.g., remove oldest entries)
+         }
+     }
 }
+
 
 // --- Initial Log ---
 console.log("Profile script initialized. Waiting for Auth state...");
