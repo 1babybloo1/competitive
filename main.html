@@ -7,160 +7,159 @@
     <title>Poxel Competitive</title>
     <style>
         :root {
-            --dark: #121212;
-            --dark-accent: #1e1e1e;
-            --orange: #ff5722; /* Main orange */
-            --orange-light: #ff7e47;
-            --orange-dark: #e64a19; /* Darker orange for hover */
-            --text: #f5f5f5;
-            --text-secondary: #aaaaaa;
+            --dark-bg: #121212; /* Deep dark background */
+            --dark-card: #1a1a1a; /* Slightly lighter card background */
+            --dark-accent: #1e1e1e; /* Accent for borders, headers */
+            --orange: #ff6600; /* Main orange */
+            --orange-light: #ff6600; /* Lighter orange for hover/gradients */
+            --orange-dark: #e65c00; /* Darker orange for active/pressed states */
+            --text-primary: #e0e0e0; /* Slightly off-white */
+            --text-secondary: #a0a0a0; /* Grey for secondary info */
+            --text-dark: #111111; /* For text on light backgrounds (buttons) */
+            --border-color: #333333; /* Subtle border color */
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --shadow-sm: 0 2px 5px var(--shadow-color);
+            --shadow-md: 0 4px 10px var(--shadow-color);
+            --shadow-lg: 0 8px 20px var(--shadow-color);
+            --border-radius: 6px;
+            --transition-speed: 0.3s;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
         body {
-            background-color: var(--dark);
-            color: var(--text);
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
             min-height: 100vh;
+            line-height: 1.6;
         }
 
         /* --- Header --- */
         header {
-            background-color: var(--dark-accent);
-            padding-top: 1rem; /* Add top padding */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            background-color: var(--dark-card);
+            padding: 0.5rem 0; /* Reduced padding */
+            box-shadow: var(--shadow-md);
+            position: sticky; /* Make header sticky */
+            top: 0;
+            z-index: 100;
         }
 
-        .header-top-row {
-            max-width: 1200px;
+        .header-container { /* Changed class for clarity */
+            max-width: 1250px;
             margin: 0 auto;
-            padding: 0 1rem 1rem 1rem; /* Padding L/R/B */
+            padding: 0 1rem;
             display: flex;
-            justify-content: space-between; /* Pushes items apart */
+            justify-content: space-between;
             align-items: center;
-            gap: 1rem; /* Space between items if they get close */
+            gap: 1rem;
+            min-height: 60px; /* Ensure header has minimum height */
         }
 
-        /* Home Button Style */
-        .btn { /* Base button styles */
-            padding: 0.7rem 1.5rem;
-            border: none;
-            border-radius: 6px;
+        /* Logo as Home Link */
+        .logo-link {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 1.7rem; /* Adjusted size */
+            font-weight: 1000;
+            transition: color var(--transition-speed) ease;
+             flex-grow: 1; /* Allow title to take space */
+             text-align: left; /* Center title */
+        }
+        .logo-link:hover {
+            color: var(--orange);
+        }
+
+        /* Placeholder Auth Buttons (Style based on reference) */
+        .auth-buttons {
+            display: flex;
+            gap: 0.8rem;
+             flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .btn-auth {
+            padding: 0.6rem 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 600;
             text-decoration: none;
             display: inline-block;
             text-align: center;
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+            transition: all var(--transition-speed) ease;
         }
 
-        .btn-home {
+        .btn-login {
+            background-color: transparent;
+            color: var(--text-secondary);
+            border-color: var(--text-secondary);
+        }
+        .btn-login:hover {
+            background-color: var(--dark-accent);
+            color: var(--text-primary);
+            border-color: var(--text-primary);
+        }
+
+        .btn-signup {
             background-color: var(--orange);
-            color: var(--text); /* White text on orange */
-            border: 2px solid var(--orange);
-            padding: 0.6rem 1.3rem; /* Adjust padding */
-            font-size: 0.9rem;
-            flex-shrink: 0; /* Prevent button from shrinking */
+            color: var(--text-dark); /* Dark text on orange */
+            border-color: var(--orange);
         }
-
-        .btn-home:hover {
-            background-color: var(--orange-dark);
-            border-color: var(--orange-dark);
-            color: var(--text);
-            box-shadow: 0 0 8px rgba(255, 87, 34, 0.5);
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            /* justify-content: center; /* Removed to allow space-between */
-            gap: 1rem;
-            flex-grow: 1; /* Allow logo to take available space if needed */
-            justify-content: center; /* Center logo elements internally */
-        }
-
-        .logo h1 {
-            font-size: 2rem;
-            background: linear-gradient(to right, var(--orange), var(--orange-light));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-align: center; /* Ensure text is centered if it wraps */
-            white-space: nowrap; /* Prevent title wrapping if possible */
-        }
-
-        .logo-icon {
-            /* Add styles if you have a logo image/icon */
-             width: 30px; /* Example size */
-             height: 30px; /* Example size */
-             /* background-color: var(--orange); /* Example placeholder */
-             /* border-radius: 50%; */
+        .btn-signup:hover {
+            background-color: var(--orange-light);
+            border-color: var(--orange-light);
+            box-shadow: 0 0 10px rgba(255, 87, 34, 0.4);
         }
 
         /* --- Navigation Tabs --- */
         nav {
+            background-color: var(--dark-accent);
             display: flex;
             justify-content: center;
-            /* margin-top: 1rem; /* Removed, spacing handled by header-top-row padding */
             flex-wrap: wrap;
-            max-width: 1200px; /* Limit width */
-            margin: 0 auto 1rem auto; /* Center nav and add bottom margin */
-            padding: 0 1rem; /* Padding for smaller screens */
+            border-bottom: 1px solid var(--border-color);
         }
 
         .nav-tab {
             background: none;
             border: none;
             color: var(--text-secondary);
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
-            padding: 0.8rem 1.5rem;
+            padding: 1rem 1.5rem; /* Increased vertical padding */
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
             position: relative;
             white-space: nowrap;
-        }
-
-        .nav-tab::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 3px;
-            background-color: var(--orange);
-            transition: width 0.3s ease;
+            border-bottom: 3px solid transparent; /* Placeholder for active state */
         }
 
         .nav-tab:hover {
-            color: var(--text);
+            color: var(--text-primary);
         }
 
         .nav-tab.active {
             color: var(--orange);
+            border-bottom-color: var(--orange); /* Use border instead of ::after */
         }
 
-        .nav-tab.active::after {
-            width: 100%;
-        }
 
         /* --- Main Content --- */
         main {
-            max-width: 1200px;
+            max-width: 1250px;
             margin: 0 auto;
-            padding: 2rem 1rem;
+            padding: 2.5rem 1rem; /* Increased padding */
         }
 
         .content-section {
             display: none;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            /* transition: opacity 0.4s ease; */ /* Fade-in handled by animation */
         }
 
         .content-section.active {
@@ -169,105 +168,162 @@
         }
 
         .section-title {
-            font-size: 1.8rem;
-            margin-bottom: 2rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--orange-dark);
+            font-size: 2rem; /* Larger title */
+            margin-bottom: 2.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 3px solid var(--dark-accent); /* Thicker border */
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.7rem;
+            color: var(--text-primary);
         }
-         .section-title span { /* Style for potential icons */
+         .section-title span { /* Style for icons */
             color: var(--orange);
+            font-size: 1.5rem;
+            line-height: 1;
          }
 
-        .card {
+        /* Filters and controls */
+        .filter-controls {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .filter-btn {
             background-color: var(--dark-accent);
-            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            background-color: #333;
+            color: var(--text-primary);
+            border-color: #444;
+        }
+
+        .filter-btn.active {
+            background-color: var(--orange);
+            color: var(--text-dark);
+            border-color: var(--orange);
+            font-weight: 600;
+             box-shadow: 0 0 8px rgba(255, 87, 34, 0.3);
+        }
+
+
+        /* --- Card Base Style --- */
+        .card {
+            background: linear-gradient(145deg, var(--dark-card), var(--dark-accent)); /* Subtle gradient */
+            border-radius: var(--border-radius);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+            border: 1px solid var(--border-color);
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
         }
 
-        /* Upcoming matches section */
+        /* --- Upcoming matches section --- */
         .matches-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Slightly wider min */
+            gap: 1.8rem; /* Increased gap */
         }
 
         .match-card {
-            border-left: 4px solid var(--orange);
+             border-top: 3px solid var(--orange); /* Top border accent */
+             padding-top: 1.2rem;
         }
 
         .match-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap; /* Allow wrapping */
-            gap: 0.5rem; /* Space if wraps */
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .match-date {
             font-size: 0.9rem;
             color: var(--text-secondary);
+            font-weight: 500;
         }
 
         .match-type {
-            background-color: var(--orange-dark);
-            color: var(--text);
+            background-color: var(--dark-accent);
+            color: var(--orange-light);
             font-size: 0.8rem;
-            padding: 0.3rem 0.6rem;
+             font-weight: 600;
+            padding: 0.3rem 0.7rem;
             border-radius: 4px;
-            white-space: nowrap; /* Prevent wrapping */
+            border: 1px solid var(--border-color);
+            white-space: nowrap;
         }
 
         .match-teams {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around; /* Better spacing */
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem; /* More space */
+            padding: 0.5rem 0;
         }
 
         .team {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.5rem;
-            width: 40%;
+            gap: 0.6rem;
+            width: 35%; /* Adjusted width */
         }
 
         .team-name {
             font-weight: 600;
+            font-size: 1rem;
             text-align: center;
             word-break: break-word;
         }
 
         .team-logo {
-            width: 50px;
-            height: 50px;
-            background-color: #333;
+            width: 55px; /* Slightly larger */
+            height: 55px;
+            background: linear-gradient(145deg, #2c2c2c, #1e1e1e);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text);
+            color: var(--text-primary);
             font-weight: bold;
-            font-size: 1.2rem;
-             overflow: hidden;
+            font-size: 1.3rem;
+            border: 2px solid var(--border-color);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
 
         .versus {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             color: var(--orange);
-             margin: 0 0.5rem; /* Add horizontal space */
+             font-weight: 700;
+             margin: 0 0.5rem;
+             flex-shrink: 0;
+        }
+        .match-countdown {
+            text-align: center;
+            margin-bottom: 1.2rem; /* More space */
+            font-size: 1rem; /* Larger countdown */
+            font-weight: 500;
+            color: var(--orange-light);
         }
 
         .match-footer {
@@ -278,62 +334,82 @@
             color: var(--text-secondary);
             flex-wrap: wrap;
             gap: 10px;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border-color);
         }
          .match-footer a {
              color: var(--orange);
              text-decoration: none;
+             font-weight: 500;
+             transition: color var(--transition-speed) ease;
          }
          .match-footer a:hover {
+             color: var(--orange-light);
              text-decoration: underline;
          }
-         .match-countdown {
-            text-align: center;
-            margin: 0.5rem 0;
-            font-size: 0.9em;
-            color: var(--orange-light);
-            width: 100%; /* Ensure it takes full width */
-             order: -1; /* Move countdown above teams visually */
-             margin-bottom: 1rem; /* Add space below countdown */
+
+
+        /* --- Leaderboard section --- */
+         .leaderboard-card { /* Added specific card class */
+             padding: 0; /* Remove card padding to allow table full width */
+             overflow: hidden; /* Needed for border-radius */
          }
+        .leaderboard-table-container {
+            overflow-x: auto; /* Make table scrollable */
+            /* Styling for scrollbar */
+            scrollbar-width: thin;
+            scrollbar-color: var(--orange) var(--dark-accent);
+        }
+         .leaderboard-table-container::-webkit-scrollbar { height: 8px; width: 8px; }
+         .leaderboard-table-container::-webkit-scrollbar-track { background: var(--dark-accent); border-radius: 4px; }
+         .leaderboard-table-container::-webkit-scrollbar-thumb { background-color: var(--orange); border-radius: 4px; }
 
-
-        /* Leaderboard section */
         .leaderboard-table {
             width: 100%;
             border-collapse: collapse;
-             overflow-x: auto;
-             display: block;
+            min-width: 600px; /* Ensure minimum width for readability */
         }
 
         .leaderboard-table th, .leaderboard-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #333;
-             white-space: nowrap;
+            padding: 1rem 1.2rem; /* Increased padding */
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+            vertical-align: middle;
         }
 
         .leaderboard-table th {
             text-align: left;
-            background-color: rgba(255, 87, 34, 0.1);
+            background-color: var(--dark-accent);
             color: var(--orange);
             font-weight: 600;
-             position: sticky;
-             top: 0;
-             z-index: 1;
-             background-color: var(--dark-accent); /* Match header for sticky effect */
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
 
-        .leaderboard-table tr:hover {
-            background-color: rgba(255, 87, 34, 0.05);
+         /* Zebra striping */
+         .leaderboard-table tbody tr:nth-child(odd) {
+             background-color: rgba(255, 255, 255, 0.02);
+         }
+
+        .leaderboard-table tbody tr:hover {
+            background-color: rgba(255, 87, 34, 0.1); /* More noticeable hover */
+            cursor: default; /* Indicate non-interactive rows */
         }
 
         .rank {
             width: 60px;
             text-align: center;
             font-weight: bold;
+            font-size: 1.1rem;
         }
 
         .top-rank {
             color: var(--orange);
+            text-shadow: 0 0 5px rgba(255, 87, 34, 0.5);
         }
 
         .player {
@@ -343,231 +419,162 @@
         }
 
         .player-avatar {
-            width: 40px;
-            height: 40px;
+            width: 45px; /* Larger avatar */
+            height: 45px;
             border-radius: 50%;
-            background-color: #333;
+             background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-             flex-shrink: 0;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+             border: 1px solid var(--border-color);
+             box-shadow: var(--shadow-sm);
         }
          .player-name {
              font-weight: 500;
+             font-size: 1rem;
          }
 
         .stats {
             text-align: center;
+            font-weight: 500;
         }
 
-        /* Bracket section */
+        /* --- Tournament Bracket Section --- */
         .tournament-controls {
             display: flex;
-            justify-content: space-between;
+            justify-content: center; /* Center the bracket type buttons */
             align-items: center;
-            margin-bottom: 1.5rem;
-             flex-wrap: wrap;
-             gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .bracket-container {
             overflow-x: auto;
-            padding: 1rem 0;
-            background-color: rgba(0,0,0,0.1);
-             border-radius: 4px;
-             /* Styling for scrollbar */
+            padding: 1.5rem; /* Add padding */
+            background-color: rgba(0,0,0,0.2); /* Slightly darker background */
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            /* Styling for scrollbar */
             scrollbar-width: thin;
-            scrollbar-color: var(--orange) var(--dark-accent);
+            scrollbar-color: var(--orange-light) var(--dark-accent); /* Lighter orange thumb */
         }
-         .bracket-container::-webkit-scrollbar { height: 8px; }
-         .bracket-container::-webkit-scrollbar-track { background: var(--dark-accent); border-radius: 4px; }
-         .bracket-container::-webkit-scrollbar-thumb { background-color: var(--orange); border-radius: 4px; }
+         .bracket-container::-webkit-scrollbar { height: 10px; } /* Thicker scrollbar */
+         .bracket-container::-webkit-scrollbar-track { background: var(--dark-accent); border-radius: 5px; }
+         .bracket-container::-webkit-scrollbar-thumb { background-color: var(--orange-light); border-radius: 5px; border: 2px solid var(--dark-accent); }
+         .bracket-container::-webkit-scrollbar-thumb:hover { background-color: var(--orange); }
 
 
         .bracket {
             display: flex;
-             gap: 30px;
-            min-width: 800px;
-             padding: 10px;
+            gap: 40px; /* Wider gap between rounds */
+            min-width: min-content; /* Allow bracket to determine its own width */
+            padding-bottom: 1rem; /* Space at the bottom */
         }
 
         .round {
             display: flex;
             flex-direction: column;
-            width: 220px;
-             gap: 15px;
-             flex-shrink: 0;
+            width: 250px; /* Wider rounds */
+            gap: 25px; /* Increased gap between matches */
+            flex-shrink: 0;
         }
 
         .round-title {
             text-align: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             color: var(--orange);
-            font-weight: 600;
-            font-size: 1.1rem;
+            font-weight: 700; /* Bolder */
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .match-bracket {
-            background-color: var(--dark-accent);
-            border-radius: 4px;
-            padding: 0.8rem;
+            background-color: var(--dark-card);
+            border-radius: var(--border-radius);
+            padding: 1rem;
             position: relative;
-            border: 1px solid #333;
-             min-height: 70px;
-             display: flex;
-             flex-direction: column;
-             justify-content: space-between;
+            border: 1px solid var(--border-color);
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--transition-speed) ease, border-color var(--transition-speed) ease;
+        }
+
+        .match-bracket:hover {
+             transform: scale(1.02); /* Slight scale on hover */
+             border-color: #555;
         }
 
         .match-bracket.completed {
-            border-left: 3px solid var(--orange);
+            /* border-left: 4px solid var(--orange); */
+             background: linear-gradient(145deg, var(--dark-card), #222); /* Slightly different bg */
         }
 
         .match-bracket.upcoming {
-            border-left: 3px solid var(--text-secondary);
+             opacity: 0.8; /* Slightly faded */
+            /* border-left: 4px solid var(--text-secondary); */
         }
 
         .bracket-team {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 0.3rem 0; /* Add slight vertical padding */
+             border-bottom: 1px dashed var(--border-color);
         }
+         .match-bracket .bracket-team:last-child {
+             border-bottom: none; /* Remove border on last team */
+         }
 
         .bracket-team-name {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             flex-grow: 1;
-            margin-right: 10px;
-             overflow: hidden;
-             text-overflow: ellipsis;
-             white-space: nowrap;
+            margin-right: 15px; /* More space before score */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .bracket-score {
             font-weight: bold;
-            font-size: 0.9rem;
-             flex-shrink: 0;
+            font-size: 1rem;
+            flex-shrink: 0;
+            min-width: 20px; /* Ensure space for score */
+            text-align: right;
         }
 
         .bracket-winner .bracket-team-name,
         .bracket-winner .bracket-score {
             color: var(--orange);
-             font-weight: bold;
+            font-weight: 700; /* Bolder winner */
         }
-
-
-        /* Filters and controls */
-        .filter-controls {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-
-        .filter-btn {
-            background-color: var(--dark-accent);
-            border: 1px solid #444;
-            color: var(--text-secondary);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .filter-btn:hover {
-            background-color: #333;
-            color: var(--text);
-        }
-
-        .filter-btn.active {
-            background-color: var(--orange-dark);
-            color: var(--text);
-            border-color: var(--orange);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-             .header-top-row {
-                 padding: 0 0.5rem 0.5rem 0.5rem;
-             }
-             .logo h1 {
-                 font-size: 1.6rem; /* Smaller logo */
-                 white-space: normal; /* Allow wrapping if needed */
-             }
-             .btn-home {
-                 padding: 0.5rem 1rem; /* Adjust button padding */
-                 font-size: 0.85rem;
-             }
-
-            nav {
-                overflow-x: auto;
-                justify-content: flex-start;
-                padding-bottom: 0.5rem;
-                scrollbar-width: thin;
-                scrollbar-color: var(--orange) var(--dark-accent);
-                 margin-bottom: 0.5rem; /* Reduce bottom margin */
-            }
-             nav::-webkit-scrollbar { height: 5px; }
-             nav::-webkit-scrollbar-track { background: var(--dark-accent); }
-             nav::-webkit-scrollbar-thumb { background-color: var(--orange); border-radius: 6px; }
-             .nav-tab { padding: 0.6rem 1rem; font-size: 0.9rem; } /* Smaller tabs */
-
-            .matches-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .tournament-controls {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.8rem;
-            }
-            .tournament-controls .filter-controls {
-                justify-content: center;
-            }
-
-             .leaderboard-table {
-                font-size: 0.9rem;
-             }
-             .leaderboard-table th, .leaderboard-table td {
-                padding: 0.6rem;
-             }
-             .player { gap: 0.5rem; }
-             .player-avatar { width: 30px; height: 30px; font-size: 0.8rem; }
-        }
-         @media (max-width: 480px) {
-             .header-top-row {
-                 flex-wrap: wrap; /* Allow button and logo to wrap */
-                 justify-content: center; /* Center items when wrapped */
-             }
-             .logo h1 {
-                 font-size: 1.4rem;
-             }
-             .btn-home {
-                 order: -1; /* Move home button to top when wrapped */
-                 margin-bottom: 0.5rem; /* Add space below button */
-                 width: 100%; /* Make button full width */
-                 text-align: center;
-             }
-             .nav-tab { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
-             .filter-controls { gap: 0.5rem; }
-             .filter-btn { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
-             .card { padding: 1rem; }
-             .section-title { font-size: 1.5rem; }
+        /* Add subtle loser styling */
+         .bracket-loser .bracket-team-name,
+         .bracket-loser .bracket-score {
+             color: var(--text-secondary);
+             opacity: 0.7;
+             text-decoration: line-through;
          }
 
 
-        /* Animation */
+        /* --- Animation --- */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .fade-in {
-            animation: fadeIn 0.5s ease forwards;
+            animation: fadeIn 0.6s ease forwards; /* Slightly longer fade */
         }
 
-        /* Empty state & Loading */
+        /* --- Empty state & Loading --- */
         .empty-state, .loading-state {
              display: flex;
              flex-direction: column;
@@ -577,41 +584,101 @@
              text-align: center;
              color: var(--text-secondary);
              background-color: var(--dark-accent);
-             border-radius: 8px;
+             border-radius: var(--border-radius);
              margin-top: 1.5rem;
              width: 100%;
-             min-height: 150px; /* Ensure it has some height */
+             min-height: 200px; /* Taller placeholder */
+             border: 1px dashed var(--border-color);
         }
 
         .empty-icon {
-            font-size: 3rem;
+            font-size: 3.5rem;
             margin-bottom: 1rem;
             color: var(--orange-dark);
+            opacity: 0.6;
         }
-         .loading-state {
+        .loading-state {
              font-style: italic;
+             font-size: 1.1rem;
              padding: 2rem 1rem;
+             background-color: transparent; /* Make loading less visually heavy */
+             border: none;
+        }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 992px) {
+            .logo-link { font-size: 1.5rem; }
+            .auth-buttons { gap: 0.6rem; }
+            .btn-auth { padding: 0.5rem 1rem; font-size: 0.85rem;}
+            main { padding: 2rem 1rem; }
+            .section-title { font-size: 1.8rem; margin-bottom: 2rem; }
+        }
+
+        @media (max-width: 768px) {
+            .header-container { flex-wrap: wrap; justify-content: center; padding-top: 0.5rem; padding-bottom: 0.5rem; min-height: auto; }
+            .logo-link { order: 1; width: 100%; text-align: center; margin-bottom: 0.5rem; font-size: 1.6rem; }
+            .auth-buttons { order: 2; width: 100%; justify-content: center; }
+
+            nav {
+                 justify-content: flex-start; /* Align tabs left on mobile */
+                 overflow-x: auto;
+                 padding-bottom: 0; /* Remove padding for border */
+                 /* Mobile Scrollbar */
+                scrollbar-width: thin;
+                scrollbar-color: var(--orange) var(--dark-accent);
+            }
+             nav::-webkit-scrollbar { height: 5px; }
+             nav::-webkit-scrollbar-track { background: var(--dark-accent); }
+             nav::-webkit-scrollbar-thumb { background-color: var(--orange); border-radius: 3px; }
+
+            .nav-tab { padding: 0.8rem 1.2rem; font-size: 0.9rem; }
+
+            main { padding: 1.5rem 0.8rem; }
+            .section-title { font-size: 1.6rem; margin-bottom: 1.5rem; }
+            .matches-grid { grid-template-columns: 1fr; gap: 1.5rem;}
+            .tournament-controls { flex-direction: column; align-items: center; } /* Center filter buttons */
+            .filter-controls { justify-content: center; } /* Center filters */
+
+             .leaderboard-table { font-size: 0.9rem; }
+             .leaderboard-table th, .leaderboard-table td { padding: 0.8rem; }
+             .player { gap: 0.5rem; }
+             .player-avatar { width: 35px; height: 35px; font-size: 0.9rem; }
+             .round { width: 230px; } /* Slightly narrower rounds on tablet */
+        }
+
+         @media (max-width: 480px) {
+             .logo-link { font-size: 1.4rem; }
+             .nav-tab { padding: 0.7rem 1rem; font-size: 0.85rem; }
+             .filter-controls { gap: 0.5rem; justify-content: center; }
+             .filter-btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
+             .card { padding: 1rem; }
+             .section-title { font-size: 1.4rem; }
+             .team-logo { width: 45px; height: 45px; font-size: 1.1rem;}
+             .team-name { font-size: 0.9rem; }
+             .versus { font-size: 1.1rem; }
+             .match-footer { font-size: 0.85rem; }
+             .round { width: 200px; } /* Even narrower rounds */
+             .match-bracket { padding: 0.8rem; min-height: 70px; }
+             .bracket-team-name { font-size: 0.9rem; margin-right: 10px;}
+             .bracket-score { font-size: 0.9rem;}
          }
 
     </style>
 </head>
 <body>
     <header>
-        <div class="header-top-row"> <!-- New container for top elements -->
-            <a href="index.html" class="btn btn-home">Home</a> <!-- Home Button -->
-            <div class="logo">
-                <!-- If you have a logo image/icon, place it here -->
-                <!-- <img src="path/to/logo.png" alt="Poxel Logo" class="logo-icon"> -->
-                 <div class="logo-icon"></div> <!-- Placeholder if no image -->
-                <h1>Poxel Competitive</h1>
-            </div>
-            <!-- Auth Buttons could go here if needed -->
+        <!-- Updated Header Structure -->
+        <div class="header-container">
+            <!-- Logo Title as Home Link -->
+            <a href="index.html" class="logo-link">Poxel Competitive</a>
+
+            <!-- Placeholder Auth Buttons -->
         </div>
+        <!-- Navigation remains below the top bar -->
         <nav>
             <button class="nav-tab active" data-section="upcoming-matches">Upcoming Matches</button>
             <button class="nav-tab" data-section="leaderboard">Leaderboard</button>
-            <button class="nav-tab" data-section="bracket">Tournament Bracket</button>
-            <!-- <a href="admin.html" class="nav-tab" style="color: var(--orange-light);">Admin Panel</a> -->
+            <button class="nav-tab" data-section="bracket">Tourney Brackets</button>
         </nav>
     </header>
 
@@ -619,38 +686,33 @@
         <!-- Upcoming Matches Section -->
         <section id="upcoming-matches" class="content-section active">
             <h2 class="section-title">
-                <span>📅</span> Upcoming Matches
+                <span></span> Upcoming Matches
             </h2>
-
             <div class="filter-controls">
-                <button class="filter-btn active" data-filter="all">All Matches</button>
+                <button class="filter-btn active" data-filter="all">All</button> <!-- Shortened text -->
                 <button class="filter-btn" data-filter="qualifiers">Qualifiers</button>
-                <button class="filter-btn" data-filter="quarterfinals">Quarterfinals</button>
-                <button class="filter-btn" data-filter="semifinals">Semifinals</button>
+                <button class="filter-btn" data-filter="quarterfinals">Quarters</button> <!-- Shortened -->
+                <button class="filter-btn" data-filter="semifinals">Semis</button> <!-- Shortened -->
                 <button class="filter-btn" data-filter="finals">Finals</button>
             </div>
-
             <div class="matches-grid" id="matches-container">
                 <div class="loading-state">Loading matches...</div>
-                <!-- Matches will be populated here via JavaScript -->
             </div>
         </section>
 
         <!-- Leaderboard Section -->
         <section id="leaderboard" class="content-section">
             <h2 class="section-title">
-                <span>🏆</span> Tournament Leaderboard
+                <span></span> Leaderboard
             </h2>
-
             <div class="filter-controls">
                 <button class="filter-btn active" data-sort="rank">Rank</button>
-                <button class="filter-btn" data-sort="wins">Wins</button>
                 <button class="filter-btn" data-sort="points">Points</button>
-                 <button class="filter-btn" data-sort="name">Name</button>
+                <button class="filter-btn" data-sort="wins">Wins</button>
+                <button class="filter-btn" data-sort="name">Name</button>
             </div>
-
-            <div class="card"> <!-- Wrap table in card for consistency -->
-                <div style="overflow-x:auto;"> <!-- Make only table scrollable -->
+            <div class="card leaderboard-card"> <!-- Added specific class -->
+                <div class="leaderboard-table-container"> <!-- Container for scrolling -->
                     <table class="leaderboard-table" id="leaderboard-table">
                         <thead>
                             <tr>
@@ -664,7 +726,6 @@
                         </thead>
                         <tbody id="leaderboard-body">
                             <tr><td colspan="6" class="loading-state">Loading leaderboard...</td></tr>
-                            <!-- Leaderboard data will be populated here via JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -674,20 +735,18 @@
         <!-- Tournament Bracket Section -->
         <section id="bracket" class="content-section">
             <h2 class="section-title">
-                <span>⚔️</span> Tournament Bracket
+                <span></span> Tourney  Brackets
             </h2>
-
             <div class="tournament-controls">
+                 <!-- Bracket type filters centered -->
                 <div class="filter-controls">
-                    <button class="filter-btn active" data-tournament="pro">Pro Tourney</button>
-                    <button class="filter-btn" data-tournament="novice">Novice Tourney</button>
+                    <button class="filter-btn active" data-tournament="pro">Pro</button> <!-- Shortened -->
+                    <button class="filter-btn" data-tournament="novice">Novice</button> <!-- Shortened -->
                 </div>
             </div>
-
             <div class="bracket-container">
                 <div class="bracket" id="bracket-display-container">
                      <div class="loading-state">Loading bracket...</div>
-                    <!-- Bracket will be populated here via JavaScript -->
                 </div>
             </div>
         </section>
@@ -700,7 +759,7 @@
     <script>
         // IMPORTANT: Replace with your actual Firebase project configuration
         const firebaseConfig = {
-           apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI",
+           apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Use env vars ideally
             authDomain: "poxelcomp.firebaseapp.com",
             projectId: "poxelcomp",
             storageBucket: "poxelcomp.firebasestorage.app",
@@ -712,37 +771,39 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // DOM Elements
+        // --- DOM Elements ---
         const tabButtons = document.querySelectorAll('.nav-tab');
         const contentSections = document.querySelectorAll('.content-section');
         const matchesContainer = document.getElementById('matches-container');
         const leaderboardBody = document.getElementById('leaderboard-body');
         const bracketDisplayContainer = document.getElementById('bracket-display-container');
 
-        // Global state
+        // --- Global state ---
         let currentMatches = [];
         let currentLeaderboard = [];
-        let currentBracket = {};
+        let currentBracket = { pro: null, novice: null }; // Initialize bracket data structure
         const countdownIntervals = {}; // Store countdown interval IDs
 
         // --- Helper Functions ---
         function createEmptyState(message, submessage) {
             return `
-                <div class="empty-state">
+                <div class="empty-state fade-in">
                     <div class="empty-icon">📭</div>
                     <h3>${message}</h3>
-                    <p>${submessage || ''}</p>
+                    ${submessage ? `<p>${submessage}</p>` : ''}
                 </div>
             `;
         }
 
-        function formatDate(date) {
+         function formatDate(date) {
             const d = (date instanceof Date) ? date : (date && date.toDate ? date.toDate() : null);
             if (!d) return 'Date TBD';
             try {
+                // More detailed format
                  return d.toLocaleString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric',
-                    hour: 'numeric', minute: '2-digit', hour12: true
+                    weekday: 'short', // e.g., Mon
+                    month: 'short', day: 'numeric',
+                    hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' // Add timezone
                 });
             } catch (e) {
                 console.error("Error formatting date:", d, e);
@@ -755,12 +816,17 @@
             for (let key in countdownIntervals) delete countdownIntervals[key];
         }
 
-        function addCountdownTimer(matchElement, matchId, matchDateTimestamp) {
+         function addCountdownTimer(matchElement, matchId, matchDateTimestamp) {
             const timerElement = matchElement.querySelector('.match-countdown');
-            if (!timerElement || !matchDateTimestamp || typeof matchDateTimestamp.toDate !== 'function') return;
+            // Check if matchDateTimestamp is valid and has toDate method
+            if (!timerElement || !matchDateTimestamp || typeof matchDateTimestamp.toDate !== 'function') {
+                if (timerElement) timerElement.textContent = 'Time TBD';
+                return;
+            }
 
             const matchDate = matchDateTimestamp.toDate();
 
+            // Clear existing interval for this match if any
             if (countdownIntervals[matchId]) clearInterval(countdownIntervals[matchId]);
 
             const updateTimer = () => {
@@ -768,8 +834,9 @@
                 const diff = matchDate - now;
 
                 if (diff <= 0) {
-                    timerElement.textContent = 'Match may have started!';
+                    timerElement.textContent = 'Match In Progress / Starting Soon!';
                     timerElement.style.color = 'var(--orange)';
+                    timerElement.style.fontWeight = 'bold';
                     if (countdownIntervals[matchId]) clearInterval(countdownIntervals[matchId]);
                     delete countdownIntervals[matchId];
                     return;
@@ -781,16 +848,19 @@
                 const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
                 let timerString = "Starts in: ";
-                if (days > 0) timerString += `${days}d `;
-                if (days > 0 || hours > 0) timerString += `${hours}h `;
-                timerString += `${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+                if (days > 1) timerString = `${days} days, ${hours}h`;
+                else if (days === 1) timerString = `1 day, ${hours}h`;
+                 else if (hours > 0) timerString = `${hours}h ${String(minutes).padStart(2, '0')}m`;
+                 else timerString = `${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+
 
                 timerElement.textContent = timerString;
                 timerElement.style.color = 'var(--orange-light)';
+                timerElement.style.fontWeight = '500';
             };
 
-            updateTimer();
-            countdownIntervals[matchId] = setInterval(updateTimer, 1000);
+            updateTimer(); // Initial call
+            countdownIntervals[matchId] = setInterval(updateTimer, 1000); // Update every second
         }
 
 
@@ -806,31 +876,49 @@
 
             setupFirestoreListeners();
 
-            // Display content for initially active tab
-             const initialSection = document.querySelector('.nav-tab.active')?.dataset.section || 'upcoming-matches';
-             switchTab(initialSection, true); // Force initial load display
+            // Trigger display for the initially active tab after a short delay
+            // This allows Firestore listeners to potentially fetch initial data first
+            setTimeout(() => {
+                const initialSection = document.querySelector('.nav-tab.active')?.dataset.section || 'upcoming-matches';
+                switchTab(initialSection, true); // Force initial load display
+            }, 100); // Adjust delay if needed
         }
 
+
         // --- Tab Switching ---
-        function switchTab(sectionId, forceDisplay = false) {
-             const alreadyActive = document.querySelector(`.nav-tab[data-section="${sectionId}"]`)?.classList.contains('active');
+         function switchTab(sectionId, forceDisplay = false) {
+            const targetTab = document.querySelector(`.nav-tab[data-section="${sectionId}"]`);
+             const targetSection = document.getElementById(sectionId);
+             if (!targetTab || !targetSection) return; // Exit if elements not found
+
+            const alreadyActive = targetTab.classList.contains('active');
 
              // Only update UI if switching to a different tab or forcing display
              if (!alreadyActive || forceDisplay) {
-                 tabButtons.forEach(button => button.classList.toggle('active', button.dataset.section === sectionId));
-                 contentSections.forEach(section => section.classList.toggle('active', section.id === sectionId));
+                 tabButtons.forEach(button => button.classList.remove('active'));
+                 contentSections.forEach(section => section.classList.remove('active'));
+
+                 targetTab.classList.add('active');
+                 targetSection.classList.add('active', 'fade-in'); // Add fade-in class on switch
 
                  // Refresh data display for the newly activated tab
-                 if (sectionId === 'upcoming-matches') {
-                     const activeFilter = document.querySelector('#upcoming-matches .filter-btn.active')?.dataset.filter || 'all';
-                     filterAndDisplayMatches(activeFilter);
-                 } else if (sectionId === 'leaderboard') {
-                     const activeSort = document.querySelector('#leaderboard .filter-btn.active')?.dataset.sort || 'rank';
-                     sortAndDisplayLeaderboard(activeSort);
-                 } else if (sectionId === 'bracket') {
-                     const activeTournament = document.querySelector('#bracket .filter-btn.active[data-tournament]')?.dataset.tournament || 'pro';
-                     displayBracket(activeTournament);
-                 }
+                  // Use try-catch blocks for robustness
+                  try {
+                    if (sectionId === 'upcoming-matches') {
+                        stopAllCountdowns(); // Stop countdowns when leaving matches tab
+                        const activeFilter = document.querySelector('#upcoming-matches .filter-btn.active')?.dataset.filter || 'all';
+                        filterAndDisplayMatches(activeFilter);
+                    } else if (sectionId === 'leaderboard') {
+                        const activeSort = document.querySelector('#leaderboard .filter-btn.active')?.dataset.sort || 'rank';
+                        sortAndDisplayLeaderboard(activeSort);
+                    } else if (sectionId === 'bracket') {
+                        const activeTournament = document.querySelector('#bracket .filter-btn.active[data-tournament]')?.dataset.tournament || 'pro';
+                        displayBracket(activeTournament);
+                    }
+                  } catch (error) {
+                     console.error(`Error displaying section ${sectionId}:`, error);
+                     // Optionally display an error message in the UI
+                  }
              }
         }
 
@@ -840,24 +928,37 @@
              const parentControls = buttonElement.closest('.filter-controls, .tournament-controls');
              if (!parentControls) return;
 
-             // Update active state
-             parentControls.querySelectorAll('.filter-btn').forEach(sibling => sibling.classList.remove('active'));
+             // Prevent action if already active
+             if (buttonElement.classList.contains('active') && !parentControls.closest('.tournament-controls')) return; // Allow re-click for tournament selection
+
+             // Update active state within the specific control group
+             parentControls.querySelectorAll('.filter-btn').forEach(sibling => {
+                 // Only deactivate buttons within the same group (e.g., data-filter or data-sort or data-tournament)
+                 if (Object.keys(sibling.dataset)[0] === Object.keys(buttonElement.dataset)[0]) {
+                    sibling.classList.remove('active');
+                 }
+             });
              buttonElement.classList.add('active');
 
              // Determine context and trigger appropriate display function
              const sectionId = buttonElement.closest('.content-section')?.id;
-             const isTournamentControl = parentControls.classList.contains('tournament-controls');
+             const isTournamentControl = buttonElement.hasAttribute('data-tournament');
 
-             if (sectionId === 'upcoming-matches' || parentControls.closest('#upcoming-matches')) {
-                 filterAndDisplayMatches(buttonElement.dataset.filter);
-             } else if (sectionId === 'leaderboard' || parentControls.closest('#leaderboard')) {
-                 sortAndDisplayLeaderboard(buttonElement.dataset.sort);
-             } else if (isTournamentControl || sectionId === 'bracket' || parentControls.closest('#bracket')) {
-                  const tournamentType = parentControls.querySelector('.filter-btn.active[data-tournament]').dataset.tournament;
-                  displayBracket(tournamentType);
+             try {
+                if (buttonElement.hasAttribute('data-filter')) {
+                    filterAndDisplayMatches(buttonElement.dataset.filter);
+                } else if (buttonElement.hasAttribute('data-sort')) {
+                    sortAndDisplayLeaderboard(buttonElement.dataset.sort);
+                } else if (isTournamentControl) {
+                     const tournamentType = buttonElement.dataset.tournament;
+                     // Ensure the correct button is marked active if multiple groups exist
+                     document.querySelectorAll('#bracket .filter-btn[data-tournament]').forEach(btn => btn.classList.toggle('active', btn === buttonElement));
+                     displayBracket(tournamentType);
+                }
+             } catch (error) {
+                 console.error("Error handling filter/sort click:", error);
              }
          }
-
 
         // --- Firestore Data Loading & Real-time Updates ---
         let matchesListener = null;
@@ -867,109 +968,123 @@
 
         function setupFirestoreListeners() {
             const now = new Date();
-            const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+            // Get start of today in local timezone (important for correct filtering)
+             const localStartOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+             // Convert local start of day to Firestore Timestamp
+             const firestoreStartOfDay = firebase.firestore.Timestamp.fromDate(localStartOfDay);
+
+            // Detach previous listeners if they exist
+            if (matchesListener) matchesListener();
+            if (leaderboardListener) leaderboardListener();
+            if (proBracketListener) proBracketListener();
+            if (noviceBracketListener) noviceBracketListener();
 
             // Matches Listener (only future matches)
-            if (matchesListener) matchesListener();
             matchesListener = db.collection('matches')
-                .where('date', '>=', startOfToday) // Fetch matches from today onwards
+                .where('date', '>=', firestoreStartOfDay) // Use Firestore Timestamp for comparison
                 .orderBy('date', 'asc')
+                .limit(30) // Limit initial load/updates
                 .onSnapshot(snapshot => {
                     currentMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                     // Update display only if matches tab is active
-                     if (document.getElementById('upcoming-matches').classList.contains('active')) {
-                         const activeFilter = document.querySelector('#upcoming-matches .filter-btn.active')?.dataset.filter || 'all';
-                         filterAndDisplayMatches(activeFilter);
-                     }
-                    console.log("Matches updated from Firestore");
+                    if (document.getElementById('upcoming-matches').classList.contains('active')) {
+                        const activeFilter = document.querySelector('#upcoming-matches .filter-btn.active')?.dataset.filter || 'all';
+                        filterAndDisplayMatches(activeFilter);
+                    }
+                    console.log(`Matches updated: ${currentMatches.length} found.`);
                 }, error => {
                     console.error("Error fetching matches:", error);
-                     if (document.getElementById('upcoming-matches').classList.contains('active')) {
-                        matchesContainer.innerHTML = createEmptyState('Error loading matches', 'Could not fetch data.');
-                     }
+                    if (document.getElementById('upcoming-matches').classList.contains('active')) {
+                        matchesContainer.innerHTML = createEmptyState('Error loading matches', `(${error.code || error.message})`);
+                    }
                 });
 
             // Leaderboard Listener
-            if (leaderboardListener) leaderboardListener();
-             leaderboardListener = db.collection('leaderboard')
+            leaderboardListener = db.collection('leaderboard')
                 .orderBy('points', 'desc')
-                .orderBy('wins', 'desc')
+                .orderBy('wins', 'desc') // Secondary sort
+                .limit(50) // Limit leaderboard size
                 .onSnapshot(snapshot => {
                     currentLeaderboard = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                     if (document.getElementById('leaderboard').classList.contains('active')) {
+                    if (document.getElementById('leaderboard').classList.contains('active')) {
                         const activeSort = document.querySelector('#leaderboard .filter-btn.active')?.dataset.sort || 'rank';
                         sortAndDisplayLeaderboard(activeSort);
-                     }
-                    console.log("Leaderboard updated from Firestore");
+                    }
+                    console.log(`Leaderboard updated: ${currentLeaderboard.length} players.`);
                 }, error => {
                     console.error("Error fetching leaderboard:", error);
-                     if (document.getElementById('leaderboard').classList.contains('active')) {
-                         leaderboardBody.innerHTML = `<tr><td colspan="6" class="loading-state">Error loading leaderboard.</td></tr>`;
-                     }
+                    if (document.getElementById('leaderboard').classList.contains('active')) {
+                        leaderboardBody.innerHTML = `<tr><td colspan="6" class="loading-state">Error loading leaderboard. (${error.code || error.message})</td></tr>`;
+                    }
                 });
 
              // Bracket Listeners
-            if (proBracketListener) proBracketListener();
              proBracketListener = db.collection('brackets').doc('pro')
                 .onSnapshot(doc => {
                     currentBracket.pro = doc.exists ? { id: doc.id, ...doc.data() } : null;
                      if (document.getElementById('bracket').classList.contains('active') && document.querySelector('#bracket .filter-btn.active[data-tournament="pro"]')) {
                          displayBracket('pro');
                      }
-                    console.log("Pro Bracket updated from Firestore");
-                }, error => console.error("Error fetching pro bracket:", error));
+                    console.log("Pro Bracket updated.");
+                }, error => {
+                     console.error("Error fetching pro bracket:", error);
+                     if (document.getElementById('bracket').classList.contains('active') && document.querySelector('#bracket .filter-btn.active[data-tournament="pro"]')) {
+                         bracketDisplayContainer.innerHTML = createEmptyState('Error loading Pro bracket', `(${error.code || error.message})`);
+                     }
+                 });
 
-             if (noviceBracketListener) noviceBracketListener();
              noviceBracketListener = db.collection('brackets').doc('novice')
                  .onSnapshot(doc => {
                     currentBracket.novice = doc.exists ? { id: doc.id, ...doc.data() } : null;
                      if (document.getElementById('bracket').classList.contains('active') && document.querySelector('#bracket .filter-btn.active[data-tournament="novice"]')) {
                          displayBracket('novice');
                      }
-                    console.log("Novice Bracket updated from Firestore");
-                }, error => console.error("Error fetching novice bracket:", error));
+                    console.log("Novice Bracket updated.");
+                }, error => {
+                    console.error("Error fetching novice bracket:", error);
+                    if (document.getElementById('bracket').classList.contains('active') && document.querySelector('#bracket .filter-btn.active[data-tournament="novice"]')) {
+                         bracketDisplayContainer.innerHTML = createEmptyState('Error loading Novice bracket', `(${error.code || error.message})`);
+                     }
+                });
         }
 
         // --- Display Logic ---
 
         function filterAndDisplayMatches(filter = 'all') {
-            matchesContainer.innerHTML = '<div class="loading-state">Filtering matches...</div>'; // Show loading state briefly
-            stopAllCountdowns();
+            matchesContainer.innerHTML = '<div class="loading-state">Loading...</div>';
+            stopAllCountdowns(); // Clear old timers
 
-            const filteredMatches = currentMatches.filter(match => {
-                if (!match.date || typeof match.date.toDate !== 'function') return false; // Skip invalid dates
-                // Filter logic remains: check date >= today and type matches filter
-                const matchDate = match.date.toDate();
-                 // const now = new Date();
-                 // const startOfToday = new Date(now.setHours(0, 0, 0, 0));
-                 // Already filtered by Firestore query >= today
-                 // if (matchDate < startOfToday) return false;
-
+             const filteredMatches = currentMatches.filter(match => {
+                // Basic validation
+                if (!match.date || typeof match.date.toDate !== 'function') {
+                    console.warn("Skipping match with invalid date:", match.id, match.date);
+                    return false;
+                }
+                // Filter by type
                 if (filter === 'all') return true;
                 return match.type?.toLowerCase() === filter.toLowerCase();
             });
 
-            // Use setTimeout to allow loading state to render before blocking thread with DOM manipulation
+            // Use setTimeout to prevent blocking UI thread during render
             setTimeout(() => {
-                matchesContainer.innerHTML = ''; // Clear loading state
+                matchesContainer.innerHTML = ''; // Clear loading/previous content
                 if (filteredMatches.length === 0) {
-                    let message = 'No upcoming matches found.';
+                    let message = 'No upcoming matches scheduled.';
                     if (filter !== 'all') message = `No upcoming ${filter} matches found.`;
                     matchesContainer.innerHTML = createEmptyState(message, 'Check back later or view all matches.');
                     return;
                 }
 
+                const fragment = document.createDocumentFragment(); // Use fragment for performance
                 filteredMatches.forEach((match, index) => {
                     const matchElement = document.createElement('div');
                     matchElement.className = 'card match-card fade-in';
-                     matchElement.style.animationDelay = `${index * 0.05}s`; // Stagger animation
+                    matchElement.style.animationDelay = `${index * 0.07}s`; // Stagger animation slightly more
 
-                    // Ensure team data exists or provide defaults gracefully
                     const team1Name = match.team1?.name || 'Team 1';
-                    const team1Logo = match.team1?.logo || team1Name.substring(0, 2).toUpperCase() || 'T1'; // Use initials if no logo
+                    const team1Logo = match.team1?.logo || team1Name.substring(0, 2).toUpperCase() || 'T1';
                     const team2Name = match.team2?.name || 'Team 2';
                     const team2Logo = match.team2?.logo || team2Name.substring(0, 2).toUpperCase() || 'T2';
-
+                    const streamLink = match.streamLink || match.stream; // Support both field names
 
                     matchElement.innerHTML = `
                         <div class="match-header">
@@ -990,85 +1105,100 @@
                         </div>
                         <div class="match-footer">
                             <span>📍 ${match.venue || 'Venue TBD'}</span>
-                            ${match.streamLink ? `<a href="${match.streamLink}" target="_blank" rel="noopener noreferrer">📺 Watch Stream</a>` : '<span>📺 No Stream Link</span>'}
+                            ${streamLink ? `<a href="${streamLink.startsWith('http') ? streamLink : 'https://' + streamLink}" target="_blank" rel="noopener noreferrer">📺 Watch Stream</a>` : '<span>📺 Stream TBD</span>'}
                         </div>
                     `;
-                    matchesContainer.appendChild(matchElement);
+                    fragment.appendChild(matchElement);
                     addCountdownTimer(matchElement, match.id, match.date);
                 });
-            }, 10); // Small delay
+                matchesContainer.appendChild(fragment); // Append fragment once
+            }, 10);
         }
 
 
         function sortAndDisplayLeaderboard(sortBy = 'rank') {
-            leaderboardBody.innerHTML = `<tr><td colspan="6" class="loading-state">Sorting leaderboard...</td></tr>`;
+            leaderboardBody.innerHTML = `<tr><td colspan="6" class="loading-state">Loading...</td></tr>`;
 
-             // Use setTimeout for responsiveness
-             setTimeout(() => {
-                let sortedData = [...currentLeaderboard];
+            setTimeout(() => {
+                let sortedData = [...currentLeaderboard]; // Create a copy to sort
 
+                // Default rank is based on Firestore order (points desc, wins desc)
+                // Apply additional sorting if needed
                 if (sortBy === 'wins') {
-                    sortedData.sort((a, b) => (b.wins || 0) - (a.wins || 0) || (a.name || '').localeCompare(b.name || '')); // Add name as tiebreaker
+                    sortedData.sort((a, b) => (b.wins || 0) - (a.wins || 0) || (b.points || 0) - (a.points || 0) || (a.name || '').localeCompare(b.name || ''));
                 } else if (sortBy === 'points') {
-                    sortedData.sort((a, b) => (b.points || 0) - (a.points || 0) || (b.wins || 0) - (a.wins || 0) || (a.name || '').localeCompare(b.name || '')); // Points -> Wins -> Name
+                    // Already sorted by points primarily by Firestore
                 } else if (sortBy === 'name') {
                     sortedData.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-                } else { // 'rank' - Use Firestore order (points desc, wins desc)
-                    // Assign rank based on this order
                 }
+                // else 'rank' uses the Firestore default order
 
-                 leaderboardBody.innerHTML = ''; // Clear loading state
+                leaderboardBody.innerHTML = ''; // Clear loading
 
                 if (sortedData.length === 0) {
-                    leaderboardBody.innerHTML = `<tr><td colspan="6">${createEmptyState('Leaderboard is empty', 'No players found.')}</td></tr>`;
+                    leaderboardBody.innerHTML = `<tr><td colspan="6">${createEmptyState('Leaderboard is empty', 'No players found yet.')}</td></tr>`;
                     return;
                 }
 
+                 const fragment = document.createDocumentFragment();
                 sortedData.forEach((player, index) => {
                     const row = document.createElement('tr');
                     row.className = 'fade-in';
                     row.style.animationDelay = `${index * 0.05}s`;
 
-                    const rank = index + 1;
+                    const rank = index + 1; // Rank based on current sort order
                     const rankClass = rank <= 3 ? 'top-rank' : '';
-                     const playerAvatar = player.avatar || player.name?.substring(0,1).toUpperCase() || '?'; // Use first initial if no avatar
+                    const playerAvatar = player.avatar || player.name?.substring(0,1).toUpperCase() || '?';
+                    const matchesPlayed = player.matchesPlayed ?? player.matches ?? 0; // Prefer matchesPlayed
+                    const wins = player.wins ?? 0;
+                    const losses = player.losses ?? 0;
+                    const points = player.points ?? 0;
+
 
                     row.innerHTML = `
                         <td class="rank ${rankClass}">${rank}</td>
                         <td>
                             <div class="player">
-                                <div class="player-avatar">${playerAvatar}</div>
+                                <div class="player-avatar" title="${player.name || 'Unknown'}">${playerAvatar}</div>
                                 <div class="player-name">${player.name || 'Unknown Player'}</div>
                             </div>
                         </td>
-                        <td class="stats">${player.matchesPlayed || player.matches || 0}</td> <!-- Prefer matchesPlayed if available -->
-                        <td class="stats">${player.wins || 0}</td>
-                        <td class="stats">${player.losses || 0}</td>
-                        <td class="stats">${player.points || 0}</td>
+                        <td class="stats">${matchesPlayed}</td>
+                        <td class="stats">${wins}</td>
+                        <td class="stats">${losses}</td>
+                        <td class="stats">${points}</td>
                     `;
-                    leaderboardBody.appendChild(row);
+                    fragment.appendChild(row);
                 });
-             }, 10); // Small delay
+                leaderboardBody.appendChild(fragment);
+            }, 10);
         }
 
-        function displayBracket(tournament = 'pro') {
-            bracketDisplayContainer.innerHTML = '<div class="loading-state">Loading bracket...</div>';
 
-             // Use setTimeout for responsiveness
+        function displayBracket(tournament = 'pro') {
+            bracketDisplayContainer.innerHTML = '<div class="loading-state">Loading...</div>';
+
             setTimeout(() => {
                 const data = currentBracket[tournament];
 
-                if (!data || !data.rounds || data.rounds.length === 0) {
+                if (!data || !data.rounds || !Array.isArray(data.rounds) || data.rounds.length === 0) {
                     bracketDisplayContainer.innerHTML = createEmptyState(
-                        `No ${tournament} bracket available`,
-                        'Check back later or select a different tournament.'
+                        `No ${tournament} bracket data available.`,
+                        'Check back later or select the other tournament.'
                     );
                     return;
                 }
 
-                 bracketDisplayContainer.innerHTML = ''; // Clear loading state
+                bracketDisplayContainer.innerHTML = ''; // Clear loading/previous
+                const fragment = document.createDocumentFragment();
 
                 data.rounds.forEach((round, roundIndex) => {
+                    // Basic validation for round structure
+                     if (!round || typeof round !== 'object' || !Array.isArray(round.matches)) {
+                         console.warn(`Skipping invalid round structure at index ${roundIndex} in ${tournament} bracket.`);
+                         return;
+                     }
+
                     const roundElement = document.createElement('div');
                     roundElement.className = 'round fade-in';
                     roundElement.style.animationDelay = `${roundIndex * 0.1}s`;
@@ -1078,56 +1208,74 @@
                     roundTitle.textContent = round.name || `Round ${roundIndex + 1}`;
                     roundElement.appendChild(roundTitle);
 
-                    round.matches.forEach((match) => {
-                        const matchElement = document.createElement('div');
-                        let team1Winner = false;
-                        let team2Winner = false;
-                         // Check winner using name primarily, fallback to ID if names aren't set? (adjust logic as needed)
-                        if (match.winner) {
-                             const t1Name = match.team1?.name;
-                             const t2Name = match.team2?.name;
-                             team1Winner = t1Name && match.winner === t1Name;
-                             team2Winner = t2Name && match.winner === t2Name;
-                             // Fallback check if winner might be an ID (less likely if names are always set)
-                             // if (!team1Winner && match.team1?.id) team1Winner = match.winner === match.team1.id;
-                             // if (!team2Winner && match.team2?.id) team2Winner = match.winner === match.team2.id;
-                        }
+                    if (round.matches.length === 0) {
+                        roundElement.innerHTML += `<p style="text-align: center; color: var(--text-secondary); font-size: 0.9em;">No matches yet.</p>`;
+                    } else {
+                        round.matches.forEach((match) => {
+                             // Basic validation for match structure
+                             if (!match || typeof match !== 'object') {
+                                 console.warn(`Skipping invalid match structure in round ${roundIndex} of ${tournament} bracket.`);
+                                 return;
+                             }
+                             // Ensure team objects exist
+                             const team1 = match.team1 || { name: 'TBD', score: null };
+                             const team2 = match.team2 || { name: 'TBD', score: null };
 
-                         // Determine status: completed if winner exists, otherwise upcoming
-                         const matchStatus = match.winner ? 'completed' : 'upcoming';
-                        matchElement.className = `match-bracket ${matchStatus}`;
+                            const matchElement = document.createElement('div');
+                            let team1Winner = false;
+                            let team2Winner = false;
+                            let team1Loser = false;
+                            let team2Loser = false;
 
-                        // Team 1
-                        const team1Element = document.createElement('div');
-                        team1Element.className = `bracket-team ${team1Winner ? 'bracket-winner' : ''}`;
-                        team1Element.innerHTML = `
-                            <span class="bracket-team-name">${match.team1?.name || 'TBD'}</span>
-                            <span class="bracket-score">${matchStatus === 'completed' && match.team1?.score != null ? match.team1.score : '-'}</span>
-                        `;
-                        matchElement.appendChild(team1Element);
+                             // Determine winner/loser based on non-null winner field AND matching name
+                            if (match.winner && typeof match.winner === 'string') {
+                                if (team1.name && match.winner.toLowerCase() === team1.name.toLowerCase()) {
+                                    team1Winner = true;
+                                    team2Loser = true; // If T1 won, T2 must have lost
+                                } else if (team2.name && match.winner.toLowerCase() === team2.name.toLowerCase()) {
+                                    team2Winner = true;
+                                    team1Loser = true; // If T2 won, T1 must have lost
+                                }
+                            }
 
-                        // Team 2
-                        const team2Element = document.createElement('div');
-                        team2Element.className = `bracket-team ${team2Winner ? 'bracket-winner' : ''}`;
-                        team2Element.innerHTML = `
-                            <span class="bracket-team-name">${match.team2?.name || 'TBD'}</span>
-                            <span class="bracket-score">${matchStatus === 'completed' && match.team2?.score != null ? match.team2.score : '-'}</span>
-                        `;
-                        matchElement.appendChild(team2Element);
+                            // Determine match status
+                             const isCompleted = match.completed || team1Winner || team2Winner; // Consider completed flag or if a winner exists
+                            const matchStatus = isCompleted ? 'completed' : 'upcoming';
+                            matchElement.className = `match-bracket ${matchStatus}`;
 
-                        roundElement.appendChild(matchElement);
-                    });
+                            // Team 1 HTML
+                            const team1Element = document.createElement('div');
+                             team1Element.className = `bracket-team ${team1Winner ? 'bracket-winner' : ''} ${team1Loser ? 'bracket-loser' : ''}`;
+                            team1Element.innerHTML = `
+                                <span class="bracket-team-name">${team1.name || 'TBD'}</span>
+                                <span class="bracket-score">${isCompleted && team1.score != null ? team1.score : '-'}</span>
+                            `;
+                            matchElement.appendChild(team1Element);
 
-                    bracketDisplayContainer.appendChild(roundElement);
+                            // Team 2 HTML
+                            const team2Element = document.createElement('div');
+                             team2Element.className = `bracket-team ${team2Winner ? 'bracket-winner' : ''} ${team2Loser ? 'bracket-loser' : ''}`;
+                            team2Element.innerHTML = `
+                                <span class="bracket-team-name">${team2.name || 'TBD'}</span>
+                                <span class="bracket-score">${isCompleted && team2.score != null ? team2.score : '-'}</span>
+                            `;
+                            matchElement.appendChild(team2Element);
+
+                            roundElement.appendChild(matchElement);
+                        });
+                    }
+                    fragment.appendChild(roundElement);
                 });
-            }, 10); // Small delay
+                bracketDisplayContainer.appendChild(fragment);
+            }, 10);
         }
+
 
         // --- Initialize application ---
         document.addEventListener('DOMContentLoaded', init);
 
     </script>
-    
-    
+
+
 </body>
 </html>
