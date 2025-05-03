@@ -1,4 +1,3 @@
-
 const firebaseConfig = {
     apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Replace if necessary, keep private
     authDomain: "poxelcomp.firebaseapp.com",
