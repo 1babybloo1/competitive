@@ -36,12 +36,31 @@
     }
 
     body {
-        background-color: var(--dark-bg);
+        background-color: var(--dark-bg); /* This acts as the base color */
         color: var(--text-primary);
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Nicer font stack */
         padding: 25px;
         line-height: 1.6;
+        position: relative; /* For stacking context, allows z-index on pseudo-elements to work reliably */
+        overflow-x: hidden; /* Optional: helps prevent horizontal scroll issues from full-width pseudo-elements */
     }
+
+    body::before {
+        content: "";
+        position: fixed; /* Fixed position to cover the entire viewport */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('https://res.cloudinary.com/djttn4xvk/image/upload/v1747746369/b8f954220395319.67cf1d256e3f6_jxw2w7.png'); /* <<< REPLACE THIS WITH YOUR IMAGE PATH */
+        background-size: cover; /* Ensure the image covers the whole area */
+        background-position: center center; /* Center the image */
+        background-repeat: no-repeat; /* Do not repeat the image */
+        opacity: 0.1; /* 10% opacity for the image */
+        z-index: -1; /* Place the pseudo-element behind the body's content */
+                      /* The var(--dark-bg) on the body will show through this semi-transparent image */
+    }
+
 
     /* --- Containers & Layout --- */
     #login-container,
@@ -312,7 +331,9 @@
     tbody tr:hover {
         background-color: rgba(255, 87, 34, 0.1); /* Hover effect */
     }
-    td input[type="text"], td input[type="number"] {
+    td input[type="text"],
+    td input[type="number"],
+    td select { /* Added select for leaderboard, if ever needed */
         width: calc(100% - 16px);
         padding: 6px 8px; /* Slightly more padding */
         margin-bottom: 0;
@@ -320,7 +341,7 @@
         background-color: var(--dark-card); /* Slightly different bg in table */
         border-color: #444;
     }
-    td input:focus {
+    td input:focus, td select:focus {
          background-color: var(--dark-accent);
     }
     td button {
@@ -358,6 +379,9 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Adjust minmax */
         gap: 15px 20px; /* Row and column gap */
+    }
+    .match-editor select {
+        margin-bottom: 0; /* Align with other inputs in the grid */
     }
 
 
@@ -470,7 +494,8 @@
         text-transform: uppercase;
     }
     .bracket-match-editor input[type="text"],
-    .bracket-match-editor input[type="number"] {
+    .bracket-match-editor input[type="number"],
+    .bracket-match-editor select { /* Added select */
         width: 100%;
         padding: 8px; /* Consistent padding */
         margin-bottom: 8px;
@@ -605,10 +630,13 @@
         button { padding: 10px 15px; font-size: 0.9em; }
         #save-matches-changes, #save-leaderboard-changes, #save-bracket-changes { padding: 12px 20px; font-size: 0.95em; }
         .bracket-round-column { flex-basis: 300px; min-width: 280px; } /* Slightly smaller bracket columns */
-        td input[type="text"], td input[type="number"] { font-size: 0.9em; }
+        td input[type="text"], td input[type="number"], td select { font-size: 0.9em; } /* Added select */
         th, td { padding: 10px 8px; }
         .user-presence-circle { width: 40px; height: 40px; font-size: 1.2em; }
         .user-presence-name { font-size: 0.75em; max-width: 70px; }
+        .match-editor > div:not(.form-actions) { grid-template-columns: 1fr; } /* Stack match editor fields on mobile */
+        .bracket-match-editor input[type="text"], .bracket-match-editor input[type="number"], .bracket-match-editor select { font-size: 0.85em; }
+
     }
 
 </style>
@@ -660,22 +688,42 @@
         </div>
         <div id="add-match-form" class="match-editor hidden">
              <h4>New Match Details</h4>
-             <label for="new-match-date">Date & Time:</label>
-             <input type="datetime-local" id="new-match-date">
-             <label for="new-match-type">Type:</label>
-             <input type="text" id="new-match-type" placeholder="e.g., Group Stage - Week 1">
-             <label for="new-match-team1-name">Team 1 Name:</label>
-             <input type="text" id="new-match-team1-name" placeholder="Team Alpha">
-             <label for="new-match-team1-logo">Team 1 Logo (Max 3 Chars):</label>
-             <input type="text" id="new-match-team1-logo" maxlength="3" placeholder="TA">
-             <label for="new-match-team2-name">Team 2 Name:</label>
-             <input type="text" id="new-match-team2-name" placeholder="Team Bravo">
-             <label for="new-match-team2-logo">Team 2 Logo (Max 3 Chars):</label>
-             <input type="text" id="new-match-team2-logo" maxlength="3" placeholder="TB">
-             <label for="new-match-venue">Venue:</label>
-             <input type="text" id="new-match-venue" placeholder="Online / Arena Name">
-             <label for="new-match-stream">Stream Link:</label>
-             <input type="text" id="new-match-stream" value="https://www.twitch.tv/poxelcompetitive/">
+             <div> <!-- Grid container for new match form -->
+                <div>
+                    <label for="new-match-date">Date & Time:</label>
+                    <input type="datetime-local" id="new-match-date">
+                </div>
+                <div>
+                    <label for="new-match-type">Type:</label>
+                    <select id="new-match-type">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+                <div>
+                    <label for="new-match-team1-name">Team 1 Name:</label>
+                    <input type="text" id="new-match-team1-name" placeholder="Team Alpha">
+                </div>
+                <div>
+                    <label for="new-match-team1-logo">Team 1 Logo (Max 3 Chars):</label>
+                    <input type="text" id="new-match-team1-logo" maxlength="3" placeholder="TA">
+                </div>
+                <div>
+                    <label for="new-match-team2-name">Team 2 Name:</label>
+                    <input type="text" id="new-match-team2-name" placeholder="Team Bravo">
+                </div>
+                <div>
+                    <label for="new-match-team2-logo">Team 2 Logo (Max 3 Chars):</label>
+                    <input type="text" id="new-match-team2-logo" maxlength="3" placeholder="TB">
+                </div>
+                <div>
+                    <label for="new-match-venue">Venue:</label>
+                    <input type="text" id="new-match-venue" placeholder="Online / Arena Name">
+                </div>
+                <div>
+                    <label for="new-match-stream">Stream Link:</label>
+                    <input type="text" id="new-match-stream" value="https://www.twitch.tv/poxelcompetitive/">
+                </div>
+            </div>
              <div class="form-actions">
                  <button type="button" onclick="document.getElementById('add-match-form').classList.add('hidden')">Cancel</button>
                  <button id="save-new-match">Save New Match</button>
@@ -713,20 +761,37 @@
          </div>
          <div id="add-player-form" class="player-editor hidden">
              <h4>New Player Details</h4>
-             <label for="new-player-name">Name (Must match profile exactly):</label>
-             <input type="text" id="new-player-name" placeholder="Case-Sensitive Display Name">
-             <label for="new-player-avatar">Avatar (Max 3 Chars):</label>
-             <input type="text" id="new-player-avatar" maxlength="3" placeholder="AB">
-             <label for="new-player-matches">Matches:</label>
-             <input type="number" id="new-player-matches" value="0" min="0">
-             <label for="new-player-wins">Wins:</label>
-             <input type="number" id="new-player-wins" value="0" min="0">
-             <label for="new-player-losses">Losses:</label>
-             <input type="number" id="new-player-losses" value="0" min="0">
-             <label for="new-player-kills">Kills:</label> <!-- KILLS LABEL -->
-             <input type="number" id="new-player-kills" value="0" min="0"> <!-- KILLS INPUT -->
-             <label for="new-player-points">Points:</label>
-             <input type="number" id="new-player-points" value="0">
+             <!-- Grid for player editor can be added similarly if desired -->
+             <div>
+                <div>
+                    <label for="new-player-name">Name (Must match profile exactly):</label>
+                    <input type="text" id="new-player-name" placeholder="Case-Sensitive Display Name">
+                </div>
+                <div>
+                    <label for="new-player-avatar">Avatar (Max 3 Chars):</label>
+                    <input type="text" id="new-player-avatar" maxlength="3" placeholder="AB">
+                </div>
+                <div>
+                    <label for="new-player-matches">Matches:</label>
+                    <input type="number" id="new-player-matches" value="0" min="0">
+                </div>
+                <div>
+                    <label for="new-player-wins">Wins:</label>
+                    <input type="number" id="new-player-wins" value="0" min="0">
+                </div>
+                <div>
+                    <label for="new-player-losses">Losses:</label>
+                    <input type="number" id="new-player-losses" value="0" min="0">
+                </div>
+                <div>
+                    <label for="new-player-kills">Kills:</label> <!-- KILLS LABEL -->
+                    <input type="number" id="new-player-kills" value="0" min="0"> <!-- KILLS INPUT -->
+                </div>
+                <div>
+                    <label for="new-player-points">Points:</label>
+                    <input type="number" id="new-player-points" value="0">
+                </div>
+             </div>
               <div class="form-actions">
                  <button type="button" onclick="document.getElementById('add-player-form').classList.add('hidden')">Cancel</button>
                  <button id="save-new-player">Save New Player</button>
@@ -766,7 +831,6 @@
     // =========================================================================
 
     const firebaseConfig = {
-        // YOUR FIREBASE CONFIG IS OK
         apiKey: "AIzaSyDWFPys8dbSgis98tbm5PVqMuHqnCpPIxI", // Use environment variables ideally
         authDomain: "poxelcomp.firebaseapp.com",
         projectId: "poxelcomp",
@@ -796,6 +860,7 @@
     const matchesList = document.getElementById('matches-list');
     const addMatchButton = document.getElementById('add-match-button');
     const addMatchForm = document.getElementById('add-match-form');
+    const newMatchForm_MatchTypeSelect = document.getElementById('new-match-type'); // For new match type select
     const saveNewMatchButton = document.getElementById('save-new-match');
     const saveMatchesChangesButton = document.getElementById('save-matches-changes');
     const leaderboardList = document.getElementById('leaderboard-list');
@@ -818,9 +883,19 @@
     let onlineUsersListenerUnsubscribe = null;
     let saveStatusTimeout;
 
+    // --- Constants for Match Types ---
+    const MATCH_TYPES = ["", "Qualifiers", "Quarter Finals", "Semi Finals", "Finals"];
+
     // =========================================================================
     // --- Core Functions ---
     // =========================================================================
+
+    // --- Helper function to generate HTML for match type select options ---
+    function generateMatchTypeOptions(selectedValue = "") {
+        return MATCH_TYPES.map(type =>
+            `<option value="${type}" ${selectedValue === type ? 'selected' : ''}>${type || 'Select Type...'}</option>`
+        ).join('');
+    }
 
     // --- MODIFIED: Checks if user's UID exists in the 'admins' collection ---
     async function checkAdminAuthorization(user) {
@@ -1016,8 +1091,7 @@
             console.log(`Auth state change: User signed in (${user.email})`);
             loginError.textContent = ''; // Clear previous login errors
 
-            // --- Check for Admin Authorization using the NEW method ---
-            const isAuthorized = await checkAdminAuthorization(user); // Calls the modified function
+            const isAuthorized = await checkAdminAuthorization(user);
 
             if (isAuthorized) {
                 console.log("Admin authorized. Showing admin panel.");
@@ -1025,32 +1099,28 @@
                 adminPanel.classList.remove('hidden');
                 adminPanel.classList.add('fade-in');
                 userInfo.textContent = `Logged in as: ${user.displayName || user.email}`;
-                await registerPresence(user); // Register presence for authorized admin
-                loadAdminData(); // Load data for authorized admin
+                await registerPresence(user);
+                loadAdminData();
             } else {
-                // --- User is signed in BUT NOT an admin (based on collection check) ---
                 console.log("User is signed in but not authorized as admin.");
-                adminPanel.classList.add('hidden'); // Ensure admin panel is hidden
+                adminPanel.classList.add('hidden');
                 adminPanel.classList.remove('fade-in');
-                loginContainer.classList.remove('hidden'); // Show login container again
+                loginContainer.classList.remove('hidden');
                 userInfo.textContent = '';
-                // Message is set by checkAdminAuthorization
-                // Automatically sign out unauthorized users
                 console.log("Automatically signing out non-admin user.");
-                showSaveStatus('Access denied. Signing out...', true); // Show status briefly
-                await auth.signOut(); // Sign them out
+                showSaveStatus('Access denied. Signing out...', true);
+                await auth.signOut();
             }
         } else {
-            // --- User is Signed Out ---
             console.log("Auth state: Signed out.");
-            if (trackedUserId) await removePresence(trackedUserId); // Cleanup presence using tracked ID
+            if (trackedUserId) await removePresence(trackedUserId);
             adminPanel.classList.add('hidden');
             adminPanel.classList.remove('fade-in');
             loginContainer.classList.remove('hidden');
             userInfo.textContent = '';
             loginError.textContent = '';
-            authCheckMessage.textContent = ''; // Clear auth message
-            clearAdminUI(); // Clear admin panel state/UI
+            authCheckMessage.textContent = '';
+            clearAdminUI();
         }
     });
 
@@ -1077,18 +1147,20 @@
         if (!matchesList) return;
         matchesList.innerHTML = '<div class="loading-indicator">Loading matches...</div>';
         try {
-            const snapshot = await db.collection('matches').orderBy('date', 'desc').limit(50).get(); // Rule: Admin read required
+            const snapshot = await db.collection('matches').orderBy('date', 'desc').limit(50).get();
             matchesList.innerHTML = ''; if (snapshot.empty) { matchesList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No matches found.</p>'; return; }
             snapshot.forEach(doc => {
                 const match = { id: doc.id, ...doc.data() };
                  const dateObj = match.date?.toDate ? match.date.toDate() : null;
                  const dateForInput = dateObj ? new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
                 const matchDiv = document.createElement('div'); matchDiv.classList.add('match-editor'); matchDiv.dataset.id = match.id;
+                const typeSelectHTML = `<select data-field="type">${generateMatchTypeOptions(match.type || "")}</select>`; // Use helper
+
                 matchDiv.innerHTML = `
                     <h4>Match: ${match.type ?? 'Unnamed'} (ID: ${match.id.substring(0,6)}...)</h4>
-                    <div>
+                    <div> <!-- Grid Container -->
                         <div><label>Date & Time:</label><input type="datetime-local" value="${dateForInput}" data-field="date"></div>
-                        <div><label>Type:</label><input type="text" value="${match.type ?? ''}" data-field="type"></div>
+                        <div><label>Type:</label>${typeSelectHTML}</div>
                         <div><label>Team 1:</label><input type="text" value="${match.team1?.name ?? ''}" data-field="team1.name"></div>
                         <div><label>Team 1 Logo:</label><input type="text" value="${match.team1?.logo ?? ''}" data-field="team1.logo" maxlength="3"></div>
                         <div><label>Team 2:</label><input type="text" value="${match.team2?.name ?? ''}" data-field="team2.name"></div>
@@ -1109,35 +1181,60 @@
     function attachMatchDeleteListeners() {
         matchesList.addEventListener('click', async (e) => { if (e.target.matches('.delete-match-button')) {
             const button = e.target; const id = button.dataset.id; if (!id) return; const editorDiv = button.closest('.match-editor');
-            const matchType = editorDiv?.querySelector('input[data-field="type"]')?.value || `ID: ${id}`;
-            if (confirm(`DELETE match "${matchType}"? This cannot be undone.`)) { button.disabled = true;
-                try { await db.collection('matches').doc(id).delete(); /* Rule: Admin write required */ showSaveStatus('Match deleted!', false); editorDiv.remove(); if (!matchesList.querySelector('.match-editor')) { matchesList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No matches found.</p>';} } catch (error) { console.error("Error deleting match:", error); showSaveStatus(`Error deleting match: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); button.disabled = false; }}}} );}
+            const matchTypeElement = editorDiv?.querySelector('select[data-field="type"]') || editorDiv?.querySelector('input[data-field="type"]'); // Handle both for safety
+            const matchTypeValue = matchTypeElement ? matchTypeElement.value : `ID: ${id}`;
+            if (confirm(`DELETE match "${matchTypeValue}"? This cannot be undone.`)) { button.disabled = true;
+                try { await db.collection('matches').doc(id).delete(); showSaveStatus('Match deleted!', false); editorDiv.remove(); if (!matchesList.querySelector('.match-editor')) { matchesList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No matches found.</p>';} } catch (error) { console.error("Error deleting match:", error); showSaveStatus(`Error deleting match: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); button.disabled = false; }}}} );}
+
     addMatchButton.addEventListener('click', () => { addMatchForm.classList.toggle('hidden'); if (!addMatchForm.classList.contains('hidden')) { addMatchForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); document.getElementById('new-match-date').focus(); }});
+
     saveNewMatchButton.addEventListener('click', async () => { saveNewMatchButton.disabled = true; let matchDateTimestamp = null;
         try { const dateValue = document.getElementById('new-match-date').value; if (!dateValue) throw new Error("Date & Time is required."); const localDate = new Date(dateValue); if (isNaN(localDate.getTime())) throw new Error("Invalid Date & Time format."); matchDateTimestamp = firebase.firestore.Timestamp.fromDate(localDate); } catch (e) { showSaveStatus(`Error: ${e.message || 'Invalid Date format.'}`, true); saveNewMatchButton.disabled = false; document.getElementById('new-match-date').focus(); return; }
-        const newMatchData={date: matchDateTimestamp, type: document.getElementById('new-match-type').value.trim(), team1: { name: document.getElementById('new-match-team1-name').value.trim(), logo: document.getElementById('new-match-team1-logo').value.trim().toUpperCase() }, team2: { name: document.getElementById('new-match-team2-name').value.trim(), logo: document.getElementById('new-match-team2-logo').value.trim().toUpperCase() }, venue: document.getElementById('new-match-venue').value.trim(), streamLink: document.getElementById('new-match-stream').value.trim() || null };
-        if (!newMatchData.type || !newMatchData.team1.name || !newMatchData.team2.name) { showSaveStatus('Error: Type, Team 1 Name, and Team 2 Name are required.', true); saveNewMatchButton.disabled = false; return; }
-        showSaveStatus('Saving new match...', false); try { await db.collection('matches').add(newMatchData); /* Rule: Admin write required */ showSaveStatus('New match added!', false); addMatchForm.classList.add('hidden'); addMatchForm.querySelectorAll('input[type="text"], input[type="datetime-local"]').forEach(input => { if (input.id === 'new-match-stream') { input.value = 'https://www.twitch.tv/poxelcompetitive/'; } else { input.value = ''; }}); loadMatchesAdmin(); } catch (error) { console.error("Error adding match:", error); showSaveStatus(`Error adding match: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); } finally { saveNewMatchButton.disabled = false; }});
+        const newMatchData={date: matchDateTimestamp, type: document.getElementById('new-match-type').value, team1: { name: document.getElementById('new-match-team1-name').value.trim(), logo: document.getElementById('new-match-team1-logo').value.trim().toUpperCase() }, team2: { name: document.getElementById('new-match-team2-name').value.trim(), logo: document.getElementById('new-match-team2-logo').value.trim().toUpperCase() }, venue: document.getElementById('new-match-venue').value.trim(), streamLink: document.getElementById('new-match-stream').value.trim() || null };
+        if (!newMatchData.team1.name || !newMatchData.team2.name) { // Type can be "" (Select Type...) initially, but not ideal. Maybe add check if needed.
+             showSaveStatus('Error: Team 1 Name and Team 2 Name are required.', true); saveNewMatchButton.disabled = false; return;
+        }
+        if (!newMatchData.type) { // Explicitly check for empty type string
+            showSaveStatus('Error: Match Type is required.', true); saveNewMatchButton.disabled = false; document.getElementById('new-match-type').focus(); return;
+        }
+        showSaveStatus('Saving new match...', false); try { await db.collection('matches').add(newMatchData); showSaveStatus('New match added!', false); addMatchForm.classList.add('hidden');
+            addMatchForm.querySelectorAll('input[type="text"], input[type="datetime-local"], select').forEach(input => {
+                if (input.id === 'new-match-stream') { input.value = 'https://www.twitch.tv/poxelcompetitive/'; }
+                else if (input.tagName === 'SELECT') { input.value = ""; } // Reset select
+                else { input.value = ''; }
+            });
+            loadMatchesAdmin();
+        } catch (error) { console.error("Error adding match:", error); showSaveStatus(`Error adding match: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); } finally { saveNewMatchButton.disabled = false; }});
+
     saveMatchesChangesButton.addEventListener('click', async () => { saveMatchesChangesButton.disabled = true; const updates = []; let errorsFound = false;
-        document.querySelectorAll('#matches-list .match-editor').forEach(editor => { const id = editor.dataset.id; if (!id) return; editor.style.border = ''; editor.querySelectorAll('input').forEach(inp => inp.style.backgroundColor = ''); const matchData = { team1: {}, team2: {} }; let hasEditorError = false;
+        document.querySelectorAll('#matches-list .match-editor').forEach(editor => { const id = editor.dataset.id; if (!id) return; editor.style.border = ''; editor.querySelectorAll('input[data-field], select[data-field]').forEach(inp => inp.style.backgroundColor = ''); const matchData = { team1: {}, team2: {} }; let hasEditorError = false;
             try { const dateInput = editor.querySelector('input[data-field="date"]'); if (dateInput) { const dateValue = dateInput.value; if (dateValue) { const localDate = new Date(dateValue); if (isNaN(localDate.getTime())) { throw new Error(`Invalid Date format in Match ID ${id.substring(0,6)}...`); } matchData.date = firebase.firestore.Timestamp.fromDate(localDate); } else { matchData.date = null; } }
-                editor.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => { if (input.dataset.field === 'date') return; const fieldPath = input.dataset.field; if (!fieldPath) return; let value = input.value.trim(); if (fieldPath.endsWith('.logo')) { value = value.toUpperCase(); } if (fieldPath.includes('.')) { const parts = fieldPath.split('.'); if (parts.length === 2) { if (!matchData[parts[0]]) matchData[parts[0]] = {}; matchData[parts[0]][parts[1]] = value || null; } } else { matchData[fieldPath] = value || null; } });
-                if (!matchData.type || !matchData.team1?.name || !matchData.team2?.name) { hasEditorError = true; console.error(`Missing required fields (Type, T1 Name, T2 Name) for Match ID ${id.substring(0,6)}...`); }
+                editor.querySelectorAll('input[data-field]:not([data-field="date"]), select[data-field]').forEach(input => {
+                    const fieldPath = input.dataset.field; if (!fieldPath) return;
+                    let value = input.value;
+                    if (input.tagName === 'INPUT' && input.type === 'text') { value = input.value.trim(); }
+                    if (fieldPath.endsWith('.logo')) { value = value.toUpperCase(); }
+                    if (fieldPath === 'type' && !value) { // Explicitly check for empty type
+                        input.style.backgroundColor = 'rgba(229, 57, 53, 0.3)';
+                        hasEditorError = true; console.error(`Match Type is required for Match ID ${id.substring(0,6)}...`);
+                    }
+                    if (fieldPath.includes('.')) { const parts = fieldPath.split('.'); if (parts.length === 2) { if (!matchData[parts[0]]) matchData[parts[0]] = {}; matchData[parts[0]][parts[1]] = value || null; } } else { matchData[fieldPath] = value || null; } });
+                if (!matchData.team1?.name || !matchData.team2?.name) { hasEditorError = true; console.error(`Missing required fields (T1 Name, T2 Name) for Match ID ${id.substring(0,6)}...`); }
             } catch (e) { console.error(`Validation error for match ${id}:`, e); hasEditorError = true; }
             if (hasEditorError) { editor.style.border = '2px solid var(--red-error)'; errorsFound = true; } else { updates.push({ id: id, data: matchData }); }});
         if (errorsFound) { showSaveStatus('Errors found in highlighted matches. Please fix and save again.', true); saveMatchesChangesButton.disabled = false; return; } if (updates.length === 0) { showSaveStatus('No changes detected to save.', false); saveMatchesChangesButton.disabled = false; return; }
         showSaveStatus(`Saving ${updates.length} match changes...`, false); const batch = db.batch(); updates.forEach(update => { const docRef = db.collection('matches').doc(update.id); batch.update(docRef, update.data); });
-        try { await batch.commit(); /* Rule: Admin write required */ showSaveStatus(`${updates.length} match(es) updated successfully!`, false); document.querySelectorAll('#matches-list .match-editor').forEach(editor => editor.style.border = ''); } catch (error) { console.error("Error committing match batch:", error); showSaveStatus(`Error saving match changes: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); } finally { saveMatchesChangesButton.disabled = false; }});
+        try { await batch.commit(); showSaveStatus(`${updates.length} match(es) updated successfully!`, false); document.querySelectorAll('#matches-list .match-editor').forEach(editor => editor.style.border = ''); } catch (error) { console.error("Error committing match batch:", error); showSaveStatus(`Error saving match changes: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); } finally { saveMatchesChangesButton.disabled = false; }});
 
     // --- Leaderboard Management ---
     async function loadLeaderboardAdmin() { if (!leaderboardBodyAdmin) return; leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" class="loading-indicator">Loading leaderboard...</td></tr>`;
-        try { const snapshot = await db.collection('leaderboard').orderBy('points', 'desc').limit(100).get(); /* Rule: Admin read required */ leaderboardBodyAdmin.innerHTML = ''; let rank = 1; if (snapshot.empty) { leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No players found.</td></tr>`; return; }
+        try { const snapshot = await db.collection('leaderboard').orderBy('points', 'desc').limit(100).get(); leaderboardBodyAdmin.innerHTML = ''; let rank = 1; if (snapshot.empty) { leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No players found.</td></tr>`; return; }
             snapshot.forEach(doc => { const player = { id: doc.id, ...doc.data() }; const row = document.createElement('tr'); row.dataset.id = player.id;
                 const matches = player.matches ?? 0, wins = player.wins ?? 0, losses = player.losses ?? 0, kills = player.kills ?? 0, points = player.points ?? 0, name = player.name ?? '', avatar = player.avatar ?? '';
                 row.innerHTML = `<td>${rank++}</td><td><input type="text" value="${name}" data-field="name" required title="Player Name (Case-Sensitive)"></td><td><input type="text" value="${avatar}" data-field="avatar" maxlength="3" title="Avatar Initials"></td><td><input type="number" value="${matches}" data-field="matches" min="0" title="Matches Played"></td><td><input type="number" value="${wins}" data-field="wins" min="0" title="Wins"></td><td><input type="number" value="${losses}" data-field="losses" min="0" title="Losses"></td><td><input type="number" value="${kills}" data-field="kills" min="0" title="Kills"></td><td><input type="number" value="${points}" data-field="points" title="Points"></td><td><button class="delete-player-button delete-button" data-id="${player.id}" title="Delete Player">Delete</button></td>`;
                 leaderboardBodyAdmin.appendChild(row); }); attachPlayerDeleteListeners();
         } catch (error) { console.error("Error loading leaderboard:", error); const errorMsg = error.code === 'permission-denied' ? 'Admin permission denied to load leaderboard.' : 'Error loading leaderboard.'; leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="color:var(--red-error); text-align: center;">${errorMsg}</td></tr>`; }}
-    function attachPlayerDeleteListeners() { leaderboardBodyAdmin.addEventListener('click', async (e) => { if (e.target.matches('.delete-player-button')) { const button = e.target; const id = button.dataset.id; if (!id) return; const row = button.closest('tr'); const nameInput = row?.querySelector('input[data-field="name"]'); const playerName = nameInput ? nameInput.value : `Player UID: ${id}`; if (confirm(`DELETE player "${playerName}" from the leaderboard? This does NOT delete their user account.`)) { button.disabled = true; try { await db.collection('leaderboard').doc(id).delete(); /* Rule: Admin write required */ showSaveStatus('Player deleted from leaderboard!', false); row.remove(); if (!leaderboardBodyAdmin.querySelector('tr')) { leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No players found.</td></tr>`; } } catch (error) { console.error(`Error deleting player ${id}:`, error); showSaveStatus(`Error deleting player: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); button.disabled = false; } } } }); }
+    function attachPlayerDeleteListeners() { leaderboardBodyAdmin.addEventListener('click', async (e) => { if (e.target.matches('.delete-player-button')) { const button = e.target; const id = button.dataset.id; if (!id) return; const row = button.closest('tr'); const nameInput = row?.querySelector('input[data-field="name"]'); const playerName = nameInput ? nameInput.value : `Player UID: ${id}`; if (confirm(`DELETE player "${playerName}" from the leaderboard? This does NOT delete their user account.`)) { button.disabled = true; try { await db.collection('leaderboard').doc(id).delete(); showSaveStatus('Player deleted from leaderboard!', false); row.remove(); if (!leaderboardBodyAdmin.querySelector('tr')) { leaderboardBodyAdmin.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No players found.</td></tr>`; } } catch (error) { console.error(`Error deleting player ${id}:`, error); showSaveStatus(`Error deleting player: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); button.disabled = false; } } } }); }
     addPlayerButton.addEventListener('click', () => { addPlayerForm.classList.toggle('hidden'); if (!addPlayerForm.classList.contains('hidden')) { addPlayerForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); document.getElementById('new-player-name').focus(); }});
     saveNewPlayerButton.addEventListener('click', async () => { saveNewPlayerButton.disabled = true; showSaveStatus('Processing new player...', false);
         const nameInput=document.getElementById('new-player-name'), avatarInput=document.getElementById('new-player-avatar'), matchesInput=document.getElementById('new-player-matches'), winsInput=document.getElementById('new-player-wins'), lossesInput=document.getElementById('new-player-losses'), killsInput=document.getElementById('new-player-kills'), pointsInput=document.getElementById('new-player-points');
@@ -1147,9 +1244,9 @@
         if (isNaN(matchesInput.value) || isNaN(winsInput.value) || isNaN(lossesInput.value) || isNaN(killsInput.value) || isNaN(pointsInput.value)) { let invalidInput = [matchesInput, winsInput, lossesInput, killsInput, pointsInput].find(inp => isNaN(inp.value)); showSaveStatus('Error: Stats must be valid numbers (or empty for 0).', true); if(invalidInput) invalidInput.focus(); saveNewPlayerButton.disabled = false; return; }
         const newPlayerData = { name: name, avatar: avatar, matches: Math.max(0, matches), wins: Math.max(0, wins), losses: Math.max(0, losses), kills: Math.max(0, kills), points: points, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() };
         let targetUID = null;
-        try { showSaveStatus(`Searching for user profile "${name}"...`, false); const userQuery = db.collection('users').where('displayName', '==', name).limit(2); /* Rule: Admin needs list permission on users - Check rules! */ const querySnapshot = await userQuery.get(); if (querySnapshot.empty) { throw new Error(`No user profile found with the exact display name "${name}".`); } if (querySnapshot.size > 1) { console.warn(`Multiple profiles found for display name "${name}". Using the first one found.`); } targetUID = querySnapshot.docs[0].id; console.log(`User profile found! Target UID: ${targetUID}`);
+        try { showSaveStatus(`Searching for user profile "${name}"...`, false); const userQuery = db.collection('users').where('displayName', '==', name).limit(2); const querySnapshot = await userQuery.get(); if (querySnapshot.empty) { throw new Error(`No user profile found with the exact display name "${name}".`); } if (querySnapshot.size > 1) { console.warn(`Multiple profiles found for display name "${name}". Using the first one found.`); } targetUID = querySnapshot.docs[0].id; console.log(`User profile found! Target UID: ${targetUID}`);
         } catch (error) { console.error("Error querying 'users' collection:", error); const errMsg = error.message.includes("No user profile found") ? error.message : `Error searching for user profile: ${error.code === 'permission-denied' ? 'Permission Denied (Check user list rule).' : error.message}`; showSaveStatus(errMsg, true); nameInput.focus(); saveNewPlayerButton.disabled = false; return; }
-        if (targetUID) { try { showSaveStatus(`Saving leaderboard data for UID ${targetUID}...`, false); await db.collection('leaderboard').doc(targetUID).set(newPlayerData, { merge: true }); /* Rule: Admin write required */ showSaveStatus('Player added/updated on leaderboard!', false); addPlayerForm.classList.add('hidden'); addPlayerForm.querySelectorAll('input').forEach(input => input.value = (input.type === 'number' ? '0' : '')); loadLeaderboardAdmin(); } catch (error) { console.error(`Error setting leaderboard document for UID ${targetUID}:`, error); showSaveStatus(`Error saving player to leaderboard: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); } finally { saveNewPlayerButton.disabled = false; } }});
+        if (targetUID) { try { showSaveStatus(`Saving leaderboard data for UID ${targetUID}...`, false); await db.collection('leaderboard').doc(targetUID).set(newPlayerData, { merge: true }); showSaveStatus('Player added/updated on leaderboard!', false); addPlayerForm.classList.add('hidden'); addPlayerForm.querySelectorAll('input').forEach(input => input.value = (input.type === 'number' ? '0' : '')); loadLeaderboardAdmin(); } catch (error) { console.error(`Error setting leaderboard document for UID ${targetUID}:`, error); showSaveStatus(`Error saving player to leaderboard: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); } finally { saveNewPlayerButton.disabled = false; } }});
     saveLeaderboardChangesButton.addEventListener('click', async () => { saveLeaderboardChangesButton.disabled = true; const updates = []; let errorsFound = false; const rows = leaderboardBodyAdmin.querySelectorAll('tr');
         rows.forEach(row => { const id = row.dataset.id; if (!id) return; row.style.backgroundColor = ''; row.querySelectorAll('input').forEach(inp => inp.style.backgroundColor = ''); const playerData = {}; let hasRowError = false;
             row.querySelectorAll('input').forEach(input => { const field = input.dataset.field; if (!field) return; let value = input.value.trim();
@@ -1157,14 +1254,14 @@
             if (hasRowError) { row.style.backgroundColor = 'rgba(229, 57, 53, 0.1)'; } else { playerData.lastUpdated = firebase.firestore.FieldValue.serverTimestamp(); updates.push({ id: id, data: playerData }); }});
         if (errorsFound) { showSaveStatus('Errors in highlighted rows/cells. Please correct and save again.', true); saveLeaderboardChangesButton.disabled = false; return; } if (updates.length === 0) { showSaveStatus('No valid changes detected to save.', false); saveLeaderboardChangesButton.disabled = false; return; }
         showSaveStatus(`Saving ${updates.length} player changes...`, false); const batch = db.batch(); updates.forEach(update => { const docRef = db.collection('leaderboard').doc(update.id); batch.update(docRef, update.data); });
-        try { await batch.commit(); /* Rule: Admin write required */ showSaveStatus(`${updates.length} player(s) updated successfully!`, false); rows.forEach(row => { row.style.backgroundColor = ''; row.querySelectorAll('input').forEach(inp => inp.style.backgroundColor = ''); }); } catch (error) { console.error("Error committing leaderboard batch:", error); showSaveStatus(`Error saving leaderboard changes: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); } finally { saveLeaderboardChangesButton.disabled = false; }});
+        try { await batch.commit(); showSaveStatus(`${updates.length} player(s) updated successfully!`, false); rows.forEach(row => { row.style.backgroundColor = ''; row.querySelectorAll('input').forEach(inp => inp.style.backgroundColor = ''); }); } catch (error) { console.error("Error committing leaderboard batch:", error); showSaveStatus(`Error saving leaderboard changes: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); } finally { saveLeaderboardChangesButton.disabled = false; }});
 
     // --- Bracket Management ---
     async function loadBracketAdmin(bracketType = 'pro') { if (!bracketEditor || !bracketLoadingIndicator) return; currentBracketType = bracketType; bracketEditor.dataset.type = bracketType; bracketLoadingIndicator.classList.remove('hidden'); bracketLoadingIndicator.textContent = `Loading ${bracketType} bracket...`; bracketEditor.innerHTML = '';
-        try { const docRef = db.collection('brackets').doc(bracketType); const docSnap = await docRef.get(); /* Rule: Admin read required */
+        try { const docRef = db.collection('brackets').doc(bracketType); const docSnap = await docRef.get();
             if (docSnap.exists) { currentBracketData = docSnap.data(); if (!currentBracketData || typeof currentBracketData !== 'object') currentBracketData = {}; if (!Array.isArray(currentBracketData.rounds)) currentBracketData.rounds = [];
                 currentBracketData.rounds.forEach((round, rIdx) => { if (!round || typeof round !== 'object') { currentBracketData.rounds[rIdx] = { name: `Round ${rIdx + 1}`, matches: [] }; round = currentBracketData.rounds[rIdx]; } round.name = round.name?.trim() || `Round ${rIdx + 1}`; if (!Array.isArray(round.matches)) round.matches = [];
-                    round.matches.forEach((match, mIdx) => { if (!match || typeof match !== 'object') { round.matches[mIdx] = { team1: { name: '', score: null }, team2: { name: '', score: null }, winnerName: '', winner: null, completed: false }; match = round.matches[mIdx]; } if (!match.team1 || typeof match.team1 !== 'object') match.team1 = { name: '', score: null }; if (!match.team2 || typeof match.team2 !== 'object') match.team2 = { name: '', score: null }; match.team1.name = match.team1.name ?? ''; match.team2.name = match.team2.name ?? ''; match.team1.score = (match.team1.score === undefined || match.team1.score === null || match.team1.score === '' || isNaN(Number(match.team1.score))) ? null : Number(match.team1.score); match.team2.score = (match.team2.score === undefined || match.team2.score === null || match.team2.score === '' || isNaN(Number(match.team2.score))) ? null : Number(match.team2.score); match.winnerName = match.winnerName ?? ''; match.completed = !!match.completed; match.winner = match.winner ?? null; }); });
+                    round.matches.forEach((match, mIdx) => { if (!match || typeof match !== 'object') { round.matches[mIdx] = { team1: { name: '', score: null }, team2: { name: '', score: null }, winnerName: '', winner: null, completed: false, matchType: "" }; match = round.matches[mIdx]; } if (!match.team1 || typeof match.team1 !== 'object') match.team1 = { name: '', score: null }; if (!match.team2 || typeof match.team2 !== 'object') match.team2 = { name: '', score: null }; match.team1.name = match.team1.name ?? ''; match.team2.name = match.team2.name ?? ''; match.team1.score = (match.team1.score === undefined || match.team1.score === null || match.team1.score === '' || isNaN(Number(match.team1.score))) ? null : Number(match.team1.score); match.team2.score = (match.team2.score === undefined || match.team2.score === null || match.team2.score === '' || isNaN(Number(match.team2.score))) ? null : Number(match.team2.score); match.winnerName = match.winnerName ?? ''; match.completed = !!match.completed; match.winner = match.winner ?? null; match.matchType = match.matchType ?? ""; }); }); // Added matchType
             } else { console.log(`${bracketType} bracket document does not exist. Initializing empty structure.`); currentBracketData = { rounds: [] }; } renderBracketEditor();
         } catch (error) { console.error(`ERROR loading ${bracketType} bracket:`, error); const errorMsg = error.code === 'permission-denied' ? `Admin permission denied to load ${bracketType} bracket.` : `Error loading ${bracketType} bracket: ${error.message}.`; bracketEditor.innerHTML = `<p style="color: var(--red-error); text-align: center;">${errorMsg}</p>`; currentBracketData = { rounds: [] }; } finally { bracketLoadingIndicator.classList.add('hidden'); }}
     function renderBracketEditor() { if (!bracketEditor) return; bracketEditor.innerHTML = ''; bracketEditor.dataset.type = currentBracketType; const rounds = currentBracketData.rounds || [];
@@ -1172,46 +1269,74 @@
             rounds.forEach((round, roundIndex) => { const roundColumnDiv = document.createElement('div'); roundColumnDiv.classList.add('bracket-round-column'); roundColumnDiv.dataset.roundIndex = roundIndex; const roundName = round.name || `Round ${roundIndex + 1}`; const roundHeader = document.createElement('h4'); roundHeader.innerHTML = `<input type="text" value="${roundName}" class="round-name" placeholder="Round Name" data-round-index="${roundIndex}" data-field="name" title="Edit Round Name"><button class="delete-round-button" data-round-index="${roundIndex}" title="Delete This Round">X</button>`; const matchesContainer = document.createElement('div'); matchesContainer.classList.add('matches-in-round'); const matches = round.matches || []; if (matches.length > 0) { matches.forEach((match, matchIndex) => { const matchDiv = renderBracketMatchEditor(match, roundIndex, matchIndex); if (matchDiv) matchesContainer.appendChild(matchDiv); }); } else { matchesContainer.innerHTML = '<p style="text-align: center; font-size: 0.9em; color: var(--text-secondary);">No matches in this round.</p>'; } const addMatchBtn = document.createElement('button'); addMatchBtn.classList.add('add-match-to-round-button'); addMatchBtn.dataset.roundIndex = roundIndex; addMatchBtn.title = "Add a new match to this round"; addMatchBtn.textContent = "Add Match"; addMatchBtn.style.marginTop = "15px"; roundColumnDiv.appendChild(roundHeader); roundColumnDiv.appendChild(matchesContainer); roundColumnDiv.appendChild(addMatchBtn); bracketEditor.appendChild(roundColumnDiv); });
         } attachBracketEditorListeners(); }
     function renderBracketMatchEditor(match, roundIndex, matchIndex) { const matchDiv = document.createElement('div'); matchDiv.classList.add('bracket-match-editor'); matchDiv.dataset.roundIndex = roundIndex; matchDiv.dataset.matchIndex = matchIndex; const t1N = match.team1?.name ?? ''; const t1S = (match.team1?.score === null || match.team1?.score === undefined) ? '' : match.team1.score; const t2N = match.team2?.name ?? ''; const t2S = (match.team2?.score === null || match.team2?.score === undefined) ? '' : match.team2.score; const wN = match.winnerName ?? ''; const comp = match.completed ?? false;
-        matchDiv.innerHTML = `<h5>Match ${matchIndex + 1} <button class="delete-match-from-round-button" data-round-index="${roundIndex}" data-match-index="${matchIndex}" title="Delete This Match">X</button></h5><label for="t1n-${roundIndex}-${matchIndex}">Team 1:</label><input type="text" id="t1n-${roundIndex}-${matchIndex}" value="${t1N}" placeholder="Team 1 Name" data-field="team1.name"><label for="t1s-${roundIndex}-${matchIndex}">Score 1:</label><input type="number" id="t1s-${roundIndex}-${matchIndex}" value="${t1S}" placeholder="Score" data-field="team1.score" min="0"><label for="t2n-${roundIndex}-${matchIndex}">Team 2:</label><input type="text" id="t2n-${roundIndex}-${matchIndex}" value="${t2N}" placeholder="Team 2 Name" data-field="team2.name"><label for="t2s-${roundIndex}-${matchIndex}">Score 2:</label><input type="number" id="t2s-${roundIndex}-${matchIndex}" value="${t2S}" placeholder="Score" data-field="team2.score" min="0"><label for="wn-${roundIndex}-${matchIndex}">Winner Name:</label><input type="text" id="wn-${roundIndex}-${matchIndex}" value="${wN}" placeholder="Exact Winner Name" data-field="winnerName" title="Enter exact winning team name (case-sensitive)"><label class="checkbox-label"><input type="checkbox" ${comp ? 'checked' : ''} data-field="completed"> Match Completed</label>`; return matchDiv; }
+        const matchTypeSelectHTML = `<select data-field="matchType" id="matchtype-${roundIndex}-${matchIndex}">${generateMatchTypeOptions(match.matchType || "")}</select>`;
+        matchDiv.innerHTML = `
+            <h5>Match ${matchIndex + 1} <button class="delete-match-from-round-button" data-round-index="${roundIndex}" data-match-index="${matchIndex}" title="Delete This Match">X</button></h5>
+            <label for="t1n-${roundIndex}-${matchIndex}">Team 1:</label><input type="text" id="t1n-${roundIndex}-${matchIndex}" value="${t1N}" placeholder="Team 1 Name" data-field="team1.name">
+            <label for="t1s-${roundIndex}-${matchIndex}">Score 1:</label><input type="number" id="t1s-${roundIndex}-${matchIndex}" value="${t1S}" placeholder="Score" data-field="team1.score" min="0">
+            <label for="t2n-${roundIndex}-${matchIndex}">Team 2:</label><input type="text" id="t2n-${roundIndex}-${matchIndex}" value="${t2N}" placeholder="Team 2 Name" data-field="team2.name">
+            <label for="t2s-${roundIndex}-${matchIndex}">Score 2:</label><input type="number" id="t2s-${roundIndex}-${matchIndex}" value="${t2S}" placeholder="Score" data-field="team2.score" min="0">
+            <label for="matchtype-${roundIndex}-${matchIndex}">Match Type:</label>${matchTypeSelectHTML}
+            <label for="wn-${roundIndex}-${matchIndex}">Winner Name:</label><input type="text" id="wn-${roundIndex}-${matchIndex}" value="${wN}" placeholder="Exact Winner Name" data-field="winnerName" title="Enter exact winning team name (case-sensitive)">
+            <label class="checkbox-label"><input type="checkbox" ${comp ? 'checked' : ''} data-field="completed"> Match Completed</label>`; return matchDiv; }
     function attachBracketEditorListeners() { if (!bracketEditor) return; bracketEditor.removeEventListener('click', handleBracketButtonClick); bracketEditor.addEventListener('click', handleBracketButtonClick); bracketEditor.removeEventListener('input', handleBracketInput); bracketEditor.removeEventListener('change', handleBracketInput); bracketEditor.addEventListener('input', handleBracketInput); bracketEditor.addEventListener('change', handleBracketInput); if (addRoundButton) { addRoundButton.removeEventListener('click', handleAddRoundClick); addRoundButton.addEventListener('click', handleAddRoundClick); } if (saveBracketChangesButton) { saveBracketChangesButton.removeEventListener('click', handleSaveBracketClick); saveBracketChangesButton.addEventListener('click', handleSaveBracketClick); } if (bracketSelect) { bracketSelect.removeEventListener('change', handleBracketSelectChange); bracketSelect.addEventListener('change', handleBracketSelectChange); } }
     function handleBracketButtonClick(event) { const target = event.target; const deleteRoundButton = target.closest('.delete-round-button'); const addMatchButton = target.closest('.add-match-to-round-button'); const deleteMatchButton = target.closest('.delete-match-from-round-button'); const roundColumn = target.closest('.bracket-round-column'); const matchEditor = target.closest('.bracket-match-editor'); const roundIndexStr = roundColumn?.dataset.roundIndex; const matchIndexStr = matchEditor?.dataset.matchIndex ?? deleteMatchButton?.dataset.matchIndex; if (deleteRoundButton && roundIndexStr !== undefined) { deleteBracketRoundFromState(parseInt(roundIndexStr)); } else if (addMatchButton && roundIndexStr !== undefined) { addBracketMatchToState(parseInt(roundIndexStr)); } else if (deleteMatchButton && roundIndexStr !== undefined && matchIndexStr !== undefined) { deleteBracketMatchFromState(parseInt(roundIndexStr), parseInt(matchIndexStr)); } }
-    function handleBracketInput(event) { const target = event.target; if (!target || !(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') || !target.dataset.field) { return; } const matchEditor = target.closest('.bracket-match-editor'); const roundColumn = target.closest('.bracket-round-column'); if (!roundColumn) return; const rIdxStr = roundColumn.dataset.roundIndex; const mIdxStr = matchEditor?.dataset.matchIndex; const field = target.dataset.field; if (rIdxStr === undefined) return; const rIdx = parseInt(rIdxStr); const mIdx = (mIdxStr !== undefined) ? parseInt(mIdxStr) : null; if (isNaN(rIdx) || (mIdx !== null && isNaN(mIdx))) { console.error("Invalid round/match index found:", rIdxStr, mIdxStr); return; } try { if (!currentBracketData?.rounds?.[rIdx]) { console.error(`Attempted to update non-existent round at index ${rIdx}`); return; } const round = currentBracketData.rounds[rIdx]; if (mIdx === null) { if (field === 'name') { round.name = target.value.trim(); } else { console.warn(`Unhandled round field update: ${field}`); } } else { if (!round.matches?.[mIdx]) { console.error(`Attempted to update non-existent match at index ${mIdx} in round ${rIdx}`); return; } const match = round.matches[mIdx]; let value; if (target.type === 'checkbox') { value = target.checked; } else if (target.type === 'number') { value = (target.value === '') ? null : parseInt(target.value, 10); if (isNaN(value) && target.value !== '') { console.warn(`Invalid number input for ${field}: "${target.value}". Storing null.`); value = null; target.value = ''; } else if (isNaN(value)) { value = null; } } else { value = target.value.trim(); } if (field.includes('.')) { const parts = field.split('.'); if (parts.length === 2) { if (!match[parts[0]]) match[parts[0]] = {}; match[parts[0]][parts[1]] = value; } else { console.error(`Unsupported nested field path: ${field}`); } } else { match[field] = value; } } if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; } catch (error) { console.error("Error updating bracket state from input:", error); } }
+    function handleBracketInput(event) { const target = event.target; if (!target || !(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') || !target.dataset.field) { return; } const matchEditor = target.closest('.bracket-match-editor'); const roundColumn = target.closest('.bracket-round-column'); if (!roundColumn) return; const rIdxStr = roundColumn.dataset.roundIndex; const mIdxStr = matchEditor?.dataset.matchIndex; const field = target.dataset.field; if (rIdxStr === undefined) return; const rIdx = parseInt(rIdxStr); const mIdx = (mIdxStr !== undefined) ? parseInt(mIdxStr) : null; if (isNaN(rIdx) || (mIdx !== null && isNaN(mIdx))) { console.error("Invalid round/match index found:", rIdxStr, mIdxStr); return; } try { if (!currentBracketData?.rounds?.[rIdx]) { console.error(`Attempted to update non-existent round at index ${rIdx}`); return; } const round = currentBracketData.rounds[rIdx]; if (mIdx === null) { if (field === 'name') { round.name = target.value.trim(); } else { console.warn(`Unhandled round field update: ${field}`); } } else { if (!round.matches?.[mIdx]) { console.error(`Attempted to update non-existent match at index ${mIdx} in round ${rIdx}`); return; } const match = round.matches[mIdx];
+            let value; if (target.type === 'checkbox') { value = target.checked; } else if (target.type === 'number') { value = (target.value === '') ? null : parseInt(target.value, 10); if (isNaN(value) && target.value !== '') { console.warn(`Invalid number input for ${field}: "${target.value}". Storing null.`); value = null; target.value = ''; } else if (isNaN(value)) { value = null; } } else if (target.tagName === 'SELECT') { value = target.value; } else { value = target.value.trim(); }
+            if (field.includes('.')) { const parts = field.split('.'); if (parts.length === 2) { if (!match[parts[0]]) match[parts[0]] = {}; match[parts[0]][parts[1]] = value; } else { console.error(`Unsupported nested field path: ${field}`); } } else { match[field] = value; } } if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; } catch (error) { console.error("Error updating bracket state from input:", error); } }
     function handleBracketSelectChange(e) { const newBracketType = e.target.value; if (newBracketType !== currentBracketType) { console.log(`Switching bracket view to: ${newBracketType}`); loadBracketAdmin(newBracketType); if (saveBracketChangesButton) saveBracketChangesButton.disabled = true; }}
     function handleAddRoundClick() { if (!currentBracketData?.rounds) { console.warn("Initializing bracket data rounds array."); currentBracketData = { rounds: [] }; } const newRoundIndex = currentBracketData.rounds.length; currentBracketData.rounds.push({ name: `Round ${newRoundIndex + 1}`, matches: [] }); renderBracketEditor(); const newRoundElement = bracketEditor.querySelector(`.bracket-round-column[data-round-index="${newRoundIndex}"]`); newRoundElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' }); if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; }
-    async function handleSaveBracketClick() { if (!currentBracketType) { showSaveStatus('Error: No bracket type selected.', true); return; } if (!currentBracketData?.rounds) { showSaveStatus('Error: No bracket data to save.', true); return; } saveBracketChangesButton.disabled = true; let dataToSave; try { dataToSave = JSON.parse(JSON.stringify(currentBracketData)); } catch (e) { console.error("Cloning error before save:", e); showSaveStatus('Error preparing bracket data for saving.', true); saveBracketChangesButton.disabled = false; return; } let validationError = false; dataToSave.rounds.forEach((round, rIdx) => { if (!round || typeof round !== 'object') { validationError = true; return; } round.name = round.name?.trim() || `Round ${rIdx + 1}`; if (!Array.isArray(round.matches)) round.matches = []; round.matches.forEach((match, mIdx) => { if (!match || typeof match !== 'object') { validationError = true; return; } if (!match.team1) match.team1 = {}; if (!match.team2) match.team2 = {}; match.team1.name = match.team1.name?.trim() ?? ''; match.team2.name = match.team2.name?.trim() ?? ''; match.team1.score = (match.team1.score === null || match.team1.score === undefined || match.team1.score === '' || isNaN(Number(match.team1.score))) ? null : Number(match.team1.score); match.team2.score = (match.team2.score === null || match.team2.score === undefined || match.team2.score === '' || isNaN(Number(match.team2.score))) ? null : Number(match.team2.score); match.completed = !!match.completed; match.winnerName = match.winnerName?.trim() ?? ''; match.winner = null; if (match.completed && match.winnerName) { const winnerLower = match.winnerName.toLowerCase(); const team1Lower = match.team1.name?.toLowerCase(); const team2Lower = match.team2.name?.toLowerCase(); if (team1Lower && winnerLower === team1Lower) { match.winner = match.team1.name; } else if (team2Lower && winnerLower === team2Lower) { match.winner = match.team2.name; } else { console.warn(`Entered Winner Name "${match.winnerName}" does not match Team 1 ("${match.team1.name}") or Team 2 ("${match.team2.name}") in R${rIdx+1}, M${mIdx+1}. Winner field will remain null.`); } } else if (match.completed && !match.winnerName) { console.warn(`Match R${rIdx+1}, M${mIdx+1} is marked completed, but no Winner Name was entered.`); } }); }); if (validationError) { showSaveStatus('Error: Invalid bracket data structure found during final check. Cannot save.', true); saveBracketChangesButton.disabled = false; return; } showSaveStatus(`Saving ${currentBracketType} bracket changes...`, false); try { await db.collection('brackets').doc(currentBracketType).set(dataToSave); /* Rule: Admin write required */ showSaveStatus(`${currentBracketType} bracket saved successfully!`, false); currentBracketData = dataToSave; saveBracketChangesButton.disabled = true; } catch (error) { console.error(`Error saving ${currentBracketType} bracket to Firestore:`, error); showSaveStatus(`Error saving bracket: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); saveBracketChangesButton.disabled = false; }}
+    async function handleSaveBracketClick() { if (!currentBracketType) { showSaveStatus('Error: No bracket type selected.', true); return; } if (!currentBracketData?.rounds) { showSaveStatus('Error: No bracket data to save.', true); return; } saveBracketChangesButton.disabled = true; let dataToSave; try { dataToSave = JSON.parse(JSON.stringify(currentBracketData)); } catch (e) { console.error("Cloning error before save:", e); showSaveStatus('Error preparing bracket data for saving.', true); saveBracketChangesButton.disabled = false; return; } let validationError = false;
+        dataToSave.rounds.forEach((round, rIdx) => { if (!round || typeof round !== 'object') { validationError = true; return; } round.name = round.name?.trim() || `Round ${rIdx + 1}`; if (!Array.isArray(round.matches)) round.matches = [];
+            round.matches.forEach((match, mIdx) => { if (!match || typeof match !== 'object') { validationError = true; return; } if (!match.team1) match.team1 = {}; if (!match.team2) match.team2 = {}; match.team1.name = match.team1.name?.trim() ?? ''; match.team2.name = match.team2.name?.trim() ?? ''; match.team1.score = (match.team1.score === null || match.team1.score === undefined || match.team1.score === '' || isNaN(Number(match.team1.score))) ? null : Number(match.team1.score); match.team2.score = (match.team2.score === null || match.team2.score === undefined || match.team2.score === '' || isNaN(Number(match.team2.score))) ? null : Number(match.team2.score); match.completed = !!match.completed; match.winnerName = match.winnerName?.trim() ?? '';
+                match.matchType = match.matchType ?? ""; // Ensure matchType is saved
+                if (!match.matchType) { // Require match type if not already caught by input handler
+                    console.warn(`Match Type missing for R${rIdx+1}, M${mIdx+1}. Setting to default.`);
+                    // Optionally, highlight this as an error to the user before saving, or auto-set a default
+                    // For now, it will save as empty string if not set.
+                }
+                match.winner = null; if (match.completed && match.winnerName) { const winnerLower = match.winnerName.toLowerCase(); const team1Lower = match.team1.name?.toLowerCase(); const team2Lower = match.team2.name?.toLowerCase(); if (team1Lower && winnerLower === team1Lower) { match.winner = match.team1.name; } else if (team2Lower && winnerLower === team2Lower) { match.winner = match.team2.name; } else { console.warn(`Entered Winner Name "${match.winnerName}" does not match Team 1 ("${match.team1.name}") or Team 2 ("${match.team2.name}") in R${rIdx+1}, M${mIdx+1}. Winner field will remain null.`); } } else if (match.completed && !match.winnerName) { console.warn(`Match R${rIdx+1}, M${mIdx+1} is marked completed, but no Winner Name was entered.`); } }); }); if (validationError) { showSaveStatus('Error: Invalid bracket data structure found during final check. Cannot save.', true); saveBracketChangesButton.disabled = false; return; } showSaveStatus(`Saving ${currentBracketType} bracket changes...`, false); try { await db.collection('brackets').doc(currentBracketType).set(dataToSave); showSaveStatus(`${currentBracketType} bracket saved successfully!`, false); currentBracketData = dataToSave; saveBracketChangesButton.disabled = true; } catch (error) { console.error(`Error saving ${currentBracketType} bracket to Firestore:`, error); showSaveStatus(`Error saving bracket: ${error.code === 'permission-denied' ? 'Permission Denied.' : error.message}`, true); saveBracketChangesButton.disabled = false; }}
     function deleteBracketRoundFromState(roundIndex) { if (!currentBracketData?.rounds?.[roundIndex]) return; const roundName = currentBracketData.rounds[roundIndex]?.name || `Round ${roundIndex + 1}`; if (confirm(`Are you sure you want to DELETE Round "${roundName}" and ALL of its matches? This cannot be undone.`)) { currentBracketData.rounds.splice(roundIndex, 1); renderBracketEditor(); if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; }}
-    function addBracketMatchToState(roundIndex) { if (!currentBracketData?.rounds?.[roundIndex]) return; if (!Array.isArray(currentBracketData.rounds[roundIndex].matches)) { currentBracketData.rounds[roundIndex].matches = []; } currentBracketData.rounds[roundIndex].matches.push({ team1: { name: '', score: null }, team2: { name: '', score: null }, winnerName: '', winner: null, completed: false }); renderBracketEditor(); bracketEditor.querySelector(`.bracket-round-column[data-round-index="${roundIndex}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' }); if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; }
+    function addBracketMatchToState(roundIndex) { if (!currentBracketData?.rounds?.[roundIndex]) return; if (!Array.isArray(currentBracketData.rounds[roundIndex].matches)) { currentBracketData.rounds[roundIndex].matches = []; }
+        currentBracketData.rounds[roundIndex].matches.push({ team1: { name: '', score: null }, team2: { name: '', score: null }, winnerName: '', winner: null, completed: false, matchType: "" }); // Added matchType
+        renderBracketEditor(); bracketEditor.querySelector(`.bracket-round-column[data-round-index="${roundIndex}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' }); if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; }
     function deleteBracketMatchFromState(roundIndex, matchIndex) { if (!currentBracketData?.rounds?.[roundIndex]?.matches?.[matchIndex]) return; const roundName = currentBracketData.rounds[roundIndex]?.name || `Round ${roundIndex + 1}`; if (confirm(`Are you sure you want to delete Match ${matchIndex + 1} from "${roundName}"?`)) { currentBracketData.rounds[roundIndex].matches.splice(matchIndex, 1); renderBracketEditor(); if (saveBracketChangesButton) saveBracketChangesButton.disabled = false; }}
 
     // --- Initial Load & Event Listeners ---
     console.log("Admin script initialized. Waiting for authentication state...");
     document.addEventListener('DOMContentLoaded', () => {
         console.log("DOM Content Loaded.");
+        // Populate the "New Match Type" dropdown
+        if (newMatchForm_MatchTypeSelect) {
+            newMatchForm_MatchTypeSelect.innerHTML = generateMatchTypeOptions();
+        }
         // Ensure save buttons are initially disabled until data loads or changes occur
         if(saveMatchesChangesButton) saveMatchesChangesButton.disabled = true;
         if(saveLeaderboardChangesButton) saveLeaderboardChangesButton.disabled = true;
         if(saveBracketChangesButton) saveBracketChangesButton.disabled = true;
+
+        // Wrap add/edit player form fields in a div for grid layout if not already
+        const playerFormFields = addPlayerForm.querySelectorAll('label, input');
+        if (playerFormFields.length > 0 && addPlayerForm.querySelector('div > label') === null) {
+            const gridContainer = document.createElement('div');
+            playerFormFields.forEach(el => gridContainer.appendChild(el.cloneNode(true))); // clone and append
+            while (addPlayerForm.firstChild && addPlayerForm.firstChild.id !== 'save-new-player' && !addPlayerForm.firstChild.classList?.contains('form-actions')) {
+                if(addPlayerForm.firstChild.tagName !== 'H4') addPlayerForm.removeChild(addPlayerForm.firstChild);
+                else addPlayerForm.firstChild.after(gridContainer); // place after h4
+            }
+            const h4Player = addPlayerForm.querySelector('h4');
+            if(h4Player) h4Player.after(gridContainer);
+            else addPlayerForm.prepend(gridContainer);
+        }
     });
     window.addEventListener('beforeunload', (event) => {
-        // Attempt to remove presence (may not always succeed before page closes)
         if (currentUserId) {
-            try {
-                 console.log("Attempting presence removal on beforeunload (might not succeed).");
-                 // NOTE: Synchronous removal is deprecated and unreliable.
-                 // The background update interval handles staleness.
-            } catch(e) {
-                 console.warn("Error attempting presence removal on beforeunload:", e);
-            }
-
-            // Check for unsaved changes to warn user
-            const hasUnsavedChanges = (saveMatchesChangesButton && !saveMatchesChangesButton.disabled) ||
+             const hasUnsavedChanges = (saveMatchesChangesButton && !saveMatchesChangesButton.disabled) ||
                                      (saveLeaderboardChangesButton && !saveLeaderboardChangesButton.disabled) ||
                                      (saveBracketChangesButton && !saveBracketChangesButton.disabled);
-
              if (hasUnsavedChanges) {
-                 // Standard way to trigger the browser's "unsaved changes" warning
                  event.preventDefault();
-                 event.returnValue = ''; // Required for older browsers
+                 event.returnValue = '';
              }
         }
      });
