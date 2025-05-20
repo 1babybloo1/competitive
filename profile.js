@@ -467,11 +467,198 @@ function resetFriendsSection() { if (friendsSection) friendsSection.style.displa
 function displayFriendshipControls(status, profileOwnerUid) { clearFriendshipControls(); if (!friendshipControlsContainer || !loggedInUser || isOwnProfile) return; friendshipControlsContainer.style.minHeight = '40px'; let btn1 = null, btn2 = null; const actions = { 'none': ()=>btn1=createFriendActionButton('Add Friend', 'sendRequest', 'primary', profileOwnerUid), 'outgoing': ()=>btn1=createFriendActionButton('Cancel Request', 'cancelRequest', 'secondary cancel', profileOwnerUid), 'incoming': ()=>{ btn1=createFriendActionButton('Accept', 'acceptRequest', 'primary accept small', profileOwnerUid); btn2=createFriendActionButton('Decline', 'declineRequest', 'secondary decline small', profileOwnerUid); }, 'friend': ()=>btn1=createFriendActionButton('Remove Friend', 'removeFriend', 'secondary remove', profileOwnerUid), }; actions[status]?.(); if(btn1) friendshipControlsContainer.appendChild(btn1); if(btn2) friendshipControlsContainer.appendChild(btn2); }
 async function displayFriendsSection(profileData) { if (!isOwnProfile || !friendsSection || !profileData || typeof profileData.friends !== 'object') { resetFriendsSection(); return; } if (!friendsListUl || !incomingListUl || !outgoingListUl || !incomingCountSpan || !outgoingCountSpan || !friendsTabsContainer) { console.error("Friend section elements missing."); resetFriendsSection(); return; } console.log("Displaying friends section..."); friendsSection.style.display = 'block'; const friendsMap = profileData.friends || {}; const friendIds = [], incomingIds = [], outgoingIds = []; for (const uid in friendsMap) { if (friendsMap.hasOwnProperty(uid)) { switch (friendsMap[uid]) { case 'friend': friendIds.push(uid); break; case 'incoming': incomingIds.push(uid); break; case 'outgoing': outgoingIds.push(uid); break; } } } incomingCountSpan.textContent = incomingIds.length; outgoingCountSpan.textContent = outgoingIds.length; try { await Promise.all([ populateFriendList(friendsListUl, friendIds, 'friend', 'You have no friends yet.'), populateFriendList(incomingListUl, incomingIds, 'incoming', 'No incoming friend requests.'), populateFriendList(outgoingListUl, outgoingIds, 'outgoing', 'No outgoing friend requests.') ]); } catch(listError) { console.error("Error populating friend lists:", listError); } if (friendsTabsContainer && !friendsTabsContainer.dataset.listenerAttached) { friendsTabsContainer.addEventListener('click', (e) => { const clickedBtn = e.target.closest('.tab-button'); if (clickedBtn) { const targetId = clickedBtn.dataset.tab; if (!targetId) return; const btns = friendsTabsContainer.querySelectorAll('.tab-button'); const contents = friendsSection.querySelectorAll('.tab-content'); btns.forEach(b => b.classList.remove('active')); contents.forEach(c => c.classList.remove('active')); clickedBtn.classList.add('active'); const targetContent = friendsSection.querySelector(`#${targetId}-container`); if (targetContent) targetContent.classList.add('active'); else console.error(`Target content not found: #${targetId}-container`); } }); friendsTabsContainer.dataset.listenerAttached = 'true'; } }
 async function populateFriendList(ulEl, userIds, type, emptyMsg) { if (!ulEl) return; ulEl.innerHTML = ''; if (!userIds || userIds.length === 0) { ulEl.innerHTML = `<li class="list-message">${emptyMsg}</li>`; return; } ulEl.innerHTML = `<li class="list-message">Loading...</li>`; const profilePromises = userIds.map(id => fetchUserMiniProfile(id).catch(err => { console.error(`Error fetching mini profile for ${id} in list ${type}:`, err); return { id: id, displayName: "Error Loading", profilePictureUrl: null }; })); const profiles = await Promise.all(profilePromises); const validProfiles = profiles.filter(p => p !== null); ulEl.innerHTML = ''; let itemsAdded = 0; validProfiles.forEach(prof => { if (prof?.id && prof.displayName) { if (prof.displayName === "Error Loading User" || prof.displayName === "User Not Found") { ulEl.appendChild(createFriendListItemError(prof.id, prof.displayName)); } else { ulEl.appendChild(createFriendListItem(prof, type)); itemsAdded++; } } else { console.warn(`Skipping invalid profile in list ${type}:`, prof); } }); if (itemsAdded === 0 && validProfiles.length > 0) ulEl.innerHTML = `<li class="list-message">Could not load details.</li>`; else if (ulEl.childElementCount === 0) ulEl.innerHTML = `<li class="list-message">${emptyMsg}</li>`; }
-function createFriendListItem(miniProf, type) { const li = document.createElement('li'); li.className = 'friend-item'; li.dataset.userId = miniProf.id; const infoDiv = document.createElement('div'); infoDiv.className = 'friend-item-info'; const pfpEl = createFriendPfpElement(miniProf); infoDiv.appendChild(pfpEl); const nameSpan = document.createElement('span'); nameSpan.className = 'friend-item-name'; const nameLink = document.createElement('a'); nameLink.href = `profile.html?uid=${miniProf.id}`; nameLink.textContent = miniProf.displayName; nameLink.title = `View ${miniProf.displayName}'s profile`; nameSpan.appendChild(nameLink); infoDiv.appendChild(nameSpan); li.appendChild(infoDiv); const actionsDiv = document.createElement('div'); actionsDiv.className = 'friend-item-actions'; let btn1=null, btn2=null; const actions = { friend:()=>btn1=createFriendActionButton('Remove', 'remove', 'secondary', miniProf.id, li), incoming:()=>{btn1=createFriendActionButton('Accept', 'accept', 'primary', miniProf.id, li);btn2=createFriendActionButton('Decline', 'decline', 'secondary', miniProf.id, li);}, outgoing:()=>btn1=createFriendActionButton('Cancel', 'cancel', 'secondary', miniProf.id, li) }; actions[type]?.(); if(btn1) actionsDiv.appendChild(btn1); if(btn2) actionsDiv.appendChild(btn2); li.appendChild(actionsDiv); return li; }
-function createFriendPfpElement(miniProf) { const container = document.createElement('div'); container.style.cssText = 'width:40px; height:40px; flex-shrink:0; position:relative;'; const initialDiv = document.createElement('div'); initialDiv.className = 'friend-item-pfp-initial'; initialDiv.textContent = miniProf.displayName?.charAt(0)?.toUpperCase() || '?'; initialDiv.style.display = 'flex'; container.appendChild(initialDiv); if (miniProf.profilePictureUrl) { const img = document.createElement('img'); img.src = miniProf.profilePictureUrl; img.alt = `${miniProf.displayName || 'User'} PFP`; img.className = 'friend-item-pfp'; img.style.display = 'none'; img.onload = () => { initialDiv.style.display = 'none'; img.style.display = 'block'; }; img.onerror = () => { console.warn(`Failed PFP load for ${miniProf.id}`); img.style.display = 'none'; initialDiv.style.display = 'flex'; }; container.appendChild(img); } return container; }
-function createFriendActionButton(text, type, styleClasses, userId, listItem) { const btn = document.createElement('button'); btn.textContent = text; btn.className = `btn btn-${styleClasses.replace(/ /g,' btn-')} btn-small`; const actionMap = { remove: 'removeFriend', accept: 'acceptRequest', decline: 'declineRequest', cancel: 'cancelRequest' }; btn.onclick = (e) => handleFriendAction(e.currentTarget, actionMap[type], userId, listItem); btn.title = `${text}`; return btn; }
-function createFriendListItemError(userId, msg) { const li = document.createElement('li'); li.className = 'friend-item list-message'; li.dataset.userId = userId; li.innerHTML = `<div class="friend-item-info" style="opacity:0.6;"><div class="friend-item-pfp-initial" style="background-color:var(--text-secondary);">?</div><span class="friend-item-name">${msg}</span></div><div class="friend-item-actions"></div>`; return li; }
-async function handleFriendAction(buttonElement, action, otherUserId, listItemToRemove = null) { if (!loggedInUser || !otherUserId || !buttonElement) { console.error("Friend action validation failed."); alert("Action failed. Please log in."); return; } const currentUserUid = loggedInUser.uid; buttonElement.disabled = true; const originalText = buttonElement.textContent; buttonElement.textContent = '...'; const actionContainer = buttonElement.closest('.friend-item-actions, #friendship-controls-container'); const siblingButtons = actionContainer ? Array.from(actionContainer.querySelectorAll('button')) : []; siblingButtons.forEach(btn => { if (btn !== buttonElement) btn.disabled = true; }); const userDocRef = db.collection('users').doc(currentUserUid); const otherUserDocRef = db.collection('users').doc(otherUserId); const batch = db.batch(); try { console.log(`Action: ${action} between ${currentUserUid} and ${otherUserId}`); const deleteField = firebase.firestore.FieldValue.delete(); const ops = { sendRequest: ()=>{ batch.update(userDocRef, {[`friends.${otherUserId}`]: 'outgoing'}); batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: 'incoming'}); }, cancelRequest: ()=>{ batch.update(userDocRef, {[`friends.${otherUserId}`]: deleteField}); batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: deleteField}); }, declineRequest: ()=>{ batch.update(userDocRef, {[`friends.${otherUserId}`]: deleteField}); batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: deleteField}); }, removeFriend: ()=>{ batch.update(userDocRef, {[`friends.${otherUserId}`]: deleteField}); batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: deleteField}); }, acceptRequest: ()=>{ batch.update(userDocRef, {[`friends.${otherUserId}`]: 'friend'}); batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: 'friend'}); } }; if (!ops[action]) throw new Error(`Invalid action: ${action}`); ops[action](); await batch.commit(); console.log("Friend action batch committed."); delete miniProfileCache[currentUserUid]; delete miniProfileCache[otherUserId]; try { const viewerSnap = await userDocRef.get(); if (viewerSnap.exists) { viewerProfileData = { id: viewerSnap.id, ...(viewerSnap.data() || {}) }; if (!viewerProfileData.friends) viewerProfileData.friends = {}; if (isOwnProfile) { viewingUserProfileData.profile = viewerProfileData; saveCombinedDataToCache(currentUserUid, viewingUserProfileData); } console.log("Refreshed viewer data."); } else { console.error("Failed refetch viewer profile!"); } } catch (fetchError) { console.error("Error refetching viewer profile:", fetchError); } if (isOwnProfile) displayFriendsSection(viewerProfileData); else if (viewingUserProfileData.profile?.id === otherUserId) { const newStatus = determineFriendshipStatus(currentUserUid, otherUserId); displayFriendshipControls(newStatus, otherUserId); } } catch (error) { console.error(`Error in '${action}':`, error); alert(`Error: ${error.message || 'Failed friend action.'}.`); buttonElement.disabled = false; buttonElement.textContent = originalText; siblingButtons.forEach(btn => { if (btn !== buttonElement) btn.disabled = false; }); } }
+
+// ***** START OF MODIFIED FUNCTIONS *****
+function createFriendListItem(miniProf, type) { // `type` here is 'friend', 'incoming', 'outgoing'
+    const li = document.createElement('li');
+    li.className = 'friend-item';
+    li.dataset.userId = miniProf.id;
+
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'friend-item-info';
+    const pfpEl = createFriendPfpElement(miniProf);
+    infoDiv.appendChild(pfpEl);
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'friend-item-name';
+    const nameLink = document.createElement('a');
+    nameLink.href = `profile.html?uid=${miniProf.id}`;
+    nameLink.textContent = miniProf.displayName;
+    nameLink.title = `View ${miniProf.displayName}'s profile`;
+    nameSpan.appendChild(nameLink);
+    infoDiv.appendChild(nameSpan);
+    li.appendChild(infoDiv);
+
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'friend-item-actions';
+    let btn1=null, btn2=null;
+
+    // Pass the full action name directly to createFriendActionButton
+    const actions = {
+        friend:   () => btn1 = createFriendActionButton('Remove',  'removeFriend',   'secondary', miniProf.id, li),
+        incoming: () => {
+                        btn1 = createFriendActionButton('Accept',  'acceptRequest',  'primary',   miniProf.id, li);
+                        btn2 = createFriendActionButton('Decline', 'declineRequest', 'secondary', miniProf.id, li);
+                      },
+        outgoing: () => btn1 = createFriendActionButton('Cancel',  'cancelRequest',  'secondary', miniProf.id, li)
+    };
+
+    actions[type]?.();
+    if(btn1) actionsDiv.appendChild(btn1);
+    if(btn2) actionsDiv.appendChild(btn2);
+    li.appendChild(actionsDiv);
+    return li;
+}
+
+function createFriendPfpElement(miniProf) {
+    const container = document.createElement('div');
+    container.style.cssText = 'width:40px; height:40px; flex-shrink:0; position:relative;';
+    const initialDiv = document.createElement('div');
+    initialDiv.className = 'friend-item-pfp-initial';
+    initialDiv.textContent = miniProf.displayName?.charAt(0)?.toUpperCase() || '?';
+    initialDiv.style.display = 'flex';
+    container.appendChild(initialDiv);
+    if (miniProf.profilePictureUrl) {
+        const img = document.createElement('img');
+        img.src = miniProf.profilePictureUrl;
+        img.alt = `${miniProf.displayName || 'User'} PFP`;
+        img.className = 'friend-item-pfp';
+        img.style.display = 'none';
+        img.onload = () => { initialDiv.style.display = 'none'; img.style.display = 'block'; };
+        img.onerror = () => { console.warn(`Failed PFP load for ${miniProf.id}`); img.style.display = 'none'; initialDiv.style.display = 'flex'; };
+        container.appendChild(img);
+    }
+    return container;
+}
+
+// Renamed 'type' parameter to 'actionName' for clarity and removed internal actionMap
+function createFriendActionButton(text, actionName, styleClasses, userId, listItem) {
+    const btn = document.createElement('button');
+    btn.textContent = text;
+    btn.className = `btn btn-${styleClasses.replace(/ /g,' btn-')} btn-small`;
+
+    // The 'actionName' is now the direct action string expected by handleFriendAction
+    btn.onclick = (e) => handleFriendAction(e.currentTarget, actionName, userId, listItem);
+    btn.title = `${text}`;
+    return btn;
+}
+
+function createFriendListItemError(userId, msg) {
+    const li = document.createElement('li');
+    li.className = 'friend-item list-message';
+    li.dataset.userId = userId;
+    li.innerHTML = `<div class="friend-item-info" style="opacity:0.6;"><div class="friend-item-pfp-initial" style="background-color:var(--text-secondary);">?</div><span class="friend-item-name">${msg}</span></div><div class="friend-item-actions"></div>`;
+    return li;
+}
+
+async function handleFriendAction(buttonElement, action, otherUserId, listItemToRemove = null) {
+    if (!loggedInUser || !otherUserId || !buttonElement) {
+        console.error("Friend action validation failed. Potentially missing loggedInUser, otherUserId, or buttonElement.");
+        alert("Action failed. Please ensure you are logged in.");
+        return;
+    }
+    const currentUserUid = loggedInUser.uid;
+
+    // Ensure 'action' is a string and not undefined before proceeding
+    if (typeof action !== 'string' || !action) {
+        console.error(`handleFriendAction called with invalid action: ${action} for otherUserId: ${otherUserId}`);
+        alert("An error occurred with the friend action. Invalid action type.");
+        if (buttonElement) {
+            buttonElement.disabled = false;
+            // Consider restoring originalText if available and appropriate
+        }
+        return;
+    }
+
+    buttonElement.disabled = true;
+    const originalText = buttonElement.textContent;
+    buttonElement.textContent = '...';
+
+    const actionContainer = buttonElement.closest('.friend-item-actions, #friendship-controls-container');
+    const siblingButtons = actionContainer ? Array.from(actionContainer.querySelectorAll('button')) : [];
+    siblingButtons.forEach(btn => {
+        if (btn !== buttonElement) btn.disabled = true;
+    });
+
+    const userDocRef = db.collection('users').doc(currentUserUid);
+    const otherUserDocRef = db.collection('users').doc(otherUserId);
+    const batch = db.batch();
+
+    try {
+        console.log(`Action: ${action} between ${currentUserUid} and ${otherUserId}`);
+        const deleteField = firebase.firestore.FieldValue.delete();
+        const ops = {
+            sendRequest: () => {
+                batch.update(userDocRef, {[`friends.${otherUserId}`]: 'outgoing'});
+                batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: 'incoming'});
+            },
+            cancelRequest: () => {
+                batch.update(userDocRef, {[`friends.${otherUserId}`]: deleteField});
+                batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: deleteField});
+            },
+            declineRequest: () => {
+                batch.update(userDocRef, {[`friends.${otherUserId}`]: deleteField});
+                batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: deleteField});
+            },
+            removeFriend: () => {
+                batch.update(userDocRef, {[`friends.${otherUserId}`]: deleteField});
+                batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: deleteField});
+            },
+            acceptRequest: () => {
+                batch.update(userDocRef, {[`friends.${otherUserId}`]: 'friend'});
+                batch.update(otherUserDocRef, {[`friends.${currentUserUid}`]: 'friend'});
+            }
+        };
+
+        if (!ops[action]) {
+            throw new Error(`Invalid action: ${action}`);
+        }
+        ops[action]();
+        await batch.commit();
+        console.log("Friend action batch committed.");
+
+        delete miniProfileCache[currentUserUid];
+        delete miniProfileCache[otherUserId];
+
+        try {
+            const viewerSnap = await userDocRef.get();
+            if (viewerSnap.exists) {
+                viewerProfileData = { id: viewerSnap.id, ...(viewerSnap.data() || {}) };
+                if (!viewerProfileData.friends) viewerProfileData.friends = {};
+                if (isOwnProfile) {
+                    viewingUserProfileData.profile = viewerProfileData;
+                    saveCombinedDataToCache(currentUserUid, viewingUserProfileData);
+                }
+                console.log("Refreshed viewer data post-action.");
+            } else {
+                console.error("Failed to refetch viewer profile data after friend action!");
+            }
+        } catch (fetchError) {
+            console.error("Error refetching viewer profile after friend action:", fetchError);
+        }
+
+        if (isOwnProfile) {
+            displayFriendsSection(viewerProfileData);
+        } else if (viewingUserProfileData.profile?.id === otherUserId) {
+            const newStatus = determineFriendshipStatus(currentUserUid, otherUserId);
+            displayFriendshipControls(newStatus, otherUserId);
+        }
+
+        if (listItemToRemove && (action === 'acceptRequest' || action === 'declineRequest' || action === 'cancelRequest' || action === 'removeFriend')) {
+            listItemToRemove.remove();
+            // Consider updating list counts or "empty" messages here
+        }
+
+    } catch (error) {
+        console.error(`Error in '${action}':`, error);
+        alert(`Error: ${error.message || 'Failed friend action.'}.`);
+        buttonElement.disabled = false;
+        buttonElement.textContent = originalText;
+        siblingButtons.forEach(btn => {
+            if (btn !== buttonElement) btn.disabled = false;
+        });
+    }
+}
+// ***** END OF MODIFIED FUNCTIONS *****
 
 // =============================================================================
 // --- Authentication and Initialization ---
