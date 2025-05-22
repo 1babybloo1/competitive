@@ -27,8 +27,7 @@ let loggedInUser = null; // Initially null, set by onAuthStateChanged
 const adminEmails = [
     'trixdesignsofficial@gmail.com',
     'jackdmbell@outlook.com',
-    'myrrr@myrrr.myrrr',
-    'headbean615@yahoo.com'
+    'myrrr@myrrr.myrrr'
 ].map(email => email.toLowerCase());
 
 // --- REMOVED Old Static Badge Configuration ---
